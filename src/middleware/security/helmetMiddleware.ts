@@ -128,8 +128,7 @@ export const adminSecurityHeaders = (req: Request, res: Response, next: NextFunc
   
   // Stricter CORS for admin
   const allowedOrigins = [
-    'https://admin.transactlab.com',
-    'https://dashboard.transactlab.com',
+    'https://transactlab-payment-sandbox.vercel.app',
     'http://localhost:3000'
   ];
   
@@ -153,11 +152,11 @@ export const cspMiddleware = (environment: 'development' | 'production' | 'stagi
     development: {
       directives: {
         defaultSrc: ["'self'"],
-        styleSrc: ["'self'", "'unsafe-inline'", "http://localhost:*"],
-        scriptSrc: ["'self'", "'unsafe-inline'", "'unsafe-eval'", "http://localhost:*"],
-        connectSrc: ["'self'", "http://localhost:*", "ws://localhost:*"],
-        imgSrc: ["'self'", "data:", "http://localhost:*"],
-        fontSrc: ["'self'", "http://localhost:*"]
+        styleSrc: ["'self'", "'unsafe-inline'", "https://transactlab-payment-sandbox.vercel.app", "http://localhost:*"],
+        scriptSrc: ["'self'", "'unsafe-inline'", "'unsafe-eval'", "https://transactlab-payment-sandbox.vercel.app", "http://localhost:*"],
+        connectSrc: ["'self'", "https://transactlab-payment-sandbox.vercel.app", "http://localhost:*", "ws://localhost:*"],
+        imgSrc: ["'self'", "data:", "https://transactlab-payment-sandbox.vercel.app", "http://localhost:*"],
+        fontSrc: ["'self'", "https://transactlab-payment-sandbox.vercel.app", "http://localhost:*"]
       }
     },
     production: {
@@ -167,7 +166,7 @@ export const cspMiddleware = (environment: 'development' | 'production' | 'stagi
         fontSrc: ["'self'", "https://fonts.gstatic.com"],
         imgSrc: ["'self'", "data:", "https:"],
         scriptSrc: ["'self'"],
-        connectSrc: ["'self'", "https://api.transactlab.com"],
+        connectSrc: ["'self'", "https://api.transactlab.com", "https://transactlab-payment-sandbox.vercel.app"],
         frameSrc: ["'none'"],
         objectSrc: ["'none'"],
         upgradeInsecureRequests: []

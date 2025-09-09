@@ -88,7 +88,7 @@ app.listen(3001);
           <div className="border rounded-lg p-4 bg-white">
             <p className="font-medium text-[#0a164d] mb-2">Client redirect</p>
             <pre className="whitespace-pre-wrap text-xs bg-gray-50 p-3 rounded border">
-{`const res = await fetch('http://localhost:3001/api/create-session', {
+{`const res = await fetch('https://transactlab-payment-sandbox.vercel.app/api/create-session', {
   method: 'POST',
   headers: { 'Content-Type': 'application/json' },
   body: JSON.stringify({ 
@@ -96,14 +96,14 @@ app.listen(3001);
     currency: 'NGN', 
     description: 'Pro', 
     customerEmail: 'dev@example.com',
-    success_url: 'http://localhost:8081/?payment=success',
-    cancel_url: 'http://localhost:8081/?payment=cancelled'
+    success_url: 'https://transactlab-payment-sandbox.vercel.app/?payment=success',
+    cancel_url: 'https://transactlab-payment-sandbox.vercel.app/?payment=cancelled'
   })
   // Or use amount_minor: 50000
 });
 const json = await res.json();
 if (!res.ok || !json?.success) throw new Error(json?.message || 'Failed');
-window.location.href = 'http://localhost:8080/checkout/' + json.data.sessionId;
+window.location.href = 'https://transactlab-payment-sandbox.vercel.app/checkout/' + json.data.sessionId;
 `}
             </pre>
           </div>
@@ -258,7 +258,7 @@ app.listen(3001, () => console.log('Proxy listening on :3001'));
           <div className="border rounded-lg p-4 bg-white">
             <p className="font-medium text-[#0a164d] mb-2">Client usage</p>
             <pre className="whitespace-pre-wrap text-xs bg-gray-50 p-3 rounded border">
-{`const res = await fetch('http://localhost:3001/api/create-session', {
+{`const res = await fetch('https://transactlab-payment-sandbox.vercel.app/api/create-session', {
   method: 'POST',
   headers: { 'Content-Type': 'application/json' },
   body: JSON.stringify({
@@ -267,13 +267,13 @@ app.listen(3001, () => console.log('Proxy listening on :3001'));
     currency: 'NGN',
     description: 'Starter Plan',
     customerEmail: 'claire@example.com',
-    success_url: 'http://localhost:8081/?payment=success',
-    cancel_url: 'http://localhost:8081/?payment=cancelled'
+    success_url: 'https://transactlab-payment-sandbox.vercel.app/?payment=success',
+    cancel_url: 'https://transactlab-payment-sandbox.vercel.app/?payment=cancelled'
   })
 });
 const json = await res.json();
 if (!res.ok || !json?.success) throw new Error(json?.message || 'Failed');
-window.location.href = 'http://localhost:8080/checkout/' + json.data.sessionId;
+window.location.href = 'https://transactlab-payment-sandbox.vercel.app/checkout/' + json.data.sessionId;
 `}
             </pre>
           </div>

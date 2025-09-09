@@ -2762,7 +2762,7 @@ export class SandboxController {
         (team.members as any).push({ email: lower, status: 'invited', invitedAt: new Date(), inviteToken: token });
       }
       await team.save();
-      const acceptUrl = `http://localhost:8080/team/accept?token=${token}`;
+      const acceptUrl = `https://transactlab-payment-sandbox.vercel.app/team/accept?token=${token}`;
       try { await EmailService.sendTeamInvite(lower, acceptUrl); } catch {}
       res.json({ success: true, data: { teamId: team._id, token }, message: 'Invite sent' });
     } catch (error) {

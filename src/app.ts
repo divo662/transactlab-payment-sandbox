@@ -47,7 +47,7 @@ app.use(helmet({
   crossOriginResourcePolicy: { policy: 'cross-origin' },
 }));
 app.use(cors({
-  origin: ['http://localhost:8080'],
+  origin: ['https://transactlab-payment-sandbox.vercel.app', 'http://localhost:8080'],
   credentials: true,
 }));
 app.use(express.json({ limit: '10mb' }));
@@ -209,7 +209,7 @@ app.get('/', (req, res) => {
 // Handle password reset links from email (redirect to frontend)
 app.get('/reset-password', (req, res) => {
   const token = req.query.token;
-  const frontendUrl = process.env.FRONTEND_URL || 'http://localhost:8081';
+  const frontendUrl = process.env.FRONTEND_URL || 'https://transactlab-payment-sandbox.vercel.app';
   const redirectUrl = `${frontendUrl}/auth/reset-password?token=${token}`;
   
   res.redirect(redirectUrl);
@@ -218,7 +218,7 @@ app.get('/reset-password', (req, res) => {
 // Handle email verification links from email (redirect to frontend)
 app.get('/verify-email', (req, res) => {
   const token = req.query.token;
-  const frontendUrl = process.env.FRONTEND_URL || 'http://localhost:8081';
+  const frontendUrl = process.env.FRONTEND_URL || 'https://transactlab-payment-sandbox.vercel.app';
   const redirectUrl = `${frontendUrl}/auth/verify-email?token=${token}`;
   
   res.redirect(redirectUrl);

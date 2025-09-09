@@ -73,7 +73,7 @@ export class PasswordController {
       // Send password reset email
       try {
         const EmailService = (await import('../../services/notification/emailService')).default;
-        const resetLink = `${process.env.FRONTEND_URL || 'http://localhost:8081'}/auth/reset-password?token=${resetToken}`;
+        const resetLink = `${process.env.FRONTEND_URL || 'https://transactlab-payment-sandbox.vercel.app'}/auth/reset-password?token=${resetToken}`;
         
         await EmailService.sendPasswordResetEmail(user.email, user.firstName, resetLink);
         logger.info(`Password reset email sent to: ${user.email}`);

@@ -635,7 +635,7 @@ export class EmailService {
     name: string,
     resetToken: string
   ): Promise<EmailResult> {
-    const resetUrl = `${process.env.FRONTEND_URL || 'http://localhost:8080'}/auth/reset-security-question?token=${resetToken}`;
+    const resetUrl = `${process.env.FRONTEND_URL || 'https://transactlab-payment-sandbox.vercel.app'}/auth/reset-security-question?token=${resetToken}`;
     
     return await this.sendTemplatedEmail('security_question_reset', to, {
       name,

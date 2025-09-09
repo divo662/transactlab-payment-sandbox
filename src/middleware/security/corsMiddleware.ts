@@ -138,8 +138,7 @@ export const adminCors = cors({
   ...corsOptions,
   origin: function (origin, callback) {
     const adminAllowedOrigins = [
-      'https://admin.transactlab.com',
-      'https://dashboard.transactlab.com',
+      'https://transactlab-payment-sandbox.vercel.app',
       'http://localhost:3000', // Development
       'http://localhost:3001'  // Development
     ];
