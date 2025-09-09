@@ -5,7 +5,6 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
-import { useAppStore } from "@/store/appStore";
 import { useToast } from "@/hooks/use-toast";
 
 const schema = z.object({
@@ -18,7 +17,12 @@ const schema = z.object({
 type FormValues = z.infer<typeof schema>;
 
 const NewTransaction = ({ compact = false }: { compact?: boolean }) => {
-  const { customers, paymentMethods, addTransaction } = useAppStore();
+  const customers: any[] = []; // Mock data - replace with actual data source
+  const paymentMethods: any[] = []; // Mock data - replace with actual data source
+  const addTransaction = (tx: any) => {
+    // Mock function - replace with actual implementation
+    console.log('Adding transaction:', tx);
+  };
   const { toast } = useToast();
   const { register, handleSubmit, formState: { errors }, reset } = useForm<FormValues>({ resolver: zodResolver(schema) });
 

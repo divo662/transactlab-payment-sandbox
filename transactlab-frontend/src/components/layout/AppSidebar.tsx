@@ -10,7 +10,6 @@ import {
   SidebarMenuButton,
   SidebarMenuItem,
 } from "@/components/ui/sidebar";
-import { useAppStore } from "@/store/appStore";
 import { useSandbox } from "@/contexts/SandboxContext";
 
 const mainItems = [
@@ -32,7 +31,6 @@ const sandboxItems = [
 
 export function AppSidebar() {
   const location = useLocation();
-  const { currentUser } = useAppStore();
   const { isSandboxMode } = useSandbox();
   const isActive = (path: string) => location.pathname === path;
 

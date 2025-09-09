@@ -18,8 +18,6 @@ import EmailVerification from "./pages/auth/EmailVerification";
 import Dashboard from "./pages/Dashboard";
 import Profile from "./pages/settings/Profile";
 import Security from "./pages/settings/Security";
-import AdminUsers from "./pages/admin/AdminUsers.tsx";
-import AuditLogs from "./pages/admin/AuditLogs";
 import NotFound from "./pages/NotFound";
 import SandboxDashboard from "./components/sandbox/SandboxDashboard";
 import ApiKeyManagement from "./components/sandbox/ApiKeyManagement";
@@ -69,8 +67,6 @@ const App = () => (
                 <Route path="/docs" element={<Docs />} />
                 <Route path="/settings/profile" element={<Profile />} />
                 <Route path="/settings/security" element={<Security />} />
-                <Route path="/admin/users" element={<AdminUsers />} />
-                <Route path="/admin/audit" element={<AuditLogs />} />
 
                 {/* Sandbox Routes */}
                 <Route path="/sandbox" element={<SandboxDashboard />} />

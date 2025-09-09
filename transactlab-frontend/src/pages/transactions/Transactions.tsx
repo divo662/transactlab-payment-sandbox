@@ -4,7 +4,6 @@ import { Input } from "@/components/ui/input";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 import { Button } from "@/components/ui/button";
-import { useAppStore } from "@/store/appStore";
 import { useSEO } from "@/hooks/use-seo";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from "@/components/ui/dialog";
 import { Plus } from "lucide-react";
@@ -14,7 +13,7 @@ const statusOptions = ["all", "pending", "completed", "failed", "refunded"] as c
 
 const Transactions = () => {
   useSEO("Transactions — TransactLab", "Manage and review all transactions.");
-  const { transactions } = useAppStore();
+  const transactions: any[] = []; // Mock data - replace with actual data source
   const [query, setQuery] = useState("");
   const [status, setStatus] = useState<(typeof statusOptions)[number]>("all");
 

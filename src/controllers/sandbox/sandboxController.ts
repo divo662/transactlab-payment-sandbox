@@ -6,7 +6,7 @@ import { ISandboxApiKey, ISandboxSession, ISandboxWebhook, ISandboxTransaction, 
 import SandboxInvoice, { ISandboxInvoice } from '../../models/SandboxInvoice';
 import SandboxPaymentMethod, { ISandboxPaymentMethod } from '../../models/SandboxPaymentMethod';
 import { logger } from '../../utils/helpers/logger';
-import EmailService from '@/services/notification/emailService';
+import EmailService from '../../services/notification/emailService';
 import SandboxTeam from '../../models/SandboxTeam';
 
 // Helper function to send sandbox webhooks

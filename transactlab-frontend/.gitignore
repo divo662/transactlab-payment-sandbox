@@ -23,11 +23,3 @@ dist-ssr
 *.sln
 *.sw?
 
-# Project-specific ignored folders
-src/store/appStore.ts
-src/styles/
-src/pages/admin/
-src/pages/analytics/
-src/pages/customers/
-src/components/merchant/
-src/pages/payments/
