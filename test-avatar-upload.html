@@ -1,0 +1,53 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>Test Avatar Upload</title>
+</head>
+<body>
+    <h1>Test Avatar Upload</h1>
+    <form id="uploadForm">
+        <input type="file" id="avatar" name="avatar" accept="image/*" required>
+        <button type="submit">Upload Avatar</button>
+    </form>
+    
+    <div id="result"></div>
+
+    <script>
+        document.getElementById('uploadForm').addEventListener('submit', async (e) => {
+            e.preventDefault();
+            
+            const formData = new FormData();
+            const fileInput = document.getElementById('avatar');
+            const file = fileInput.files[0];
+            
+            if (!file) {
+                alert('Please select a file');
+                return;
+            }
+            
+            formData.append('avatar', file);
+            
+            try {
+                const response = await fetch('http://localhost:5000/api/v1/auth/upload-avatar', {
+                    method: 'POST',
+                    headers: {
+                        'Authorization': 'Bearer eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJ1c2VySWQiOiI2ODk5M2RhMmJiM2MyOWYxNzRiMDgyMWMiLCJlbWFpbCI6ImRpdnplaDAwMUBnbWFpbC5jb20iLCJyb2xlIjoibWVyY2hhbnQiLCJpYXQiOjE3NTY5ODk3NjEsImV4cCI6MTc1NzU5NDU2MSwiYXVkIjoidHJhbnNhY3RsYWItYXBpIiwiaXNzIjoidHJhbnNhY3RsYWIifQ.aV4ac8QDtFvUqzgDKW_VTKSne7J3ZXSG1we_9ZrMBZM'
+                    },
+                    body: formData
+                });
+                
+                const result = await response.json();
+                document.getElementById('result').innerHTML = '<pre>' + JSON.stringify(result, null, 2) + '</pre>';
+                
+                if (result.success) {
+                    alert('Avatar uploaded successfully!');
+                } else {
+                    alert('Upload failed: ' + result.message);
+                }
+            } catch (error) {
+                document.getElementById('result').innerHTML = '<p style="color: red;">Error: ' + error.message + '</p>';
+            }
+        });
+    </script>
+</body>
+</html>

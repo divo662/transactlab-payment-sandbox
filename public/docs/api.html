@@ -1,0 +1,807 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>TransactLab - API Documentation</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            min-height: 100vh;
+            padding: 20px;
+        }
+
+        .container {
+            max-width: 1400px;
+            margin: 0 auto;
+            background: white;
+            border-radius: 15px;
+            box-shadow: 0 20px 40px rgba(0,0,0,0.1);
+            overflow: hidden;
+        }
+
+        .header {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+            padding: 30px;
+            text-align: center;
+        }
+
+        .header h1 {
+            font-size: 2.5rem;
+            margin-bottom: 10px;
+        }
+
+        .header p {
+            font-size: 1.1rem;
+            opacity: 0.9;
+        }
+
+        .content {
+            display: flex;
+            min-height: 600px;
+        }
+
+        .sidebar {
+            width: 300px;
+            background: #f8f9fa;
+            border-right: 2px solid #e1e5e9;
+            padding: 20px;
+            overflow-y: auto;
+        }
+
+        .main-content {
+            flex: 1;
+            padding: 30px;
+            overflow-y: auto;
+        }
+
+        .nav-item {
+            padding: 12px 16px;
+            margin-bottom: 8px;
+            border-radius: 8px;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            font-weight: 500;
+        }
+
+        .nav-item:hover {
+            background: #667eea;
+            color: white;
+        }
+
+        .nav-item.active {
+            background: #667eea;
+            color: white;
+        }
+
+        .section {
+            margin-bottom: 40px;
+            display: none;
+        }
+
+        .section.active {
+            display: block;
+        }
+
+        .section h2 {
+            color: #333;
+            margin-bottom: 20px;
+            font-size: 1.8rem;
+            border-bottom: 2px solid #667eea;
+            padding-bottom: 10px;
+        }
+
+        .section h3 {
+            color: #555;
+            margin: 25px 0 15px 0;
+            font-size: 1.3rem;
+        }
+
+        .endpoint {
+            background: #f8f9fa;
+            border: 2px solid #e1e5e9;
+            border-radius: 8px;
+            margin-bottom: 20px;
+            overflow: hidden;
+        }
+
+        .endpoint-header {
+            background: #667eea;
+            color: white;
+            padding: 15px 20px;
+            font-weight: 600;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+
+        .method {
+            background: #28a745;
+            color: white;
+            padding: 4px 12px;
+            border-radius: 4px;
+            font-size: 12px;
+            font-weight: 600;
+        }
+
+        .method.post { background: #007bff; }
+        .method.get { background: #28a745; }
+        .method.put { background: #ffc107; color: #333; }
+        .method.delete { background: #dc3545; }
+
+        .endpoint-body {
+            padding: 20px;
+        }
+
+        .endpoint-url {
+            background: #e9ecef;
+            padding: 10px;
+            border-radius: 4px;
+            font-family: 'Courier New', monospace;
+            margin-bottom: 15px;
+        }
+
+        .code-block {
+            background: #2d3748;
+            color: #e2e8f0;
+            padding: 20px;
+            border-radius: 8px;
+            font-family: 'Courier New', monospace;
+            font-size: 14px;
+            overflow-x: auto;
+            margin: 15px 0;
+        }
+
+        .btn {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+            border: none;
+            padding: 10px 20px;
+            border-radius: 6px;
+            font-size: 14px;
+            font-weight: 600;
+            cursor: pointer;
+            transition: transform 0.2s ease;
+            margin: 5px;
+        }
+
+        .btn:hover {
+            transform: translateY(-1px);
+        }
+
+        .btn-secondary {
+            background: #6c757d;
+        }
+
+        .form-group {
+            margin-bottom: 15px;
+        }
+
+        .form-group label {
+            display: block;
+            margin-bottom: 5px;
+            font-weight: 600;
+            color: #555;
+        }
+
+        .form-group input,
+        .form-group textarea {
+            width: 100%;
+            padding: 10px;
+            border: 2px solid #e1e5e9;
+            border-radius: 6px;
+            font-size: 14px;
+        }
+
+        .response-area {
+            background: #f8f9fa;
+            border: 2px solid #e1e5e9;
+            border-radius: 8px;
+            padding: 15px;
+            margin-top: 15px;
+            font-family: 'Courier New', monospace;
+            font-size: 13px;
+            white-space: pre-wrap;
+            max-height: 300px;
+            overflow-y: auto;
+        }
+
+        .status {
+            padding: 6px 12px;
+            border-radius: 15px;
+            font-size: 11px;
+            font-weight: 600;
+            text-transform: uppercase;
+            margin-bottom: 10px;
+        }
+
+        .status.success {
+            background: #d4edda;
+            color: #155724;
+        }
+
+        .status.error {
+            background: #f8d7da;
+            color: #721c24;
+        }
+
+        .api-key-section {
+            background: #fff3cd;
+            border: 1px solid #ffeaa7;
+            border-radius: 8px;
+            padding: 20px;
+            margin-bottom: 30px;
+        }
+
+        .api-key-section h3 {
+            color: #856404;
+            margin-bottom: 15px;
+        }
+
+        .copy-btn {
+            background: #28a745;
+            color: white;
+            border: none;
+            padding: 5px 10px;
+            border-radius: 4px;
+            font-size: 12px;
+            cursor: pointer;
+            margin-left: 10px;
+        }
+
+        .test-credentials {
+            background: #e7f3ff;
+            border: 1px solid #b3d9ff;
+            border-radius: 8px;
+            padding: 20px;
+            margin-bottom: 30px;
+        }
+
+        .test-credentials h3 {
+            color: #0066cc;
+            margin-bottom: 15px;
+        }
+
+        .credential-item {
+            margin-bottom: 10px;
+        }
+
+        .credential-item strong {
+            color: #333;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <div class="header">
+            <h1>📚 TransactLab API Documentation</h1>
+            <p>Complete payment gateway simulation API reference</p>
+        </div>
+
+        <div class="content">
+            <div class="sidebar">
+                <div class="nav-item active" onclick="showSection('overview')">📋 Overview</div>
+                <div class="nav-item" onclick="showSection('authentication')">🔐 Authentication</div>
+                <div class="nav-item" onclick="showSection('transactions')">💳 Transactions</div>
+                <div class="nav-item" onclick="showSection('refunds')">💰 Refunds</div>
+                <div class="nav-item" onclick="showSection('webhooks')">🔗 Webhooks</div>
+                <div class="nav-item" onclick="showSection('subscriptions')">🔄 Subscriptions</div>
+                <div class="nav-item" onclick="showSection('merchant')">🏢 Merchant API</div>
+                <div class="nav-item" onclick="showSection('analytics')">📊 Analytics</div>
+                <div class="nav-item" onclick="showSection('testing')">🧪 Testing</div>
+            </div>
+
+            <div class="main-content">
+                <!-- Overview Section -->
+                <div id="overview" class="section active">
+                    <h2>🚀 Getting Started</h2>
+                    
+                    <div class="api-key-section">
+                        <h3>🔑 API Keys</h3>
+                        <p>TransactLab uses API keys for authentication. Include your API key in the request headers:</p>
+                        <div class="code-block">
+X-API-Key: pk_test_your_api_key_here
+X-Secret-Key: sk_test_your_secret_key_here
+                        </div>
+                        <button class="copy-btn" onclick="copyToClipboard('pk_test_your_api_key_here')">Copy Public Key</button>
+                        <button class="copy-btn" onclick="copyToClipboard('sk_test_your_secret_key_here')">Copy Secret Key</button>
+                    </div>
+
+                    <div class="test-credentials">
+                        <h3>🧪 Test Credentials</h3>
+                        <div class="credential-item">
+                            <strong>Public Key:</strong> pk_test_1234567890abcdef
+                        </div>
+                        <div class="credential-item">
+                            <strong>Secret Key:</strong> sk_test_1234567890abcdef
+                        </div>
+                        <div class="credential-item">
+                            <strong>Test Card:</strong> 4242 4242 4242 4242
+                        </div>
+                        <div class="credential-item">
+                            <strong>Test CVC:</strong> 123
+                        </div>
+                        <div class="credential-item">
+                            <strong>Test Expiry:</strong> 12/25
+                        </div>
+                    </div>
+
+                    <h3>Base URL</h3>
+                    <div class="code-block">
+https://api.transactlab.com/v1
+                    </div>
+
+                    <h3>Response Format</h3>
+                    <p>All API responses follow this format:</p>
+                    <div class="code-block">
+{
+  "success": true,
+  "data": {
+    // Response data
+  },
+  "message": "Operation successful"
+}
+                    </div>
+                </div>
+
+                <!-- Authentication Section -->
+                <div id="authentication" class="section">
+                    <h2>🔐 Authentication</h2>
+                    
+                    <div class="endpoint">
+                        <div class="endpoint-header">
+                            <span>Login</span>
+                            <span class="method post">POST</span>
+                        </div>
+                        <div class="endpoint-body">
+                            <div class="endpoint-url">/api/v1/auth/login</div>
+                            <h4>Request Body:</h4>
+                            <div class="code-block">
+{
+  "email": "merchant@example.com",
+  "password": "your_password"
+}
+                            </div>
+                            <h4>Response:</h4>
+                            <div class="code-block">
+{
+  "success": true,
+  "data": {
+    "user": {
+      "id": "user_id",
+      "email": "merchant@example.com",
+      "role": "merchant"
+    },
+    "token": "jwt_token_here"
+  },
+  "message": "Login successful"
+}
+                            </div>
+                            <button class="btn" onclick="testEndpoint('login')">Test Login</button>
+                        </div>
+                    </div>
+
+                    <div class="endpoint">
+                        <div class="endpoint-header">
+                            <span>Register</span>
+                            <span class="method post">POST</span>
+                        </div>
+                        <div class="endpoint-body">
+                            <div class="endpoint-url">/api/v1/auth/register</div>
+                            <h4>Request Body:</h4>
+                            <div class="code-block">
+{
+  "email": "merchant@example.com",
+  "password": "secure_password",
+  "firstName": "John",
+  "lastName": "Doe",
+  "businessName": "My Business",
+  "businessEmail": "business@example.com"
+}
+                            </div>
+                            <button class="btn" onclick="testEndpoint('register')">Test Register</button>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Transactions Section -->
+                <div id="transactions" class="section">
+                    <h2>💳 Transactions</h2>
+                    
+                    <div class="endpoint">
+                        <div class="endpoint-header">
+                            <span>Initialize Transaction</span>
+                            <span class="method post">POST</span>
+                        </div>
+                        <div class="endpoint-body">
+                            <div class="endpoint-url">/api/v1/transactions/initialize</div>
+                            <h4>Request Body:</h4>
+                            <div class="code-block">
+{
+  "amount": 5000,
+  "currency": "NGN",
+  "email": "customer@example.com",
+  "reference": "TXN_123456",
+  "callback_url": "https://your-site.com/verify",
+  "metadata": {
+    "customer_name": "John Doe",
+    "order_id": "ORD_123"
+  }
+}
+                            </div>
+                            <h4>Response:</h4>
+                            <div class="code-block">
+{
+  "success": true,
+  "data": {
+    "authorization_url": "https://checkout.transactlab.com/123456",
+    "access_code": "access_code_here",
+    "reference": "TXN_123456"
+  },
+  "message": "Transaction initialized successfully"
+}
+                            </div>
+                            <button class="btn" onclick="testEndpoint('initialize')">Test Initialize</button>
+                        </div>
+                    </div>
+
+                    <div class="endpoint">
+                        <div class="endpoint-header">
+                            <span>Verify Transaction</span>
+                            <span class="method get">GET</span>
+                        </div>
+                        <div class="endpoint-body">
+                            <div class="endpoint-url">/api/v1/transactions/verify/:reference</div>
+                            <h4>Response:</h4>
+                            <div class="code-block">
+{
+  "success": true,
+  "data": {
+    "id": "transaction_id",
+    "reference": "TXN_123456",
+    "amount": 5000,
+    "currency": "NGN",
+    "status": "successful",
+    "customer": {
+      "email": "customer@example.com",
+      "name": "John Doe"
+    },
+    "payment_method": "card",
+    "created_at": "2024-01-15T10:30:00Z"
+  },
+  "message": "Transaction verified successfully"
+}
+                            </div>
+                            <button class="btn" onclick="testEndpoint('verify')">Test Verify</button>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Refunds Section -->
+                <div id="refunds" class="section">
+                    <h2>💰 Refunds</h2>
+                    
+                    <div class="endpoint">
+                        <div class="endpoint-header">
+                            <span>Create Refund</span>
+                            <span class="method post">POST</span>
+                        </div>
+                        <div class="endpoint-body">
+                            <div class="endpoint-url">/api/v1/refunds</div>
+                            <h4>Request Body:</h4>
+                            <div class="code-block">
+{
+  "transaction_id": "transaction_id_here",
+  "amount": 2500,
+  "reason": "Customer request",
+  "metadata": {
+    "refund_note": "Partial refund for damaged item"
+  }
+}
+                            </div>
+                            <button class="btn" onclick="testEndpoint('refund')">Test Refund</button>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Webhooks Section -->
+                <div id="webhooks" class="section">
+                    <h2>🔗 Webhooks</h2>
+                    
+                    <p>Webhooks allow you to receive real-time notifications when events occur in your account.</p>
+                    
+                    <h3>Event Types</h3>
+                    <ul>
+                        <li><strong>payment.success</strong> - Payment completed successfully</li>
+                        <li><strong>payment.failed</strong> - Payment failed</li>
+                        <li><strong>refund.processed</strong> - Refund processed</li>
+                        <li><strong>subscription.created</strong> - Subscription created</li>
+                        <li><strong>subscription.cancelled</strong> - Subscription cancelled</li>
+                    </ul>
+
+                    <h3>Webhook Payload</h3>
+                    <div class="code-block">
+{
+  "event": "payment.success",
+  "timestamp": "2024-01-15T10:30:00Z",
+  "data": {
+    "id": "transaction_id",
+    "reference": "TXN_123456",
+    "amount": 5000,
+    "currency": "NGN",
+    "status": "successful"
+  }
+}
+                    </div>
+
+                    <h3>Security</h3>
+                    <p>All webhooks are signed with HMAC-SHA256. Verify the signature to ensure authenticity.</p>
+                </div>
+
+                <!-- Subscriptions Section -->
+                <div id="subscriptions" class="section">
+                    <h2>🔄 Subscriptions</h2>
+                    
+                    <div class="endpoint">
+                        <div class="endpoint-header">
+                            <span>Create Subscription</span>
+                            <span class="method post">POST</span>
+                        </div>
+                        <div class="endpoint-body">
+                            <div class="endpoint-url">/api/v1/subscriptions</div>
+                            <h4>Request Body:</h4>
+                            <div class="code-block">
+{
+  "amount": 5000,
+  "currency": "NGN",
+  "interval": "monthly",
+  "customer_email": "customer@example.com",
+  "reference": "SUB_123456",
+  "metadata": {
+    "plan_name": "Premium Plan"
+  }
+}
+                            </div>
+                            <button class="btn" onclick="testEndpoint('subscription')">Test Subscription</button>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Merchant API Section -->
+                <div id="merchant" class="section">
+                    <h2>🏢 Merchant API</h2>
+                    
+                    <div class="endpoint">
+                        <div class="endpoint-header">
+                            <span>Get Merchant Profile</span>
+                            <span class="method get">GET</span>
+                        </div>
+                        <div class="endpoint-body">
+                            <div class="endpoint-url">/api/merchant/profile</div>
+                            <h4>Headers:</h4>
+                            <div class="code-block">
+Authorization: Bearer jwt_token_here
+                            </div>
+                            <button class="btn" onclick="testEndpoint('profile')">Test Profile</button>
+                        </div>
+                    </div>
+
+                    <div class="endpoint">
+                        <div class="endpoint-header">
+                            <span>Create API Key</span>
+                            <span class="method post">POST</span>
+                        </div>
+                        <div class="endpoint-body">
+                            <div class="endpoint-url">/api/merchant/api-keys</div>
+                            <h4>Request Body:</h4>
+                            <div class="code-block">
+{
+  "name": "Production API Key",
+  "description": "API key for production environment",
+  "permissions": ["transactions:read", "transactions:write"]
+}
+                            </div>
+                            <button class="btn" onclick="testEndpoint('api-key')">Test API Key</button>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Analytics Section -->
+                <div id="analytics" class="section">
+                    <h2>📊 Analytics</h2>
+                    
+                    <div class="endpoint">
+                        <div class="endpoint-header">
+                            <span>Get Analytics</span>
+                            <span class="method get">GET</span>
+                        </div>
+                        <div class="endpoint-body">
+                            <div class="endpoint-url">/api/analytics/dashboard</div>
+                            <h4>Query Parameters:</h4>
+                            <div class="code-block">
+?start_date=2024-01-01&end_date=2024-01-31&group_by=day
+                            </div>
+                            <button class="btn" onclick="testEndpoint('analytics')">Test Analytics</button>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Testing Section -->
+                <div id="testing" class="section">
+                    <h2>🧪 Testing</h2>
+                    
+                    <h3>Test Cards</h3>
+                    <div class="code-block">
+Success: 4242 4242 4242 4242
+Decline: 4000 0000 0000 0002
+Insufficient Funds: 4000 0000 0000 9995
+Expired Card: 4000 0000 0000 0069
+Incorrect CVC: 4000 0000 0000 0127
+                    </div>
+
+                    <h3>Test Bank Accounts</h3>
+                    <div class="code-block">
+Account Number: 0001234567
+Bank Code: 044
+                    </div>
+
+                    <h3>Error Simulation</h3>
+                    <p>Add these parameters to simulate errors:</p>
+                    <div class="code-block">
+?simulate_error=network_timeout
+?simulate_error=bank_decline
+?simulate_error=insufficient_funds
+                    </div>
+
+                    <div id="testResponse" class="response-area" style="display: none;"></div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        function showSection(sectionName) {
+            // Hide all sections
+            const sections = document.querySelectorAll('.section');
+            sections.forEach(section => section.classList.remove('active'));
+
+            // Remove active class from all nav items
+            const navItems = document.querySelectorAll('.nav-item');
+            navItems.forEach(item => item.classList.remove('active'));
+
+            // Show selected section
+            document.getElementById(sectionName).classList.add('active');
+
+            // Add active class to clicked nav item
+            event.target.classList.add('active');
+        }
+
+        function copyToClipboard(text) {
+            navigator.clipboard.writeText(text).then(() => {
+                alert('Copied to clipboard!');
+            });
+        }
+
+        async function testEndpoint(endpoint) {
+            const responseDiv = document.getElementById('testResponse');
+            responseDiv.style.display = 'block';
+            responseDiv.innerHTML = 'Testing endpoint...';
+
+            try {
+                let url, method, body;
+
+                switch (endpoint) {
+                    case 'login':
+                        url = '/api/v1/auth/login';
+                        method = 'POST';
+                        body = {
+                            email: 'test@transactlab.com',
+                            password: 'password123'
+                        };
+                        break;
+                    case 'register':
+                        url = '/api/v1/auth/register';
+                        method = 'POST';
+                        body = {
+                            email: 'newuser@transactlab.com',
+                            password: 'password123',
+                            firstName: 'John',
+                            lastName: 'Doe',
+                            businessName: 'Test Business',
+                            businessEmail: 'business@transactlab.com'
+                        };
+                        break;
+                    case 'initialize':
+                        url = '/api/v1/transactions/initialize';
+                        method = 'POST';
+                        body = {
+                            amount: 5000,
+                            currency: 'NGN',
+                            email: 'customer@example.com',
+                            reference: 'TXN_TEST_' + Date.now(),
+                            callback_url: 'https://example.com/callback'
+                        };
+                        break;
+                    case 'verify':
+                        url = '/api/v1/transactions/verify/TXN_TEST_123456';
+                        method = 'GET';
+                        break;
+                    case 'refund':
+                        url = '/api/v1/refunds';
+                        method = 'POST';
+                        body = {
+                            transaction_id: 'transaction_id_here',
+                            amount: 2500,
+                            reason: 'Customer request'
+                        };
+                        break;
+                    case 'subscription':
+                        url = '/api/v1/subscriptions';
+                        method = 'POST';
+                        body = {
+                            amount: 5000,
+                            currency: 'NGN',
+                            interval: 'monthly',
+                            customer_email: 'customer@example.com',
+                            reference: 'SUB_TEST_' + Date.now()
+                        };
+                        break;
+                    case 'profile':
+                        url = '/api/merchant/profile';
+                        method = 'GET';
+                        break;
+                    case 'api-key':
+                        url = '/api/merchant/api-keys';
+                        method = 'POST';
+                        body = {
+                            name: 'Test API Key',
+                            description: 'API key for testing',
+                            permissions: ['transactions:read']
+                        };
+                        break;
+                    case 'analytics':
+                        url = '/api/analytics/dashboard?start_date=2024-01-01&end_date=2024-01-31';
+                        method = 'GET';
+                        break;
+                }
+
+                const options = {
+                    method: method,
+                    headers: {
+                        'Content-Type': 'application/json',
+                        'X-API-Key': 'pk_test_1234567890abcdef'
+                    }
+                };
+
+                if (body) {
+                    options.body = JSON.stringify(body);
+                }
+
+                const response = await fetch(url, options);
+                const result = await response.json();
+
+                let html = '<div class="status success">SUCCESS</div>';
+                html += '<h4>Response:</h4>';
+                html += '<pre>' + JSON.stringify(result, null, 2) + '</pre>';
+
+                responseDiv.innerHTML = html;
+
+            } catch (error) {
+                let html = '<div class="status error">ERROR</div>';
+                html += '<h4>Error:</h4>';
+                html += '<pre>' + error.message + '</pre>';
+
+                responseDiv.innerHTML = html;
+            }
+        }
+    </script>
+</body>
+</html> 
