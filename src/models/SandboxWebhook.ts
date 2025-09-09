@@ -12,7 +12,7 @@ interface ISandboxWebhookMethods {
 }
 
 // Define the interface for static methods
-interface ISandboxWebhookStatics {
+interface ISandboxWebhookStatics extends Model<ISandboxWebhook> {
   findByUserId(userId: string): Promise<ISandboxWebhook[]>;
   findByEvent(event: string): Promise<ISandboxWebhook[]>;
   deactivateWebhook(webhookId: string): Promise<ISandboxWebhook | null>;
@@ -214,6 +214,6 @@ SandboxWebhookSchema.statics.deactivateWebhook = function(webhookId: string) {
   );
 };
 
-const SandboxWebhook = mongoose.model<ISandboxWebhook, Model<ISandboxWebhook, {}, {}, {}, ISandboxWebhookStatics>>('SandboxWebhook', SandboxWebhookSchema);
+const SandboxWebhook = mongoose.model<ISandboxWebhook, ISandboxWebhookStatics>('SandboxWebhook', SandboxWebhookSchema);
 
 export default SandboxWebhook;

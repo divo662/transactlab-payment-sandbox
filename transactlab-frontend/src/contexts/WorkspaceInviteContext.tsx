@@ -40,7 +40,7 @@ export const WorkspaceInviteProvider: React.FC<{ children: React.ReactNode }> = 
   const [loading, setLoading] = useState(false);
   const [showNotification, setShowNotification] = useState(true);
 
-  const API_BASE = 'http://localhost:5000/api/v1/sandbox';
+  const API_BASE = 'https://transactlab-backend.onrender.com/api/v1/sandbox';
 
   const authHeader = () => ({
     'Authorization': `Bearer ${localStorage.getItem('accessToken')}`,

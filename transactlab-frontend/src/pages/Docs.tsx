@@ -38,7 +38,7 @@ const Docs: React.FC = () => {
             <p className="font-medium text-[#0a164d] mb-2">.env for your server</p>
             <pre className="whitespace-pre-wrap text-xs bg-gray-50 p-3 rounded border">
 {`# Option A: Use sandbox secret (preferred Stripe-like)
-TL_BASE=http://localhost:5000/api/v1/sandbox
+TL_BASE=https://transactlab-backend.onrender.com/api/v1/sandbox
 TL_SECRET=sk_test_secret_...
 
 # Option B: Use user JWT (Bearer)
@@ -56,7 +56,7 @@ import fetch from 'node-fetch';
 const app = express();
 app.use(express.json());
 
-const TL_BASE = process.env.TL_BASE || 'http://localhost:5000/api/v1/sandbox';
+const TL_BASE = process.env.TL_BASE || 'https://transactlab-backend.onrender.com/api/v1/sandbox';
 
 app.post('/api/create-session', async (req, res) => {
   const headers: any = { 'Content-Type': 'application/json' };
@@ -148,7 +148,7 @@ window.location.href = 'http://localhost:8080/checkout/' + json.data.sessionId;
           <li>Handle webhook events in your backend to update order status.</li>
         </ol>
         <div className="text-sm text-gray-700 bg-blue-50 border border-blue-100 rounded p-3">
-          <strong>Base URL</strong>: <code>http://localhost:5000/api/v1/sandbox</code>
+          <strong>Base URL</strong>: <code>https://transactlab-backend.onrender.com/api/v1/sandbox</code>
           <span className="ml-2">·</span>
           <strong className="ml-2">Auth</strong>: <code>Authorization: Bearer &lt;JWT&gt;</code>
         </div>
@@ -156,7 +156,7 @@ window.location.href = 'http://localhost:8080/checkout/' + json.data.sessionId;
           <div className="border rounded-lg p-4 bg-white">
             <p className="font-medium text-[#0a164d] mb-2">Create session (server)</p>
             <pre className="whitespace-pre-wrap text-xs bg-gray-50 p-3 rounded border">
-{`POST http://localhost:5000/api/v1/sandbox/sessions
+{`POST https://transactlab-backend.onrender.com/api/v1/sandbox/sessions
 Authorization: Bearer <JWT>
 Content-Type: application/json
 
@@ -226,7 +226,7 @@ import fetch from 'node-fetch';
 const app = express();
 app.use(express.json());
 
-const TL_BASE = 'http://localhost:5000/api/v1/sandbox';
+const TL_BASE = 'https://transactlab-backend.onrender.com/api/v1/sandbox';
 const TL_TOKEN = process.env.TL_TOKEN; // 'Bearer <JWT>'
 
 app.post('/api/create-session', async (req, res) => {

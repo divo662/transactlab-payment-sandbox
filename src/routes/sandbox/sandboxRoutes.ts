@@ -1,5 +1,5 @@
 import { Router } from 'express';
-import { SandboxController } from '../../controllers/sandbox/SandboxController';
+import { SandboxController } from '../../controllers/sandbox/sandboxController';
 import { sandboxFlexibleAuth } from '../../middleware/auth/sandboxFlexibleAuth';
 import { applyWorkspaceScope } from '../../middleware/auth/applyWorkspaceScope';
 

@@ -18,7 +18,7 @@ import EmailVerification from "./pages/auth/EmailVerification";
 import Dashboard from "./pages/Dashboard";
 import Profile from "./pages/settings/Profile";
 import Security from "./pages/settings/Security";
-import AdminUsers from "./pages/admin/AdminUsers";
+import AdminUsers from "./pages/admin/AdminUsers.tsx";
 import AuditLogs from "./pages/admin/AuditLogs";
 import NotFound from "./pages/NotFound";
 import SandboxDashboard from "./components/sandbox/SandboxDashboard";

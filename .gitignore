@@ -111,23 +111,23 @@ transactlab-frontend/dist/
 transactlab-frontend/node_modules/
 transactlab-frontend/.env
 
-# Backend specific
-src/controllers/merchant/
-src/services/merchant/
-src/models/Merchant.ts
-src/models/ApiKey.ts
-src/models/PaymentChannel.ts
-src/models/PaymentLink.ts
-src/models/PaymentMethod.ts
-src/models/Product.ts
-src/models/Refund.ts
-src/models/Subscription.ts
-src/models/Transaction.ts
-src/models/Webhook.ts
-src/routes/merchant/
-src/routes/payment/
-src/middleware/merchantAccess.ts
-src/middleware/auth/apiKeyMiddleware.ts
+# Backend specific - commented out to keep files in repository
+# src/controllers/merchant/
+# src/services/merchant/
+# src/models/Merchant.ts
+# src/models/ApiKey.ts
+# src/models/PaymentChannel.ts
+# src/models/PaymentLink.ts
+# src/models/PaymentMethod.ts
+# src/models/Product.ts
+# src/models/Refund.ts
+# src/models/Subscription.ts
+# src/models/Transaction.ts
+# src/models/Webhook.ts
+# src/routes/merchant/
+# src/routes/payment/
+# src/middleware/merchantAccess.ts
+# src/middleware/auth/apiKeyMiddleware.ts
 
 # Keep core sandbox functionality
 !src/controllers/sandbox/

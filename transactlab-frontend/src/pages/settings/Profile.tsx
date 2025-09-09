@@ -18,7 +18,7 @@ const TeamSection: React.FC = () => {
   const [members, setMembers] = React.useState<any[]>([]);
   const [loading, setLoading] = React.useState(false);
   const [inviteStatus, setInviteStatus] = React.useState<{[key: string]: string}>({});
-  const API_BASE = 'http://localhost:5000/api/v1/sandbox';
+  const API_BASE = 'https://transactlab-backend.onrender.com/api/v1/sandbox';
 
   const authHeader = () => ({ 'Authorization': `Bearer ${localStorage.getItem('accessToken')}`, 'Content-Type': 'application/json' });
 
@@ -136,7 +136,7 @@ const WorkspaceSection: React.FC = () => {
   const [editName, setEditName] = React.useState('');
   const [logs, setLogs] = React.useState<any[]>([]);
   const [showLogs, setShowLogs] = React.useState(false);
-  const API_BASE = 'http://localhost:5000/api/v1/sandbox';
+  const API_BASE = 'https://transactlab-backend.onrender.com/api/v1/sandbox';
 
   const authHeader = () => ({ 'Authorization': `Bearer ${localStorage.getItem('accessToken')}`, 'Content-Type': 'application/json' });
 
@@ -557,7 +557,7 @@ const Profile = () => {
               <div className="w-12 h-12 rounded-full bg-[#0a164d]/10 flex items-center justify-center text-[#0a164d] font-bold overflow-hidden">
                 {avatarPreviewUrl || normalizedAvatar ? (
                   <img
-                    src={avatarPreviewUrl || `http://localhost:5000/${normalizedAvatar}`}
+                    src={avatarPreviewUrl || `https://transactlab-backend.onrender.com/${normalizedAvatar}`}
                     alt="Avatar" 
                     className="w-full h-full object-cover"
                     onError={(e) => {

@@ -169,7 +169,7 @@ const TransactionHistory: React.FC = () => {
     try {
       setSubmitting(true);
       const token = localStorage.getItem('accessToken');
-      const response = await fetch('http://localhost:5000/api/v1/sandbox/refunds', {
+      const response = await fetch('https://transactlab-backend.onrender.com/api/v1/sandbox/refunds', {
         method: 'POST',
         headers: {
           'Authorization': `Bearer ${token}`,

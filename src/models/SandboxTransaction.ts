@@ -29,6 +29,11 @@ export interface ISandboxTransaction extends Document {
   cancelledAt?: Date;
 }
 
+// Define the interface for static methods
+interface ISandboxTransactionStatics extends Model<ISandboxTransaction> {
+  getUserStats(userId: string): Promise<any>;
+}
+
 const sandboxTransactionSchema = new Schema<ISandboxTransaction>(
   {
     transactionId: {
@@ -216,6 +221,6 @@ sandboxTransactionSchema.statics.getUserStats = async function(userId: string) {
   return stats;
 };
 
-const SandboxTransaction: Model<ISandboxTransaction> = mongoose.model<ISandboxTransaction>('SandboxTransaction', sandboxTransactionSchema);
+const SandboxTransaction = mongoose.model<ISandboxTransaction, ISandboxTransactionStatics>('SandboxTransaction', sandboxTransactionSchema);
 
 export default SandboxTransaction;

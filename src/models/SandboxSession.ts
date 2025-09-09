@@ -12,7 +12,7 @@ interface ISandboxSessionMethods {
 }
 
 // Define the interface for static methods
-interface ISandboxSessionStatics {
+interface ISandboxSessionStatics extends Model<ISandboxSession> {
   findBySessionId(sessionId: string): Promise<ISandboxSession | null>;
   findByUserId(userId: string, options: { limit?: number; status?: string }): Promise<ISandboxSession[]>;
   findExpiredSessions(): Promise<ISandboxSession[]>;
@@ -298,6 +298,6 @@ SandboxSessionSchema.statics.getUserStats = function(userId: string) {
   ]);
 };
 
-const SandboxSession = mongoose.model<ISandboxSession, Model<ISandboxSession, {}, {}, {}, ISandboxSessionStatics>>('SandboxSession', SandboxSessionSchema);
+const SandboxSession = mongoose.model<ISandboxSession, ISandboxSessionStatics>('SandboxSession', SandboxSessionSchema);
 
 export default SandboxSession;

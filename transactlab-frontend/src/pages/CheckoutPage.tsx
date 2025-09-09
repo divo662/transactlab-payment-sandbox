@@ -44,7 +44,7 @@ interface PaymentFormData {
   saveCard: boolean;
 }
 
-const API_BASE = 'http://localhost:5000/api/v1/sandbox';
+const API_BASE = 'https://transactlab-backend.onrender.com/api/v1/sandbox';
 
 const CheckoutPage: React.FC = () => {
   const { sessionId } = useParams<{ sessionId: string }>();

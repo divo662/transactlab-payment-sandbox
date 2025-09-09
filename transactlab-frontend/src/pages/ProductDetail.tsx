@@ -12,7 +12,7 @@ import { ArrowLeft, Plus, BarChart3, TrendingUp, Users, DollarSign, Settings, Ed
 import { useToast } from '@/hooks/use-toast';
 import ApiWorkbench from '@/components/dev/ApiWorkbench';
 
-const API_BASE = 'http://localhost:5000/api/v1/sandbox';
+const API_BASE = 'https://transactlab-backend.onrender.com/api/v1/sandbox';
 
 const ProductDetail: React.FC = () => {
   const { productId } = useParams();

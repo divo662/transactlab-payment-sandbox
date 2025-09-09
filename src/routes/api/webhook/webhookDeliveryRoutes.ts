@@ -1,7 +1,7 @@
 import { Router } from 'express';
 import { WebhookController } from '../../../controllers/payment/webhookController';
 import { rateLimiters } from '../../../config/rateLimit';
-import { validateWebhookSignature } from '../../../middleware/validation';
+import { verifyWebhookSignature } from '../../../middleware/validation';
 
 const router = Router();
 
@@ -12,7 +12,7 @@ const router = Router();
  */
 router.post('/delivery', 
   rateLimiters.webhook, 
-  validateWebhookSignature,
+  verifyWebhookSignature,
   WebhookController.deliverWebhook
 );
 

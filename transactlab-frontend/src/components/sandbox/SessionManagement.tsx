@@ -222,7 +222,7 @@ const SessionManagement: React.FC = () => {
   const fetchCustomers = async () => {
     try {
       const token = localStorage.getItem('accessToken');
-      const response = await fetch('http://localhost:5000/api/v1/sandbox/customers', {
+      const response = await fetch('https://transactlab-backend.onrender.com/api/v1/sandbox/customers', {
         headers: {
           'Authorization': `Bearer ${token}`,
           'Content-Type': 'application/json'
@@ -245,7 +245,7 @@ const SessionManagement: React.FC = () => {
     try {
       setLoading(true);
       const token = localStorage.getItem('accessToken');
-      const response = await fetch('http://localhost:5000/api/v1/sandbox/customers', {
+      const response = await fetch('https://transactlab-backend.onrender.com/api/v1/sandbox/customers', {
         method: 'POST',
         headers: {
           'Authorization': `Bearer ${token}`,

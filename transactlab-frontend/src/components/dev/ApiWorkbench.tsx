@@ -10,7 +10,7 @@ type Example = {
   note?: string;
 };
 
-const API_BASE = 'http://localhost:5000/api/v1/sandbox';
+const API_BASE = 'https://transactlab-backend.onrender.com/api/v1/sandbox';
 
 export default function ApiWorkbench({ examples }: { examples: Example[] }) {
   const [activeIdx, setActiveIdx] = useState(0);

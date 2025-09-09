@@ -3,7 +3,7 @@ import { useParams, useNavigate } from 'react-router-dom';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 
-const API_BASE = 'http://localhost:5000/api/v1/sandbox';
+const API_BASE = 'https://transactlab-backend.onrender.com/api/v1/sandbox';
 
 const SubscriptionDetail: React.FC = () => {
   const { subscriptionId } = useParams();

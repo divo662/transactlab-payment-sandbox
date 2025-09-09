@@ -30,8 +30,8 @@ $env:ENCRYPTION_KEY = "7c27e3efa5978c37d9f35b96cf36ecbd734ef6986f913cc293e003642
 # Email Configuration
 $env:SMTP_HOST = "smtp.gmail.com"
 $env:SMTP_PORT = "587"
-$env:SMTP_USER = "nzehdivine49@gmail.com"
-$env:SMTP_PASS = "gtqy bkhl hpoy sywy "
+$env:SMTP_USER = ""
+$env:SMTP_PASS = " "
 $env:EMAIL_FROM = "noreply@transactlab.com"
 
 # Redis Configuration

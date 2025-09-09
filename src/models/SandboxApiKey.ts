@@ -11,7 +11,7 @@ interface ISandboxApiKeyMethods {
 }
 
 // Define the interface for static methods
-interface ISandboxApiKeyStatics {
+interface ISandboxApiKeyStatics extends Model<ISandboxApiKey> {
   findByApiKey(apiKey: string): Promise<ISandboxApiKey | null>;
   getUserKeys(userId: string): Promise<ISandboxApiKey[]>;
   deactivateKey(apiKey: string): Promise<ISandboxApiKey | null>;
@@ -228,6 +228,6 @@ SandboxApiKeySchema.statics.updateUsage = function(apiKey: string) {
   );
 };
 
-const SandboxApiKey = mongoose.model<ISandboxApiKey, Model<ISandboxApiKey, {}, {}, {}, ISandboxApiKeyStatics>>('SandboxApiKey', SandboxApiKeySchema);
+const SandboxApiKey = mongoose.model<ISandboxApiKey, ISandboxApiKeyStatics>('SandboxApiKey', SandboxApiKeySchema);
 
 export default SandboxApiKey;

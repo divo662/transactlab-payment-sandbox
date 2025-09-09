@@ -16,7 +16,7 @@ const Subscriptions: React.FC = () => {
   const { toast } = useToast();
 
   // Backend endpoints base
-  const API_BASE = 'http://localhost:5000/api/v1/sandbox';
+  const API_BASE = 'https://transactlab-backend.onrender.com/api/v1/sandbox';
 
   // Products & Plans state
   const [products, setProducts] = useState<any[]>([]);
@@ -255,7 +255,7 @@ const Subscriptions: React.FC = () => {
 
 export default Subscriptions;
 function CreateProductForm({ onCreated }: { onCreated: () => void }) {
-  const API_BASE = 'http://localhost:5000/api/v1/sandbox';
+  const API_BASE = 'https://transactlab-backend.onrender.com/api/v1/sandbox';
   const { toast } = useToast();
   const [name, setName] = useState('Pro Suite');
   const [description, setDescription] = useState('All features');
@@ -289,7 +289,7 @@ function CreateProductForm({ onCreated }: { onCreated: () => void }) {
 }
 
 function CreatePlanForm({ products, onCreated }: { products: any[]; onCreated: () => void }) {
-  const API_BASE = 'http://localhost:5000/api/v1/sandbox';
+  const API_BASE = 'https://transactlab-backend.onrender.com/api/v1/sandbox';
   const { toast } = useToast();
   const [productId, setProductId] = useState('');
   const [amount, setAmount] = useState(10000);

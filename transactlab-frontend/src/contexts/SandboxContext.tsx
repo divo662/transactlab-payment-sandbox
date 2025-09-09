@@ -136,7 +136,7 @@ export const SandboxProvider: React.FC<SandboxProviderProps> = ({ children }) =>
   const lastFetchTimeRef = useRef(0);
 
   // API base URL
-  const API_BASE = 'http://localhost:5000/api/v1/sandbox';
+  const API_BASE = 'https://transactlab-backend.onrender.com/api/v1/sandbox';
 
   // Helper function to make authenticated API calls
   const apiCall = async (endpoint: string, options: RequestInit = {}) => {
