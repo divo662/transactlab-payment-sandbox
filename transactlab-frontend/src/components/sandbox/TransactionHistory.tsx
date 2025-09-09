@@ -6,7 +6,7 @@ import { Label } from '@/components/ui/label';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { useSandbox } from '@/contexts/SandboxContext';
 import { useToast } from '@/hooks/use-toast';
-import { Pagination } from '@/components/ui/pagination';
+import Pagination from '@/components/ui/pagination';
 import { generateReceiptPDF } from '@/utils/pdfGenerator';
 import { 
   DollarSign, 
