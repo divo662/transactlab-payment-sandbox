@@ -26,7 +26,7 @@ const Index = () => {
               <a href="#features" className="text-gray-700 hover:text-[#0a164d] font-medium">Features</a>
               <a href="#sandbox" className="text-gray-700 hover:text-[#0a164d] font-medium">Sandbox</a>
               <a href="#developers" className="text-gray-700 hover:text-[#0a164d] font-medium">Developers</a>
-              <a href="#pricing" className="text-gray-700 hover:text-[#0a164d] font-medium">Pricing</a>
+              <a href="#how-it-works" className="text-gray-700 hover:text-[#0a164d] font-medium">How It Works</a>
             </nav>
             <div className="flex items-center gap-3">
               <Link to="/auth/login">
@@ -75,12 +75,12 @@ const Index = () => {
           
           <div className="flex flex-col sm:flex-row gap-4 justify-center mb-12">
             <Link to="/auth/login">
-              <Button size="lg" className="bg-white hover:bg-gray-100 text-[#0a164d] px-8 py-3 text-lg font-semibold">
+              <Button size="lg" className="bg-white hover:bg-gray-100 hover:text-black text-[#0a164d] px-8 py-3 text-lg font-semibold">
                 Get Started
               </Button>
             </Link>
             <Link to="/auth/register">
-              <Button size="lg" variant="outline" className="border-white/30 text-white hover:bg-white/10 px-8 py-3 text-lg backdrop-blur-sm">
+              <Button size="lg" variant="outline" className="border-white/30 text-black hover:bg-white/10 hover:text-white px-8 py-3 text-lg backdrop-blur-sm">
                 Create Account
               </Button>
             </Link>
@@ -88,7 +88,7 @@ const Index = () => {
           
           <div className="text-center">
             <p className="text-sm font-semibold text-blue-200 uppercase tracking-wider mb-4">
-              SUPPORTS POPULAR PAYMENT GATEWAYS
+             SANDBOX ALTERNATIVE FOR
             </p>
             <div className="flex justify-center items-center space-x-8 opacity-80">
               <span className="text-white font-semibold">Paystack</span>
@@ -295,12 +295,12 @@ const Index = () => {
           </p>
           <div className="flex flex-col sm:flex-row gap-4 justify-center">
             <Link to="/auth/register">
-              <Button size="lg" className="bg-white hover:bg-gray-100 text-[#0a164d] px-8 py-3 text-lg font-semibold">
+              <Button size="lg" className="bg-white hover:bg-gray-100 hover:text-black text-[#0a164d] px-8 py-3 text-lg font-semibold">
                 Get Started Free
               </Button>
             </Link>
             <Link to="/sandbox">
-              <Button size="lg" variant="outline" className="border-white/30 text-white hover:bg-white/10 px-8 py-3 text-lg">
+              <Button size="lg" variant="outline" className="border-white/30 text-black hover:bg-white/10 hover:text-white px-8 py-3 text-lg">
                 Explore Sandbox
               </Button>
             </Link>
@@ -308,118 +308,133 @@ const Index = () => {
         </div>
       </section>
 
-      {/* Pricing Section */}
-      <section id="pricing" className="py-20 bg-white">
-        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 text-center">
-          <h2 className="text-4xl font-bold text-gray-900 mb-4">
-            Simple, Transparent Pricing
-          </h2>
-          <p className="text-xl text-gray-600 max-w-2xl mx-auto mb-12">
-            Choose the plan that fits your development and testing needs
-          </p>
+      {/* How It Works Section */}
+      <section id="how-it-works" className="py-20 bg-gradient-to-br from-gray-50 to-blue-50">
+        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+          <div className="text-center mb-16">
+            <h2 className="text-4xl font-bold text-gray-900 mb-4">
+              How TransactLab Works
+            </h2>
+            <p className="text-xl text-gray-600 max-w-3xl mx-auto">
+              Get started with payment testing in just a few simple steps. No complex setup required.
+            </p>
+          </div>
           
-          <div className="grid md:grid-cols-3 gap-8 max-w-4xl mx-auto">
-            <Card className="p-8 hover:shadow-lg transition-shadow">
-              <CardContent className="p-0 text-center">
-                <h3 className="text-2xl font-bold text-gray-900 mb-4">Free</h3>
-                <div className="text-4xl font-bold text-blue-600 mb-2">$0</div>
-                <p className="text-gray-600 mb-6">Perfect for getting started</p>
-                <ul className="text-left space-y-2 mb-8">
-                  <li className="flex items-center">
-                    <svg className="w-5 h-5 text-green-500 mr-2" fill="currentColor" viewBox="0 0 20 20">
-                      <path fillRule="evenodd" d="M16.707 5.293a1 1 0 010 1.414l-8 8a1 1 0 01-1.414 0l-4-4a1 1 0 011.414-1.414L8 12.586l7.293-7.293a1 1 0 011.414 0z" clipRule="evenodd" />
-                    </svg>
-                    100 transactions/month
-                  </li>
-                  <li className="flex items-center">
-                    <svg className="w-5 h-5 text-green-500 mr-2" fill="currentColor" viewBox="0 0 20 20">
-                      <path fillRule="evenodd" d="M16.707 5.293a1 1 0 010 1.414l-8 8a1 1 0 01-1.414 0l-4-4a1 1 0 011.414-1.414L8 12.586l7.293-7.293a1 1 0 011.414 0z" clipRule="evenodd" />
-                    </svg>
-                    Basic analytics
-                  </li>
-                  <li className="flex items-center">
-                    <svg className="w-5 h-5 text-green-500 mr-2" fill="currentColor" viewBox="0 0 20 20">
-                      <path fillRule="evenodd" d="M16.707 5.293a1 1 0 010 1.414l-8 8a1 1 0 01-1.414 0l-4-4a1 1 0 011.414-1.414L8 12.586l7.293-7.293a1 1 0 011.414 0z" clipRule="evenodd" />
-                    </svg>
-                    Email support
-                  </li>
-                </ul>
-                <Link to="/auth/register">
-                  <Button className="w-full bg-blue-600 hover:bg-blue-700 text-white">
-                    Get Started Free
-                  </Button>
-                </Link>
-              </CardContent>
-            </Card>
-            
-            <Card className="p-8 hover:shadow-lg transition-shadow border-2 border-blue-500 relative">
-              <div className="absolute -top-4 left-1/2 transform -translate-x-1/2">
-                <span className="bg-blue-500 text-white px-3 py-1 rounded-full text-sm font-medium">Most Popular</span>
+          <div className="grid md:grid-cols-3 gap-8">
+            <div className="text-center">
+              <div className="w-16 h-16 bg-blue-100 rounded-full flex items-center justify-center mx-auto mb-6">
+                <span className="text-2xl font-bold text-blue-600">1</span>
               </div>
-              <CardContent className="p-0 text-center">
-                <h3 className="text-2xl font-bold text-gray-900 mb-4">Pro</h3>
-                <div className="text-4xl font-bold text-blue-600 mb-2">$29</div>
-                <p className="text-gray-600 mb-6">For growing businesses</p>
-                <ul className="text-left space-y-2 mb-8">
-                  <li className="flex items-center">
-                    <svg className="w-5 h-5 text-green-500 mr-2" fill="currentColor" viewBox="0 0 20 20">
-                      <path fillRule="evenodd" d="M16.707 5.293a1 1 0 010 1.414l-8 8a1 1 0 01-1.414 0l-4-4a1 1 0 011.414-1.414L8 12.586l7.293-7.293a1 1 0 011.414 0z" clipRule="evenodd" />
-                    </svg>
-                    10,000 transactions/month
-                  </li>
-                  <li className="flex items-center">
-                    <svg className="w-5 h-5 text-green-500 mr-2" fill="currentColor" viewBox="0 0 20 20">
-                      <path fillRule="evenodd" d="M16.707 5.293a1 1 0 010 1.414l-8 8a1 1 0 01-1.414 0l-4-4a1 1 0 011.414-1.414L8 12.586l7.293-7.293a1 1 0 011.414 0z" clipRule="evenodd" />
-                    </svg>
-                    Advanced analytics
-                  </li>
-                  <li className="flex items-center">
-                    <svg className="w-5 h-5 text-green-500 mr-2" fill="currentColor" viewBox="0 0 20 20">
-                      <path fillRule="evenodd" d="M16.707 5.293a1 1 0 010 1.414l-8 8a1 1 0 01-1.414 0l-4-4a1 1 0 011.414-1.414L8 12.586l7.293-7.293a1 1 0 011.414 0z" clipRule="evenodd" />
-                    </svg>
-                    Priority support
-                  </li>
-                </ul>
-                <Link to="/auth/register">
-                  <Button className="w-full bg-blue-600 hover:bg-blue-700 text-white">
-                    Start Pro Trial
-                  </Button>
-                </Link>
-              </CardContent>
-            </Card>
+              <h3 className="text-xl font-semibold text-gray-900 mb-4">Create Your Account</h3>
+              <p className="text-gray-600">
+                Sign up for free and get instant access to our sandbox environment. No credit card required.
+              </p>
+            </div>
             
-            <Card className="p-8 hover:shadow-lg transition-shadow">
-              <CardContent className="p-0 text-center">
-                <h3 className="text-2xl font-bold text-gray-900 mb-4">Enterprise</h3>
-                <div className="text-4xl font-bold text-blue-600 mb-2">Custom</div>
-                <p className="text-gray-600 mb-6">For large organizations</p>
-                <ul className="text-left space-y-2 mb-8">
-                  <li className="flex items-center">
-                    <svg className="w-5 h-5 text-green-500 mr-2" fill="currentColor" viewBox="0 0 20 20">
-                      <path fillRule="evenodd" d="M16.707 5.293a1 1 0 010 1.414l-8 8a1 1 0 01-1.414 0l-4-4a1 1 0 011.414-1.414L8 12.586l7.293-7.293a1 1 0 011.414 0z" clipRule="evenodd" />
-                    </svg>
-                    Unlimited transactions
-                  </li>
-                  <li className="flex items-center">
-                    <svg className="w-5 h-5 text-green-500 mr-2" fill="currentColor" viewBox="0 0 20 20">
-                      <path fillRule="evenodd" d="M16.707 5.293a1 1 0 010 1.414l-8 8a1 1 0 01-1.414 0l-4-4a1 1 0 011.414-1.414L8 12.586l7.293-7.293a1 1 0 011.414 0z" clipRule="evenodd" />
-                    </svg>
-                    Custom integrations
-                  </li>
-                  <li className="flex items-center">
-                    <svg className="w-5 h-5 text-green-500 mr-2" fill="currentColor" viewBox="0 0 20 20">
-                      <path fillRule="evenodd" d="M16.707 5.293a1 1 0 010 1.414l-8 8a1 1 0 01-1.414 0l-4-4a1 1 0 011.414-1.414L8 12.586l7.293-7.293a1 1 0 011.414 0z" clipRule="evenodd" />
-                    </svg>
-                    Dedicated support
-                  </li>
-                </ul>
-                <Link to="/auth/login">
-                  <Button className="w-full bg-gray-900 hover:bg-gray-800 text-white">
-                    Contact Sales
-                  </Button>
-                </Link>
-              </CardContent>
-            </Card>
+            <div className="text-center">
+              <div className="w-16 h-16 bg-purple-100 rounded-full flex items-center justify-center mx-auto mb-6">
+                <span className="text-2xl font-bold text-purple-600">2</span>
+              </div>
+              <h3 className="text-xl font-semibold text-gray-900 mb-4">Generate API Keys</h3>
+              <p className="text-gray-600">
+                Create test API keys and configure your webhook endpoints. All keys are safe for testing.
+              </p>
+            </div>
+            
+            <div className="text-center">
+              <div className="w-16 h-16 bg-green-100 rounded-full flex items-center justify-center mx-auto mb-6">
+                <span className="text-2xl font-bold text-green-600">3</span>
+              </div>
+              <h3 className="text-xl font-semibold text-gray-900 mb-4">Start Testing</h3>
+              <p className="text-gray-600">
+                Integrate our APIs into your application and test payment flows with realistic data.
+              </p>
+            </div>
+          </div>
+        </div>
+      </section>
+
+      {/* Test Data Section */}
+      <section className="py-20 bg-gradient-to-br from-blue-50 to-purple-50">
+        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+          <div className="text-center mb-16">
+            <h2 className="text-4xl font-bold text-gray-900 mb-4">
+              Test Data & Scenarios
+            </h2>
+            <p className="text-xl text-gray-600 max-w-3xl mx-auto">
+              Use our pre-configured test data to simulate real-world payment scenarios and edge cases.
+            </p>
+          </div>
+          
+          <div className="grid md:grid-cols-2 gap-8">
+            <div className="bg-white rounded-2xl p-8 shadow-lg">
+              <h3 className="text-2xl font-bold text-gray-900 mb-6">Test Credit Cards</h3>
+              <div className="space-y-4">
+                <div className="flex items-center justify-between p-4 bg-green-50 rounded-lg">
+                  <div>
+                    <p className="font-semibold text-green-800">Success</p>
+                    <p className="text-sm text-green-600">4242 4242 4242 4242</p>
+                  </div>
+                  <span className="text-green-600 font-bold">✓</span>
+                </div>
+                <div className="flex items-center justify-between p-4 bg-red-50 rounded-lg">
+                  <div>
+                    <p className="font-semibold text-red-800">Insufficient Funds</p>
+                    <p className="text-sm text-red-600">4000 0000 0000 9995</p>
+                  </div>
+                  <span className="text-red-600 font-bold">✗</span>
+                </div>
+                <div className="flex items-center justify-between p-4 bg-yellow-50 rounded-lg">
+                  <div>
+                    <p className="font-semibold text-yellow-800">3D Secure Required</p>
+                    <p className="text-sm text-yellow-600">4000 0027 6000 3184</p>
+                  </div>
+                  <span className="text-yellow-600 font-bold">⚠</span>
+                </div>
+              </div>
+            </div>
+            
+            <div className="bg-white rounded-2xl p-8 shadow-lg">
+              <h3 className="text-2xl font-bold text-gray-900 mb-6">Test Scenarios</h3>
+              <div className="space-y-4">
+                <div className="flex items-start">
+                  <div className="w-6 h-6 bg-blue-100 rounded-full flex items-center justify-center mr-3 mt-1">
+                    <span className="text-xs font-bold text-blue-600">1</span>
+                  </div>
+                  <div>
+                    <p className="font-semibold text-gray-900">Payment Success</p>
+                    <p className="text-sm text-gray-600">Test successful payment flows and webhook delivery</p>
+                  </div>
+                </div>
+                <div className="flex items-start">
+                  <div className="w-6 h-6 bg-blue-100 rounded-full flex items-center justify-center mr-3 mt-1">
+                    <span className="text-xs font-bold text-blue-600">2</span>
+                  </div>
+                  <div>
+                    <p className="font-semibold text-gray-900">Payment Failures</p>
+                    <p className="text-sm text-gray-600">Simulate declined cards and processing errors</p>
+                  </div>
+                </div>
+                <div className="flex items-start">
+                  <div className="w-6 h-6 bg-blue-100 rounded-full flex items-center justify-center mr-3 mt-1">
+                    <span className="text-xs font-bold text-blue-600">3</span>
+                  </div>
+                  <div>
+                    <p className="font-semibold text-gray-900">Refunds & Disputes</p>
+                    <p className="text-sm text-gray-600">Test refund processing and dispute handling</p>
+                  </div>
+                </div>
+                <div className="flex items-start">
+                  <div className="w-6 h-6 bg-blue-100 rounded-full flex items-center justify-center mr-3 mt-1">
+                    <span className="text-xs font-bold text-blue-600">4</span>
+                  </div>
+                  <div>
+                    <p className="font-semibold text-gray-900">Subscriptions</p>
+                    <p className="text-sm text-gray-600">Test recurring payments and subscription management</p>
+                  </div>
+                </div>
+              </div>
+            </div>
           </div>
         </div>
       </section>
@@ -439,7 +454,7 @@ const Index = () => {
               <ul className="space-y-2 text-sm text-gray-400">
                 <li><a href="#features" className="hover:text-white">Features</a></li>
                 <li><a href="#sandbox" className="hover:text-white">Sandbox</a></li>
-                <li><a href="#pricing" className="hover:text-white">Pricing</a></li>
+                <li><a href="#how-it-works" className="hover:text-white">How It Works</a></li>
               </ul>
             </div>
             <div>
@@ -461,7 +476,7 @@ const Index = () => {
           </div>
           <div className="border-t border-gray-800 mt-8 pt-8 text-center">
             <p className="text-gray-400 text-sm">
-              © 2024 TransactLab. All rights reserved. Built for developers, by developers.
+              © 2025 TransactLab. All rights reserved. Built for developers, by developers.
             </p>
           </div>
         </div>
