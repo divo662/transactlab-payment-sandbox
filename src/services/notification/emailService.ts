@@ -77,32 +77,32 @@ export class EmailService {
   private static readonly TEMPLATES: Record<string, EmailTemplate> = {
     'welcome': {
       name: 'welcome',
-      subject: 'Welcome to TransactLab!',
+      subject: 'Welcome to TransactLab Sandbox!',
       html: `
         <div style="font-family: Arial, sans-serif; max-width: 600px; margin: 0 auto; padding: 20px;">
           <div style="background: #0a164d; color: white; padding: 30px; text-align: center; border-radius: 10px 10px 0 0;">
-            <h1 style="margin: 0; font-size: 28px;">Welcome to TransactLab!</h1>
-            <p style="margin: 10px 0 0 0; opacity: 0.9;">Your payment processing journey starts here</p>
+            <h1 style="margin: 0; font-size: 28px;">Welcome to TransactLab Sandbox!</h1>
+            <p style="margin: 10px 0 0 0; opacity: 0.9;">Build and test payments with no real money</p>
           </div>
           <div style="background: white; padding: 30px; border-radius: 0 0 10px 10px; box-shadow: 0 4px 6px rgba(0,0,0,0.1);">
             <p style="font-size: 16px; color: #333; margin-bottom: 20px;">Hi <strong>{{name}}</strong>,</p>
             <p style="font-size: 16px; color: #555; line-height: 1.6; margin-bottom: 20px;">
-              Thank you for joining TransactLab! We're excited to have you on board and can't wait to help you streamline your payment processing.
+              Thanks for joining TransactLab Sandbox — a safe, production-like environment to simulate checkouts, webhooks, subscriptions and refunds without moving real funds.
             </p>
             <div style="background: #f8f9fa; padding: 20px; border-radius: 8px; margin: 20px 0;">
-              <h3 style="color: #333; margin-top: 0;">What's Next?</h3>
+              <h3 style="color: #333; margin-top: 0;">Next steps</h3>
               <ul style="color: #555; line-height: 1.6;">
-                <li>Complete your merchant profile setup</li>
-                <li>Configure your payment methods</li>
-                <li>Start processing your first transactions</li>
-                <li>Explore our analytics and reporting tools</li>
+                <li>Create API keys (publishable and secret) in Sandbox → API Keys</li>
+                <li>Create a Checkout Session and redirect to the hosted checkout</li>
+                <li>Use test card numbers to simulate success/failure and 3‑D Secure</li>
+                <li>Configure a webhook URL and inspect events from the Sandbox dashboard</li>
               </ul>
             </div>
             <p style="font-size: 16px; color: #555; line-height: 1.6; margin-bottom: 20px;">
-              If you have any questions or need assistance getting started, our support team is here to help!
+              If you have any questions or need help getting started, our team is here to help.
             </p>
             <div style="text-align: center; margin-top: 30px;">
-              <a href="{{dashboardUrl}}" style="background: #0a164d; color: white; padding: 15px 30px; text-decoration: none; border-radius: 25px; display: inline-block; font-weight: bold;">Go to Dashboard</a>
+              <a href="{{dashboardUrl}}" style="background: #0a164d; color: white; padding: 15px 30px; text-decoration: none; border-radius: 25px; display: inline-block; font-weight: bold;">Open Sandbox Dashboard</a>
             </div>
             <p style="font-size: 14px; color: #888; text-align: center; margin-top: 30px;">
               Best regards,<br>The TransactLab Team
@@ -111,21 +111,21 @@ export class EmailService {
         </div>
       `,
       text: `
-        Welcome to TransactLab!
+        Welcome to TransactLab Sandbox!
         
         Hi {{name}},
         
-        Thank you for joining TransactLab! We're excited to have you on board and can't wait to help you streamline your payment processing.
+        Thanks for joining TransactLab Sandbox — a safe, production-like environment to simulate checkouts, webhooks, subscriptions and refunds without moving real funds.
         
-        What's Next?
-        - Complete your merchant profile setup
-        - Configure your payment methods
-        - Start processing your first transactions
-        - Explore our analytics and reporting tools
+        Next steps:
+        - Create API keys in Sandbox → API Keys
+        - Create a Checkout Session and redirect to hosted checkout
+        - Use test card numbers to simulate outcomes
+        - Configure a webhook URL and inspect events
         
-        If you have any questions or need assistance getting started, our support team is here to help!
+        If you have any questions or need help getting started, our team is here to help.
         
-        Dashboard: {{dashboardUrl}}
+        Sandbox Dashboard: {{dashboardUrl}}
         
         Best regards,
         The TransactLab Team
@@ -505,7 +505,7 @@ export class EmailService {
     name: string,
     verificationToken: string
   ): Promise<EmailResult> {
-    const verificationUrl = `${process.env.BASE_URL || 'http://localhost:5000'}/verify-email?token=${verificationToken}`;
+    const verificationUrl = `${process.env.FRONTEND_URL || 'https://transactlab-payment-sandbox.vercel.app'}/auth/verify-email?token=${verificationToken}`;
     
     return await this.sendTemplatedEmail('email_verification', to, {
       name,
@@ -520,7 +520,7 @@ export class EmailService {
     to: string,
     name: string
   ): Promise<EmailResult> {
-    const dashboardUrl = `${process.env.BASE_URL || 'http://localhost:5000'}/dashboard`;
+    const dashboardUrl = `${process.env.FRONTEND_URL || 'https://transactlab-payment-sandbox.vercel.app'}/dashboard`;
     
     return await this.sendTemplatedEmail('welcome', to, {
       name,

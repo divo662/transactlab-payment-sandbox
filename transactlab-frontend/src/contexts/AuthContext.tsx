@@ -165,14 +165,20 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
       const response = await apiService.register(userData);
       
       if (response.success && response.data) {
-        const { user: newUser, tokens: authTokens } = response.data;
+        // Do NOT auto-login after registration.
+        // Ensure any possible tokens are cleared and send user to login with verification notice.
+        setUser(null);
+        setTokens(null);
+        localStorage.removeItem('accessToken');
+        localStorage.removeItem('refreshToken');
         
-        setUser(newUser);
-        setTokens(authTokens);
-        
-        // Store tokens
-        localStorage.setItem('accessToken', authTokens.accessToken);
-        localStorage.setItem('refreshToken', authTokens.refreshToken);
+        try {
+          if (typeof window !== 'undefined') {
+            window.location.href = '/auth/login?verification=required';
+          }
+        } catch (_) {
+          // no-op
+        }
       } else {
         throw new Error(response.message || 'Registration failed');
       }
