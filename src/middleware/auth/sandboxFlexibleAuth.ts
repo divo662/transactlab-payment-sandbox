@@ -43,7 +43,12 @@ export const sandboxFlexibleAuth = async (req: Request, res: Response, next: Nex
     const apiKeyHeader = (req.headers['x-api-key'] as string | undefined);
 
     if (!secretHeader && !apiKeyHeader) {
-      return res.status(401).json({ success: false, error: 'Unauthorized', message: 'Provide Authorization Bearer token or x-sandbox-secret' });
+      return res.status(401).json({ 
+        success: false, 
+        error: 'Unauthorized', 
+        message: 'Provide Authorization Bearer token or x-sandbox-secret',
+        cause: 'INVALID_TOKEN: missing'
+      });
     }
 
     // 1) Try sandbox secret from SandboxConfig
@@ -60,14 +65,14 @@ export const sandboxFlexibleAuth = async (req: Request, res: Response, next: Nex
         (req as any).user = { _id: userId };
         return next();
       }
-      return res.status(401).json({ success: false, error: 'Unauthorized', message: 'Invalid sandbox secret' });
+      return res.status(401).json({ success: false, error: 'Unauthorized', message: 'Invalid sandbox secret', cause: 'INVALID_TOKEN: invalid_secret' });
     }
 
     // 3) Try x-api-key header
     if (apiKeyHeader) {
       const key = await SandboxApiKey.findOne({ apiKey: apiKeyHeader, isActive: true });
       if (!key) {
-        return res.status(401).json({ success: false, error: 'Unauthorized', message: 'Invalid API key' });
+        return res.status(401).json({ success: false, error: 'Unauthorized', message: 'Invalid API key', cause: 'INVALID_TOKEN: invalid_api_key' });
       }
       const userId = (key as any).userId?.toString?.() || (key as any).userId;
       (req as any).user = { _id: userId };

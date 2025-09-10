@@ -4,6 +4,7 @@ import helmet from 'helmet';
 import compression from 'compression';
 import rateLimit from 'express-rate-limit';
 import { logger } from './utils/helpers/logger';
+import { SandboxSession } from './models';
 
 // Import middleware
 import { requestLogger } from './middleware/logging/requestLogger';
@@ -166,6 +167,61 @@ app.use('/api/v1/payment-hub', paymentHubRoutes);
 
 // Sandbox routes
 app.use('/api/v1/sandbox', sandboxRoutes);
+
+// Public checkout route (workspace-bound, no auth required for customers)
+app.get('/checkout/:sessionId', async (req, res) => {
+  try {
+    const { sessionId } = req.params;
+    
+    // Find session without user authentication (public access)
+    const session = await SandboxSession.findOne({ sessionId, status: { $ne: 'expired' } });
+    
+    if (!session) {
+      return res.status(404).json({
+        success: false,
+        error: 'Session not found',
+        message: 'Checkout session not found or expired'
+      });
+    }
+
+    // Check if session is expired
+    if (session.isExpired()) {
+      return res.status(410).json({
+        success: false,
+        error: 'Session expired',
+        message: 'This checkout session has expired'
+      });
+    }
+
+    // For now, return session data with checkout URL
+    // In a full implementation, this would render a checkout page
+    const checkoutUrl = `${req.protocol}://${req.get('host')}/checkout/${sessionId}`;
+    
+    res.json({
+      success: true,
+      data: {
+        sessionId: session.sessionId,
+        checkoutUrl,
+        amount: session.getFormattedAmount(),
+        currency: session.currency,
+        description: session.description,
+        customerEmail: session.customerEmail,
+        customerName: session.customerName,
+        successUrl: session.successUrl,
+        cancelUrl: session.cancelUrl,
+        status: session.status,
+        expiresAt: session.expiresAt
+      }
+    });
+  } catch (error) {
+    logger.error('Error accessing checkout session:', error);
+    res.status(500).json({
+      success: false,
+      error: 'Internal server error',
+      message: 'Failed to access checkout session'
+    });
+  }
+});
 
 // Analytics dashboard routes
 app.use('/api/analytics', analyticsDashboardRoutes);

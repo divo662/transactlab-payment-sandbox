@@ -21,6 +21,8 @@ router.delete('/api-keys/:apiKey', SandboxController.deactivateApiKey);
 router.post('/sessions', SandboxController.createSession);
 router.get('/sessions/:sessionId', SandboxController.getSession);
 router.get('/sessions', SandboxController.getRecentSessions);
+// Checkout URL resolution (workspace-safe)
+router.get('/checkout-url/:sessionId', SandboxController.getCheckoutUrl);
 // Quick create customer + session
 router.post('/customers/quick-session', SandboxController.createCustomerWithSession);
 

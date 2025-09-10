@@ -31,6 +31,76 @@ export class SandboxController {
   // Simple in-process scheduler flag
   private static schedulerStarted = false;
 
+  // Build absolute checkout URL from a relative path using env or request host
+  private static buildAbsoluteCheckoutUrl(req: Request, relativePath: string): string {
+    try {
+      const base = process.env.TL_CHECKOUT_BASE || `${req.protocol}://${req.get('host') || 'localhost:3000'}`;
+      const normalizedBase = base.replace(/\/$/, '');
+      const path = relativePath.startsWith('/') ? relativePath : `/${relativePath}`;
+      return `${normalizedBase}${path}`;
+    } catch {
+      return relativePath;
+    }
+  }
+
+  /**
+   * Resolve checkout URL by session ID (workspace-safe)
+   */
+  static async getCheckoutUrl(req: Request, res: Response) {
+    try {
+      const userId = req.user?._id;
+      if (!userId) {
+        return res.status(401).json({
+          success: false,
+          error: 'Unauthorized',
+          message: 'User not authenticated',
+          cause: 'INVALID_TOKEN: missing'
+        });
+      }
+
+      const { sessionId } = req.params as { sessionId: string };
+      
+      // First check if session exists at all
+      const sessionExists = await SandboxSession.findOne({ sessionId });
+      if (!sessionExists) {
+        return res.status(404).json({
+          success: false,
+          error: 'Not found',
+          message: 'Session not found'
+        });
+      }
+
+      // Check if session belongs to requesting user
+      const session = await (SandboxSession.findOne({ sessionId, userId: userId.toString() }) as Promise<ISandboxSession | null>);
+      if (!session) {
+        return res.status(403).json({
+          success: false,
+          error: 'Forbidden',
+          message: 'Session belongs to different workspace',
+          cause: 'WORKSPACE_MISMATCH',
+          createdWorkspaceId: sessionExists.userId,
+          checkoutWorkspaceId: userId.toString()
+        });
+      }
+
+      const url = SandboxController.buildAbsoluteCheckoutUrl(req, session.getCheckoutUrl());
+      return res.json({
+        success: true,
+        data: {
+          sessionId: session.sessionId,
+          checkoutUrl: url
+        }
+      });
+    } catch (error) {
+      logger.error('Error resolving checkout URL:', error);
+      return res.status(500).json({
+        success: false,
+        error: 'Internal server error',
+        message: 'Failed to resolve checkout URL'
+      });
+    }
+  }
+
   static ensureRenewalScheduler() {
     if (SandboxController.schedulerStarted) return;
     SandboxController.schedulerStarted = true;
@@ -658,11 +728,58 @@ export class SandboxController {
         return res.status(401).json({
           success: false,
           error: 'Unauthorized',
-          message: 'User not authenticated'
+          message: 'User not authenticated',
+          cause: 'INVALID_TOKEN: missing'
         });
       }
 
       const { amount, amount_minor, currency, description, customerEmail, customerName, metadata, success_url, cancel_url, successUrl, cancelUrl } = req.body;
+      
+      // Validation with field hints
+      const errors: string[] = [];
+      if (!amount && !amount_minor) {
+        errors.push('missing amount');
+      }
+      if (amount && typeof amount !== 'number') {
+        errors.push('invalid amount (must be number)');
+      }
+      if (amount_minor && typeof amount_minor !== 'number') {
+        errors.push('invalid amount_minor (must be number)');
+      }
+      if (currency && typeof currency !== 'string') {
+        errors.push('invalid currency (must be string)');
+      }
+      if (description && typeof description !== 'string') {
+        errors.push('invalid description (must be string)');
+      }
+      if (customerEmail && typeof customerEmail !== 'string') {
+        errors.push('invalid customerEmail (must be string)');
+      }
+      if (customerName && typeof customerName !== 'string') {
+        errors.push('invalid customerName (must be string)');
+      }
+      if (successUrl && typeof successUrl !== 'string') {
+        errors.push('invalid successUrl (must be string)');
+      }
+      if (cancelUrl && typeof cancelUrl !== 'string') {
+        errors.push('invalid cancelUrl (must be string)');
+      }
+      if (success_url && typeof success_url !== 'string') {
+        errors.push('invalid success_url (must be string)');
+      }
+      if (cancel_url && typeof cancel_url !== 'string') {
+        errors.push('invalid cancel_url (must be string)');
+      }
+      
+      if (errors.length > 0) {
+        return res.status(400).json({
+          success: false,
+          error: 'Bad Request',
+          message: 'Validation failed',
+          fieldHints: errors
+        });
+      }
+      
       // Accept standard major units by default; allow explicit minor units via amount_minor
       const computedAmountMinor = typeof amount_minor === 'number' && amount_minor > 0
         ? Math.round(amount_minor)
@@ -699,15 +816,16 @@ export class SandboxController {
         );
       }
 
+      const relative = session.getCheckoutUrl();
+      const checkoutUrl = SandboxController.buildAbsoluteCheckoutUrl(req, relative);
+
       res.status(201).json({
         success: true,
         data: {
           sessionId: session.sessionId,
-          checkoutUrl: session.getCheckoutUrl(),
-          amount: session.getFormattedAmount(),
-          successUrl: session.successUrl,
-          cancelUrl: session.cancelUrl,
-          expiresAt: session.expiresAt
+          checkoutUrl,
+          successUrl: session.successUrl || success_url || successUrl || null,
+          cancelUrl: session.cancelUrl || cancel_url || cancelUrl || null
         }
       });
     } catch (error) {
@@ -730,25 +848,45 @@ export class SandboxController {
         return res.status(401).json({
           success: false,
           error: 'Unauthorized',
-          message: 'User not authenticated'
+          message: 'User not authenticated',
+          cause: 'INVALID_TOKEN: missing'
         });
       }
 
       const { sessionId } = req.params;
 
-      const session = (await SandboxSession.findOne({ sessionId, userId: userId.toString() }) as unknown) as ISandboxSession | null;
-       
-      if (!session) {
-         return res.status(404).json({
+      // First check if session exists at all
+      const sessionExists = await SandboxSession.findOne({ sessionId });
+      if (!sessionExists) {
+        return res.status(404).json({
           success: false,
           error: 'Not found',
           message: 'Session not found'
         });
       }
 
+      // Check if session belongs to requesting user
+      const session = (await SandboxSession.findOne({ sessionId, userId: userId.toString() }) as unknown) as ISandboxSession | null;
+      if (!session) {
+        return res.status(403).json({
+          success: false,
+          error: 'Forbidden',
+          message: 'Session belongs to different workspace',
+          cause: 'WORKSPACE_MISMATCH',
+          createdWorkspaceId: sessionExists.userId,
+          checkoutWorkspaceId: userId.toString()
+        });
+      }
+
+      const checkoutUrl = SandboxController.buildAbsoluteCheckoutUrl(req, session.getCheckoutUrl());
       res.json({
         success: true,
-        data: session
+        data: {
+          sessionId: session.sessionId,
+          checkoutUrl,
+          successUrl: session.successUrl || null,
+          cancelUrl: session.cancelUrl || null
+        }
       });
     } catch (error) {
       logger.error('Error getting session:', error);
@@ -806,20 +944,52 @@ export class SandboxController {
         return res.status(401).json({
           success: false,
           error: 'Unauthorized',
-          message: 'User not authenticated'
+          message: 'User not authenticated',
+          cause: 'INVALID_TOKEN: missing'
         });
       }
 
       const { sessionId } = req.params;
       const { paymentMethod, cardDetails } = req.body;
 
-      const session = (await SandboxSession.findOne({ sessionId, userId: userId.toString() }) as unknown) as ISandboxSession | null;
+      // Validation with field hints
+      const errors: string[] = [];
+      if (paymentMethod && typeof paymentMethod !== 'string') {
+        errors.push('invalid paymentMethod (must be string)');
+      }
+      if (cardDetails && typeof cardDetails !== 'object') {
+        errors.push('invalid cardDetails (must be object)');
+      }
+      
+      if (errors.length > 0) {
+        return res.status(400).json({
+          success: false,
+          error: 'Bad Request',
+          message: 'Validation failed',
+          fieldHints: errors
+        });
+      }
 
-      if (!session) {
+      // First check if session exists at all
+      const sessionExists = await SandboxSession.findOne({ sessionId });
+      if (!sessionExists) {
         return res.status(404).json({
           success: false,
           error: 'Not found',
           message: 'Session not found'
+        });
+      }
+
+      // Check if session belongs to requesting user
+      const session = (await SandboxSession.findOne({ sessionId, userId: userId.toString() }) as unknown) as ISandboxSession | null;
+      if (!session) {
+        return res.status(403).json({
+          success: false,
+          error: 'Forbidden',
+          message: 'Session belongs to different workspace',
+          cause: 'WORKSPACE_MISMATCH',
+          createdWorkspaceId: sessionExists.userId,
+          checkoutWorkspaceId: userId.toString()
         });
       }
 
