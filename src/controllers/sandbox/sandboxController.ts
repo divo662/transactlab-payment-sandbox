@@ -3102,4 +3102,85 @@ export class SandboxController {
       res.status(500).json({ success: false, message: 'Failed to fetch pending invites' });
     }
   }
+
+  // Internal proxy methods for workspace-bound hosted checkout
+  static async getSessionForCheckout(req: Request, res: Response) {
+    try {
+      const { id: sessionId } = req.params;
+      
+      // Use server-side sandbox secret for internal requests
+      const sandboxSecret = process.env.SANDBOX_SECRET;
+      if (!sandboxSecret) {
+        return res.status(500).json({ 
+          success: false, 
+          message: 'Sandbox secret not configured' 
+        });
+      }
+
+      // Fetch session using server-side authentication
+      const response = await fetch(`${process.env.TL_BASE}/api/v1/sandbox/sessions/${sessionId}`, {
+        method: 'GET',
+        headers: {
+          'x-sandbox-secret': sandboxSecret,
+          'Content-Type': 'application/json'
+        }
+      });
+
+      const data = await response.json();
+      
+      if (!response.ok) {
+        return res.status(response.status).json(data);
+      }
+
+      // Return session data to frontend
+      res.json(data);
+    } catch (error) {
+      console.error('Error fetching session for checkout:', error);
+      res.status(500).json({ 
+        success: false, 
+        message: 'Failed to fetch session for checkout' 
+      });
+    }
+  }
+
+  static async processPaymentForCheckout(req: Request, res: Response) {
+    try {
+      const { id: sessionId } = req.params;
+      const paymentData = req.body;
+      
+      // Use server-side sandbox secret for internal requests
+      const sandboxSecret = process.env.SANDBOX_SECRET;
+      if (!sandboxSecret) {
+        return res.status(500).json({ 
+          success: false, 
+          message: 'Sandbox secret not configured' 
+        });
+      }
+
+      // Process payment using server-side authentication
+      const response = await fetch(`${process.env.TL_BASE}/api/v1/sandbox/sessions/${sessionId}/process-payment`, {
+        method: 'POST',
+        headers: {
+          'x-sandbox-secret': sandboxSecret,
+          'Content-Type': 'application/json'
+        },
+        body: JSON.stringify(paymentData)
+      });
+
+      const data = await response.json();
+      
+      if (!response.ok) {
+        return res.status(response.status).json(data);
+      }
+
+      // Return payment result to frontend
+      res.json(data);
+    } catch (error) {
+      console.error('Error processing payment for checkout:', error);
+      res.status(500).json({ 
+        success: false, 
+        message: 'Failed to process payment for checkout' 
+      });
+    }
+  }
 }

@@ -25,9 +25,7 @@ const CONFIG = {
   SUCCESS_URL: process.env.SUCCESS_URL || 'http://localhost:3000/?payment=success',
   CANCEL_URL: process.env.CANCEL_URL || 'http://localhost:3000/?payment=cancelled',
   TL_WEBHOOK_SECRET: process.env.TL_WEBHOOK_SECRET || '',
-  FRONTEND_URL: process.env.FRONTEND_URL || 'http://localhost:3000',
-  // Workspace checkout BASE (no trailing /checkout). We will append /checkout/{sessionId}
-  TL_CHECKOUT_BASE: process.env.TL_CHECKOUT_BASE || 'https://transactlab-payment-sandbox.vercel.app',
+  FRONTEND_URL: process.env.FRONTEND_URL || 'https://transactlab-payment-sandbox.vercel.app',
 };
 
 // In‑memory stores with better error handling
@@ -61,36 +59,20 @@ function addMonths(date, months) {
   return d;
 }
 
-// Enhanced URL normalization with better error handling
+// Enhanced URL normalization using internal proxy
 function normalizeCheckoutUrl(apiResponse) {
   const data = apiResponse?.data || apiResponse;
-  let checkoutUrl = data?.checkoutUrl || data?.url || null;
   const sessionId = data?.sessionId || data?.id || data?.session_id;
 
-  // CRITICAL: Always use YOUR workspace checkout base, never trust external domains
-  if (sessionId) {
-    // Build the checkout URL using YOUR workspace's checkout base (strip any trailing /checkout)
-    let base = CONFIG.TL_CHECKOUT_BASE.replace(/\/$/, '');
-    base = base.replace(/\/checkout$/, '');
-    checkoutUrl = `${base}/checkout/${sessionId}`;
-  } else if (checkoutUrl) {
-    // If we have a checkout URL but no sessionId, extract sessionId from URL
-    const sessionMatch = checkoutUrl.match(/\/checkout\/([^\/\?]+)/);
-    if (sessionMatch) {
-      const extractedSessionId = sessionMatch[1];
-      let base = CONFIG.TL_CHECKOUT_BASE.replace(/\/$/, '');
-      base = base.replace(/\/checkout$/, '');
-      // Rebuild with YOUR workspace checkout base
-      checkoutUrl = `${base}/checkout/${extractedSessionId}`;
-    }
+  if (!sessionId) {
+    throw new Error('No sessionId found in API response');
   }
 
-  if (!checkoutUrl) {
-    throw new Error('No checkout URL could be generated. API returned neither checkoutUrl nor sessionId.');
-  }
+  // Use our internal proxy route for workspace-bound checkout
+  const checkoutUrl = `${CONFIG.FRONTEND_URL}/checkout/${sessionId}`;
 
   return {
-    sessionId: sessionId || checkoutUrl.match(/\/checkout\/([^\/\?]+)/)?.[1],
+    sessionId: sessionId,
     checkoutUrl,
     originalResponse: data
   };

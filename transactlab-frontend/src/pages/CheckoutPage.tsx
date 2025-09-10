@@ -44,7 +44,7 @@ interface PaymentFormData {
   saveCard: boolean;
 }
 
-const API_BASE = 'https://transactlab-backend.onrender.com/api/v1/sandbox';
+const API_BASE = 'https://transactlab-backend.onrender.com/api/v1';
 
 const CheckoutPage: React.FC = () => {
   const { sessionId } = useParams<{ sessionId: string }>();
@@ -81,12 +81,7 @@ const CheckoutPage: React.FC = () => {
   useEffect(() => {
     const fetchSession = async () => {
       try {
-        const token = localStorage.getItem('accessToken');
-        const res = await fetch(`${API_BASE}/sessions/${sessionId}`, {
-          headers: {
-            'Authorization': `Bearer ${token}`
-          }
-        });
+        const res = await fetch(`${API_BASE}/internal/checkout/sessions/${sessionId}`);
         const json = await res.json();
         if (!res.ok || !json?.success) {
           throw new Error(json?.message || 'Failed to load checkout session');
@@ -236,12 +231,10 @@ const CheckoutPage: React.FC = () => {
     setProcessing(true);
     setError(null);
     try {
-      const token = localStorage.getItem('accessToken');
       const [mm, yy] = formData.expiryDate.split('/');
-      const res = await fetch(`${API_BASE}/sessions/${session.sessionId}/process-payment`, {
+      const res = await fetch(`${API_BASE}/internal/checkout/sessions/${session.sessionId}/process`, {
         method: 'POST',
         headers: {
-          'Authorization': `Bearer ${token}`,
           'Content-Type': 'application/json'
         },
         body: JSON.stringify({

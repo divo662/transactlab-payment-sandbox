@@ -32,5 +32,6 @@ export { default as webhookConfigRoutes } from './merchant/webhookConfigRoutes';
 export { default as paymentHubRoutes } from './payment/paymentHubRoutes';
 export { default as reportRoutes } from './analytics/reportRoutes';
 export { default as sandboxRoutes } from './sandbox/sandboxRoutes';
+export { default as internalRoutes } from './sandbox/internalRoutes';
 export { default as adminRoutes } from './admin/adminRoutes';
 export { default as systemRoutes } from './admin/systemRoutes'; 

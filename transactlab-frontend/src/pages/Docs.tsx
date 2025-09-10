@@ -86,7 +86,7 @@ app.listen(3001);
 
         <div className="grid md:grid-cols-2 gap-4">
           <div className="border rounded-lg p-4 bg-white">
-            <p className="font-medium text-[#0a164d] mb-2">Client redirect</p>
+            <p className="font-medium text-[#0a164d] mb-2">Client redirect (workspace-bound checkout)</p>
             <pre className="whitespace-pre-wrap text-xs bg-gray-50 p-3 rounded border">
 {`const res = await fetch('https://transactlab-payment-sandbox.vercel.app/api/create-session', {
   method: 'POST',
@@ -99,10 +99,10 @@ app.listen(3001);
     success_url: 'https://transactlab-payment-sandbox.vercel.app/?payment=success',
     cancel_url: 'https://transactlab-payment-sandbox.vercel.app/?payment=cancelled'
   })
-  // Or use amount_minor: 50000
 });
 const json = await res.json();
 if (!res.ok || !json?.success) throw new Error(json?.message || 'Failed');
+// Uses workspace-bound hosted checkout (no auth required)
 window.location.href = 'https://transactlab-payment-sandbox.vercel.app/checkout/' + json.data.sessionId;
 `}
             </pre>
@@ -129,10 +129,54 @@ window.location.href = 'https://transactlab-payment-sandbox.vercel.app/checkout/
         <div className="border rounded-lg p-4 bg-white">
           <p className="font-medium text-[#0a164d] mb-2">Troubleshooting</p>
           <ul className="list-disc list-inside text-xs text-gray-700 space-y-1">
-            <li>404 on /api/create-session: your app doesn’t expose that route — add the proxy server code above or call TL directly from your backend.</li>
-            <li>401 Unauthorized: provide either Authorization: Bearer &lt;JWT&gt; or x-sandbox-secret: &lt;secret&gt;.</li>
+            <li>404 on /api/create-session: your app doesn't expose that route — add the proxy server code above or call TL directly from your backend.</li>
+            <li>401 Unauthorized: use workspace-bound hosted checkout instead of direct API calls from browser.</li>
+            <li>Workspace mismatch: redirect to <code>/checkout/:sessionId</code> which uses internal proxy routes.</li>
             <li>Enum validation on webhooks: use only the supported events listed above.</li>
           </ul>
+        </div>
+      </section>
+
+      <Separator />
+
+      {/* Workspace-Bound Hosted Checkout */}
+      <section className="space-y-4">
+        <h2 className="text-xl font-semibold">Workspace-Bound Hosted Checkout</h2>
+        <p className="text-gray-700 text-sm">
+          TransactLab provides a workspace-bound hosted checkout that eliminates authentication issues. 
+          Your customers can complete payments without needing to be logged into TransactLab.
+        </p>
+
+        <div className="grid md:grid-cols-2 gap-4">
+          <div className="border rounded-lg p-4 bg-white">
+            <p className="font-medium text-[#0a164d] mb-2">How it works</p>
+            <ol className="text-xs text-gray-700 space-y-1 list-decimal list-inside">
+              <li>Your server creates a session using your sandbox secret</li>
+              <li>Redirect customer to <code>/checkout/:sessionId</code></li>
+              <li>Checkout page uses internal proxy routes (no auth needed)</li>
+              <li>Internal routes use your server-side sandbox secret</li>
+              <li>Customer completes payment seamlessly</li>
+            </ol>
+          </div>
+
+          <div className="border rounded-lg p-4 bg-white">
+            <p className="font-medium text-[#0a164d] mb-2">Benefits</p>
+            <ul className="text-xs text-gray-700 space-y-1 list-disc list-inside">
+              <li>No 401 authentication errors</li>
+              <li>No workspace mismatch issues</li>
+              <li>Customers don't need TransactLab accounts</li>
+              <li>Consistent with your workspace</li>
+              <li>Works with any external application</li>
+            </ul>
+          </div>
+        </div>
+
+        <div className="border rounded-lg p-4 bg-green-50 border-green-200">
+          <p className="font-medium text-green-800 mb-2">✅ Recommended Approach</p>
+          <p className="text-xs text-green-700">
+            Use the workspace-bound hosted checkout for all external integrations. 
+            It's more reliable than trying to manage authentication across different domains.
+          </p>
         </div>
       </section>
 
@@ -214,7 +258,7 @@ window.location.href =
       {/* End-to-End Integration (Copy/Paste) */}
       <section className="space-y-4">
         <h2 className="text-xl font-semibold">End‑to‑End Integration (Copy/Paste)</h2>
-        <p className="text-gray-700 text-sm">Use this small proxy on your app’s backend to call TransactLab securely, then redirect your users to the TransactLab checkout.</p>
+        <p className="text-gray-700 text-sm">Use this small proxy on your app's backend to call TransactLab securely, then redirect your users to the workspace-bound hosted checkout.</p>
 
         <div className="grid md:grid-cols-2 gap-4">
           <div className="border rounded-lg p-4 bg-white">
@@ -256,7 +300,7 @@ app.listen(3001, () => console.log('Proxy listening on :3001'));
             </pre>
           </div>
           <div className="border rounded-lg p-4 bg-white">
-            <p className="font-medium text-[#0a164d] mb-2">Client usage</p>
+            <p className="font-medium text-[#0a164d] mb-2">Client usage (workspace-bound checkout)</p>
             <pre className="whitespace-pre-wrap text-xs bg-gray-50 p-3 rounded border">
 {`const res = await fetch('https://transactlab-payment-sandbox.vercel.app/api/create-session', {
   method: 'POST',
@@ -273,6 +317,7 @@ app.listen(3001, () => console.log('Proxy listening on :3001'));
 });
 const json = await res.json();
 if (!res.ok || !json?.success) throw new Error(json?.message || 'Failed');
+// Redirects to workspace-bound hosted checkout (no auth required)
 window.location.href = 'https://transactlab-payment-sandbox.vercel.app/checkout/' + json.data.sessionId;
 `}
             </pre>
@@ -307,6 +352,13 @@ window.location.href = 'https://transactlab-payment-sandbox.vercel.app/checkout/
           <li>POST /products · GET /products · POST /plans · GET /plans</li>
           <li>POST /subscriptions · GET /subscriptions</li>
         </ul>
+        <div className="mt-3 p-3 bg-blue-50 border border-blue-200 rounded-lg">
+          <p className="text-sm font-medium text-blue-800 mb-1">Internal Proxy Routes (for workspace-bound checkout)</p>
+          <ul className="text-xs text-blue-700 list-disc list-inside space-y-1">
+            <li>GET /internal/checkout/sessions/:id - Fetch session data (no auth required)</li>
+            <li>POST /internal/checkout/sessions/:id/process - Process payment (no auth required)</li>
+          </ul>
+        </div>
       </section>
 
       <Separator />

@@ -25,6 +25,7 @@ import apiKeyRoutes from './routes/merchant/apiKeyRoutes';
 import webhookConfigRoutes from './routes/merchant/webhookConfigRoutes';
 import paymentHubRoutes from './routes/payment/paymentHubRoutes';
 import sandboxRoutes from './routes/sandbox/sandboxRoutes';
+import internalRoutes from './routes/sandbox/internalRoutes';
 import analyticsDashboardRoutes from './routes/analytics/analyticsRoutes';
 import reportRoutes from './routes/analytics/reportRoutes';
 import adminRoutes from './routes/admin/adminRoutes';
@@ -167,6 +168,7 @@ app.use('/api/v1/payment-hub', paymentHubRoutes);
 
 // Sandbox routes
 app.use('/api/v1/sandbox', sandboxRoutes);
+app.use('/api/v1', internalRoutes);
 
 // Public checkout route (workspace-bound, no auth required for customers)
 app.get('/checkout/:sessionId', async (req, res) => {
