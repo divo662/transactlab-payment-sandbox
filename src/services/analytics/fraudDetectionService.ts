@@ -1,4 +1,5 @@
 import { Types } from 'mongoose';
+import { ENV } from '../../config/environment';
 import Transaction from '../../models/Transaction';
 import { logger } from '../../utils/helpers/logger';
 
@@ -111,8 +112,8 @@ export class FraudDetectionService {
   static async analyzeTransaction(transaction: any): Promise<FraudDetectionResult> {
     try {
       const riskScore = await this.calculateRiskScore(transaction);
-      const isFraudulent = riskScore.score >= 70;
-      const flagged = riskScore.score >= 50;
+      const isFraudulent = riskScore.score >= ENV.FRAUD_BLOCK_THRESHOLD;
+      const flagged = riskScore.score >= ENV.FRAUD_REVIEW_THRESHOLD;
       
       let action: 'allow' | 'block' | 'review' | 'flag' = 'allow';
       let reason: string | undefined = undefined;
@@ -123,7 +124,7 @@ export class FraudDetectionService {
       } else if (flagged) {
         action = 'review';
         reason = 'Suspicious activity detected';
-      } else if (riskScore.score >= 30) {
+      } else if (riskScore.score >= ENV.FRAUD_FLAG_THRESHOLD) {
         action = 'flag';
         reason = 'Moderate risk detected';
       }
@@ -229,6 +230,25 @@ export class FraudDetectionService {
     timeWindow: number = 3600000 // 1 hour
   ): Promise<boolean> {
     try {
+      // Use Mongo TTL doc to simulate Redis-like counter per window in sandbox
+      const key = `vel:${merchantId.toString()}:${customerEmail}`;
+      const { default: SandboxVelocity } = await import('../../models/SandboxVelocity');
+      const now = Date.now();
+      const existing = await SandboxVelocity.findOne({ key });
+      if (!existing || (existing.expiresAt && existing.expiresAt.getTime() <= now)) {
+        const expiresAt = new Date(now + timeWindow);
+        await SandboxVelocity.findOneAndUpdate(
+          { key },
+          { key, count: 1, expiresAt },
+          { upsert: true, new: true, setDefaultsOnInsert: true }
+        );
+        return false;
+      } else {
+        existing.count += 1;
+        await existing.save();
+        return existing.count > 5;
+      }
+
       const cutoffTime = new Date(Date.now() - timeWindow);
       
       const recentTransactions = await Transaction.find({
@@ -237,7 +257,7 @@ export class FraudDetectionService {
         createdAt: { $gte: cutoffTime }
       }).countDocuments();
       
-      return recentTransactions > 5; // More than 5 transactions in 1 hour
+      return recentTransactions > 5; // fallback check
     } catch (error) {
       logger.error('Error checking velocity fraud:', { error: error instanceof Error ? error.message : 'Unknown error' });
       return false;

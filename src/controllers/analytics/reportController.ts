@@ -1,5 +1,7 @@
 import { Request, Response } from 'express';
 import { Transaction, Refund, Subscription, Merchant } from '../../models';
+import SandboxFraudReview from '../../models/SandboxFraudReview';
+import SandboxFraudDecision from '../../models/SandboxFraudDecision';
 import { logger } from '../../utils/helpers/logger';
 
 // Request interfaces
@@ -513,3 +515,112 @@ export class ReportController {
 }
 
 export default ReportController; 
+
+// --- Minimal Fraud Review Handlers ---
+export const listFraudReviews = async (req: Request, res: Response): Promise<void> => {
+  try {
+    const userId = (req.user as any)?.id || (req.query.userId as string);
+    const status = (req.query.status as string) || 'pending';
+    if (!userId) {
+      res.status(400).json({ success: false, error: 'Missing userId' });
+      return;
+    }
+    const reviews = await SandboxFraudReview.find({ userId, status }).sort({ createdAt: -1 });
+    res.status(200).json({ success: true, data: { reviews } });
+  } catch (error) {
+    logger.error('listFraudReviews error:', error);
+    res.status(500).json({ success: false, error: 'Failed to list reviews' });
+  }
+};
+
+export const approveFraudReview = async (req: Request, res: Response): Promise<void> => {
+  try {
+    const id = req.params.id;
+    const reviewerId = (req.user as any)?.id || 'system';
+    const review = await SandboxFraudReview.findByIdAndUpdate(
+      id,
+      { status: 'approved', reviewerId },
+      { new: true }
+    );
+    if (!review) {
+      res.status(404).json({ success: false, error: 'Review not found' });
+      return;
+    }
+    res.status(200).json({ success: true, data: { review } });
+  } catch (error) {
+    logger.error('approveFraudReview error:', error);
+    res.status(500).json({ success: false, error: 'Failed to approve review' });
+  }
+};
+
+export const denyFraudReview = async (req: Request, res: Response): Promise<void> => {
+  try {
+    const id = req.params.id;
+    const reviewerId = (req.user as any)?.id || 'system';
+    const review = await SandboxFraudReview.findByIdAndUpdate(
+      id,
+      { status: 'denied', reviewerId },
+      { new: true }
+    );
+    if (!review) {
+      res.status(404).json({ success: false, error: 'Review not found' });
+      return;
+    }
+    res.status(200).json({ success: true, data: { review } });
+  } catch (error) {
+    logger.error('denyFraudReview error:', error);
+    res.status(500).json({ success: false, error: 'Failed to deny review' });
+  }
+};
+
+// --- Fraud risk summaries (sandbox/read-only) ---
+export const getFraudSummary = async (req: Request, res: Response): Promise<void> => {
+  try {
+    const userId = (req.user as any)?.id || (req.query.userId as string);
+    if (!userId) {
+      res.status(400).json({ success: false, error: 'Missing userId' });
+      return;
+    }
+    const since = req.query.since ? new Date(String(req.query.since)) : new Date(Date.now() - 7 * 24 * 60 * 60 * 1000);
+    const match = { userId, createdAt: { $gte: since } } as any;
+    const totals = await SandboxFraudDecision.aggregate([
+      { $match: match },
+      { $group: {
+        _id: null,
+        count: { $sum: 1 },
+        avgScore: { $avg: '$riskScore' },
+        highCount: { $sum: { $cond: [{ $gte: ['$riskScore', 60] }, 1, 0] } },
+        blocked: { $sum: { $cond: [{ $eq: ['$action', 'block'] }, 1, 0] } },
+        reviewed: { $sum: { $cond: [{ $eq: ['$action', 'review'] }, 1, 0] } },
+        flagged: { $sum: { $cond: [{ $eq: ['$action', 'flag'] }, 1, 0] } }
+      } }
+    ]);
+    const topFactors = await SandboxFraudDecision.aggregate([
+      { $match: match },
+      { $unwind: '$factors' },
+      { $group: { _id: '$factors', count: { $sum: 1 } } },
+      { $sort: { count: -1 } },
+      { $limit: 10 }
+    ]);
+    res.status(200).json({ success: true, data: { totals: totals[0] || null, topFactors } });
+  } catch (error) {
+    logger.error('getFraudSummary error:', error);
+    res.status(500).json({ success: false, error: 'Failed to get fraud summary' });
+  }
+};
+
+export const getRecentFraudDecisions = async (req: Request, res: Response): Promise<void> => {
+  try {
+    const userId = (req.user as any)?.id || (req.query.userId as string);
+    if (!userId) {
+      res.status(400).json({ success: false, error: 'Missing userId' });
+      return;
+    }
+    const limit = Math.min(parseInt(String(req.query.limit || '50')), 200);
+    const decisions = await SandboxFraudDecision.find({ userId }).sort({ createdAt: -1 }).limit(limit);
+    res.status(200).json({ success: true, data: { decisions } });
+  } catch (error) {
+    logger.error('getRecentFraudDecisions error:', error);
+    res.status(500).json({ success: false, error: 'Failed to get fraud decisions' });
+  }
+};

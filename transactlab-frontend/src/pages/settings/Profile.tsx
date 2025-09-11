@@ -499,11 +499,12 @@ const Profile = () => {
       <h1 className="text-2xl font-semibold">Settings</h1>
       
       <Tabs defaultValue="profile" className="w-full">
-        <TabsList className="grid grid-cols-4 max-w-2xl">
+        <TabsList className="grid grid-cols-5 max-w-3xl">
           <TabsTrigger value="profile">Profile</TabsTrigger>
           <TabsTrigger value="payouts">Payouts</TabsTrigger>
           <TabsTrigger value="team">Team</TabsTrigger>
           <TabsTrigger value="workspaces">Workspaces</TabsTrigger>
+          <TabsTrigger value="fraud">Fraud</TabsTrigger>
         </TabsList>
 
         <TabsContent value="profile" className="space-y-6">
@@ -767,9 +768,235 @@ const Profile = () => {
           </Card>
         </TabsContent>
 
+        {/* Fraud */}
+        <TabsContent value="fraud">
+          <Card>
+            <CardHeader><CardTitle>Fraud Controls (Sandbox)</CardTitle></CardHeader>
+            <CardContent className="grid gap-8">
+              <FraudSettingsSection />
+              <FraudSummarySection />
+              <FraudReviewSection />
+            </CardContent>
+          </Card>
+        </TabsContent>
+
       </Tabs>
     </div>
   );
 };
 
 export default Profile;
+
+// --- Fraud Settings Section ---
+const FraudSettingsSection: React.FC = () => {
+  const API_BASE = 'https://transactlab-backend.onrender.com/api/v1/sandbox';
+  const [loading, setLoading] = React.useState(false);
+  const [enabled, setEnabled] = React.useState(true);
+  const [block, setBlock] = React.useState(70);
+  const [review, setReview] = React.useState(50);
+  const [flag, setFlag] = React.useState(30);
+
+  const headers = () => ({ 'Authorization': `Bearer ${localStorage.getItem('accessToken')}`, 'Content-Type': 'application/json' });
+
+  const load = async () => {
+    try {
+      setLoading(true);
+      const res = await fetch(`${API_BASE}/fraud/settings`, { headers: headers() });
+      const json = await res.json();
+      if (json?.success && json.data?.fraud) {
+        setEnabled(!!json.data.fraud.enabled);
+        setBlock(Number(json.data.fraud.blockThreshold ?? 70));
+        setReview(Number(json.data.fraud.reviewThreshold ?? 50));
+        setFlag(Number(json.data.fraud.flagThreshold ?? 30));
+      }
+    } finally { setLoading(false); }
+  };
+
+  React.useEffect(() => { void load(); }, []);
+
+  const save = async () => {
+    try {
+      setLoading(true);
+      const res = await fetch(`${API_BASE}/fraud/settings`, {
+        method: 'PUT',
+        headers: headers(),
+        body: JSON.stringify({ enabled, blockThreshold: block, reviewThreshold: review, flagThreshold: flag })
+      });
+      const json = await res.json();
+      if (!json?.success) throw new Error(json?.message || 'Failed to save');
+      toast({ title: 'Saved', description: 'Fraud settings updated' });
+    } catch (e: any) {
+      toast({ title: 'Error', description: e?.message || 'Save failed', variant: 'destructive' });
+    } finally { setLoading(false); }
+  };
+
+  return (
+    <div className="grid gap-4">
+      <div className="font-medium">Settings</div>
+      <div className="grid md:grid-cols-2 gap-4 max-w-3xl">
+        <div className="flex items-center justify-between border rounded-lg p-4">
+          <div>
+            <div className="font-medium">Enable fraud checks</div>
+            <div className="text-xs text-muted-foreground">Applies to sandbox payment simulations</div>
+          </div>
+          <Switch checked={enabled} onCheckedChange={setEnabled} />
+        </div>
+        <div className="border rounded-lg p-4">
+          <div className="font-medium mb-3">Thresholds</div>
+          <div className="grid md:grid-cols-3 gap-3">
+            <div className="grid gap-1">
+              <Label>Block ≥</Label>
+              <Input type="number" value={block} onChange={(e)=>setBlock(Number(e.target.value))} />
+            </div>
+            <div className="grid gap-1">
+              <Label>Review ≥</Label>
+              <Input type="number" value={review} onChange={(e)=>setReview(Number(e.target.value))} />
+            </div>
+            <div className="grid gap-1">
+              <Label>Flag ≥</Label>
+              <Input type="number" value={flag} onChange={(e)=>setFlag(Number(e.target.value))} />
+            </div>
+          </div>
+        </div>
+      </div>
+      <div>
+        <Button onClick={save} disabled={loading}>Save settings</Button>
+      </div>
+    </div>
+  );
+};
+
+// --- Fraud Summary Section ---
+const FraudSummarySection: React.FC = () => {
+  const API_BASE = 'https://transactlab-backend.onrender.com/api/v1/analytics';
+  const [loading, setLoading] = React.useState(false);
+  const [totals, setTotals] = React.useState<any | null>(null);
+  const [factors, setFactors] = React.useState<any[]>([]);
+
+  const headers = () => ({ 'Authorization': `Bearer ${localStorage.getItem('accessToken')}` });
+
+  const load = async () => {
+    try {
+      setLoading(true);
+      const [sumRes, decRes] = await Promise.all([
+        fetch(`${API_BASE}/fraud/summary`, { headers: headers() }),
+        fetch(`${API_BASE}/fraud/decisions`, { headers: headers() })
+      ]);
+      const sumJson = await sumRes.json();
+      const fac = sumJson?.data?.topFactors || [];
+      setFactors(fac);
+      setTotals(sumJson?.data?.totals || null);
+      // decisions list is available in FraudReviewSection
+    } finally { setLoading(false); }
+  };
+
+  React.useEffect(() => { void load(); }, []);
+
+  return (
+    <div className="grid gap-4">
+      <div className="font-medium">Summary</div>
+      <div className="grid md:grid-cols-3 gap-4">
+        <div className="border rounded-lg p-4">
+          <div className="text-sm text-muted-foreground">Decisions (7d)</div>
+          <div className="text-2xl font-semibold">{totals?.count ?? 0}</div>
+        </div>
+        <div className="border rounded-lg p-4">
+          <div className="text-sm text-muted-foreground">Avg score</div>
+          <div className="text-2xl font-semibold">{totals?.avgScore ? totals.avgScore.toFixed(1) : '0.0'}</div>
+        </div>
+        <div className="border rounded-lg p-4">
+          <div className="text-sm text-muted-foreground">Blocked / Reviewed / Flagged</div>
+          <div className="text-2xl font-semibold">{(totals?.blocked ?? 0)} / {(totals?.reviewed ?? 0)} / {(totals?.flagged ?? 0)}</div>
+        </div>
+      </div>
+      <div className="border rounded-lg overflow-hidden">
+        <table className="w-full text-sm">
+          <thead className="bg-gray-50">
+            <tr>
+              <th className="text-left p-3">Top risk factors</th>
+              <th className="text-right p-3">Count</th>
+            </tr>
+          </thead>
+          <tbody>
+            {factors.length === 0 ? (
+              <tr><td className="p-3 text-gray-500" colSpan={2}>No data</td></tr>
+            ) : factors.map((f)=> (
+              <tr key={f._id}>
+                <td className="p-3">{f._id}</td>
+                <td className="p-3 text-right">{f.count}</td>
+              </tr>
+            ))}
+          </tbody>
+        </table>
+      </div>
+    </div>
+  );
+};
+
+// --- Fraud Review Section ---
+const FraudReviewSection: React.FC = () => {
+  const API_BASE = 'https://transactlab-backend.onrender.com/api/v1/analytics';
+  const [loading, setLoading] = React.useState(false);
+  const [items, setItems] = React.useState<any[]>([]);
+
+  const headers = () => ({ 'Authorization': `Bearer ${localStorage.getItem('accessToken')}`, 'Content-Type': 'application/json' });
+
+  const load = async () => {
+    try {
+      setLoading(true);
+      const res = await fetch(`${API_BASE}/fraud/reviews?status=pending`, { headers: headers() });
+      const json = await res.json();
+      setItems(json?.data?.reviews || []);
+    } finally { setLoading(false); }
+  };
+
+  React.useEffect(() => { void load(); }, []);
+
+  const act = async (id: string, action: 'approve'|'deny') => {
+    try {
+      setLoading(true);
+      const res = await fetch(`${API_BASE}/fraud/reviews/${id}/${action}`, { method: 'POST', headers: headers() });
+      const json = await res.json();
+      if (!json?.success) throw new Error(json?.message || 'Action failed');
+      toast({ title: `Review ${action}d` });
+      await load();
+    } catch (e: any) {
+      toast({ title: 'Error', description: e?.message || 'Action failed', variant: 'destructive' });
+    } finally { setLoading(false); }
+  };
+
+  return (
+    <div className="grid gap-4">
+      <div className="font-medium">Review queue</div>
+      <div className="border rounded-lg overflow-hidden">
+        <table className="w-full text-sm">
+          <thead className="bg-gray-50">
+            <tr>
+              <th className="text-left p-3">Session</th>
+              <th className="text-left p-3">Risk</th>
+              <th className="text-left p-3">Factors</th>
+              <th className="text-right p-3">Action</th>
+            </tr>
+          </thead>
+          <tbody>
+            {items.length === 0 ? (
+              <tr><td className="p-3 text-gray-500" colSpan={4}>No pending reviews</td></tr>
+            ) : items.map((r)=> (
+              <tr key={r._id}>
+                <td className="p-3">{r.sessionId}</td>
+                <td className="p-3">{r.riskLevel} ({r.riskScore})</td>
+                <td className="p-3">{Array.isArray(r.factors) ? r.factors.join(', ') : ''}</td>
+                <td className="p-3 text-right">
+                  <div className="flex items-center gap-2 justify-end">
+                    <Button size="sm" variant="outline" disabled={loading} onClick={()=>act(r._id, 'approve')}>Approve</Button>
+                    <Button size="sm" variant="destructive" disabled={loading} onClick={()=>act(r._id, 'deny')}>Deny</Button>
+                  </div>
+                </td>
+              </tr>
+            ))}
+          </tbody>
+        </table>
+      </div>
+    </div>
+  );
+};

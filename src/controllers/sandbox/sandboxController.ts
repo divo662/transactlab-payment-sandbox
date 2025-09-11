@@ -1001,6 +1001,45 @@ export class SandboxController {
         });
       }
 
+      // --- Fraud pre-check (sandbox only) ---
+      try {
+        const { FraudDetectionService } = await import('../../services/analytics/fraudDetectionService');
+        const { Types } = await import('mongoose');
+        const analysis = await FraudDetectionService.analyzeTransaction({
+          transactionId: session.sessionId,
+          amount: session.amount,
+          currency: session.currency,
+          description: session.description,
+          customerEmail: session.customerEmail,
+          merchantId: (() => { try { return new Types.ObjectId((session as any).userId); } catch { return new Types.ObjectId(); } })(),
+          createdAt: new Date(),
+          ipAddress: (req.headers['x-forwarded-for'] as string) || req.ip,
+          isNewCustomer: false
+        });
+        if (analysis.action === 'block') {
+          return res.status(403).json({ success: false, error: 'blocked_by_fraud', risk: analysis.riskScore });
+        }
+        if (analysis.action === 'review') {
+          try {
+            const SandboxFraudReview = (await import('../../models/SandboxFraudReview')).default;
+            await SandboxFraudReview.create({
+              sessionId: session.sessionId,
+              userId: session.userId,
+              riskScore: analysis.riskScore.score,
+              riskLevel: analysis.riskScore.level,
+              factors: analysis.riskScore.factors,
+              status: 'pending'
+            });
+          } catch (e) {
+            logger.warn('sandbox review create failed', e);
+          }
+          return res.status(202).json({ success: false, error: 'review_required', risk: analysis.riskScore });
+        }
+      } catch (e) {
+        logger.warn('fraud pre-check failed, proceeding', e);
+      }
+      // --- end fraud pre-check ---
+
       // Allow processing for any pending, non-expired session
       const isExpired = session.expiresAt ? new Date(session.expiresAt).getTime() < Date.now() : false;
       if (session.status !== 'pending' || isExpired) {
@@ -1138,9 +1177,9 @@ export class SandboxController {
           logger.warn('Sandbox: failed to send payment success email', e);
         }
 
-      res.json({
-        success: true,
-        data: {
+        res.json({
+          success: true,
+          data: {
             status: 'completed',
             transactionId: session.sessionId, // Use sessionId as transactionId
             amount: session.getFormattedAmount(),
@@ -3189,6 +3228,71 @@ export class SandboxController {
         success: false, 
         message: 'Failed to process payment for checkout' 
       });
+    }
+  }
+
+  /**
+   * Get fraud settings for sandbox (per workspace)
+   */
+  static async getFraudSettings(req: Request, res: Response) {
+    try {
+      const userId = req.user?._id;
+      if (!userId) {
+        return res.status(401).json({ success: false, error: 'Unauthorized', message: 'User not authenticated' });
+      }
+      const config = await SandboxConfig.findOne({ userId: userId.toString() });
+      if (!config) {
+        return res.status(404).json({ success: false, error: 'Not found', message: 'Sandbox config not found' });
+      }
+      return res.status(200).json({
+        success: true,
+        data: {
+          fraud: config.fraud || { enabled: true, blockThreshold: 70, reviewThreshold: 50, flagThreshold: 30 }
+        }
+      });
+    } catch (error) {
+      logger.error('getFraudSettings error:', error);
+      return res.status(500).json({ success: false, error: 'Internal server error' });
+    }
+  }
+
+  /**
+   * Update fraud settings for sandbox (per workspace)
+   */
+  static async updateFraudSettings(req: Request, res: Response) {
+    try {
+      const userId = req.user?._id;
+      if (!userId) {
+        return res.status(401).json({ success: false, error: 'Unauthorized', message: 'User not authenticated' });
+      }
+      const { enabled, blockThreshold, reviewThreshold, flagThreshold } = req.body || {};
+      const errors: string[] = [];
+      const isNumberOrUndef = (v: any) => v === undefined || typeof v === 'number';
+      if (enabled !== undefined && typeof enabled !== 'boolean') errors.push('enabled must be boolean');
+      if (!isNumberOrUndef(blockThreshold)) errors.push('blockThreshold must be number');
+      if (!isNumberOrUndef(reviewThreshold)) errors.push('reviewThreshold must be number');
+      if (!isNumberOrUndef(flagThreshold)) errors.push('flagThreshold must be number');
+      if (errors.length) {
+        return res.status(400).json({ success: false, error: 'Bad Request', message: 'Validation failed', fieldHints: errors });
+      }
+
+      const config = await SandboxConfig.findOne({ userId: userId.toString() });
+      if (!config) {
+        return res.status(404).json({ success: false, error: 'Not found', message: 'Sandbox config not found' });
+      }
+
+      config.fraud = {
+        enabled: enabled !== undefined ? enabled : config.fraud?.enabled ?? true,
+        blockThreshold: blockThreshold ?? config.fraud?.blockThreshold ?? 70,
+        reviewThreshold: reviewThreshold ?? config.fraud?.reviewThreshold ?? 50,
+        flagThreshold: flagThreshold ?? config.fraud?.flagThreshold ?? 30
+      };
+
+      await config.save();
+      return res.status(200).json({ success: true, data: { fraud: config.fraud } });
+    } catch (error) {
+      logger.error('updateFraudSettings error:', error);
+      return res.status(500).json({ success: false, error: 'Internal server error' });
     }
   }
 }

@@ -26,6 +26,9 @@ const CONFIG = {
   CANCEL_URL: 'http://localhost:3000/?payment=cancelled',
   TL_WEBHOOK_SECRET: 'jZ3W82Qbh0Ydl2XboZo7vJxc1chSJRS9',
   FRONTEND_URL: 'https://transactlab-payment-sandbox.vercel.app',
+  // Defaults for existing resources (provided by user)
+  DEFAULT_PRODUCT_ID: '68c30388402198f404ab92de',
+  DEFAULT_PLAN_ID: 'plan_z2x8haem',
 };
 
 // ---- Robust fetch helper with retries and JSON sniffing ----
@@ -75,6 +78,9 @@ async function fetchJsonWithRetry(url, options = {}, { retries = 3, retryDelayMs
 // In‑memory stores with better error handling
 const enrollments = new Map(); // key: email+offer
 const webhookEvents = new Set();
+// Simple in-memory caches to avoid recreating products/plans repeatedly
+const productCacheByName = new Map(); // name -> productId
+const planCacheByKey = new Map(); // `${productId}:${amountMinor}:${currency}:${interval}` -> planId
 
 // Hardcoded auth headers for testing
 function getAuthHeaders() {
@@ -346,19 +352,93 @@ app.post('/api/create-subscription', async (req, res) => {
       customerEmail: payload.customerEmail
     });
 
-    if (!payload.planId) {
-      return res.status(400).json({
-        success: false,
-        error: 'planId is required for subscription creation'
-      });
+    // If planId not provided, use configured default; otherwise (as fallback) support auto-create
+    let planId = payload.planId || CONFIG.DEFAULT_PLAN_ID;
+    if (!planId) {
+      const missing = [];
+      const hasProductId = !!payload.productId;
+      const hasProductName = !!payload.productName;
+      const hasPlanBits = payload.amount !== undefined && !!payload.currency && !!payload.interval;
+      if (!hasProductId && !hasProductName) missing.push('productId or productName');
+      if (!hasPlanBits) missing.push('amount, currency, interval');
+
+      if (missing.length) {
+        return res.status(400).json({
+          success: false,
+          error: 'Missing fields',
+          details: { missing, hint: 'Provide planId OR productId/productName with amount, currency, interval' }
+        });
+      }
+
+      // 1) Ensure product exists (use default or re-use from cache or create if missing)
+      let productId = payload.productId || CONFIG.DEFAULT_PRODUCT_ID;
+      if (!productId) {
+        const defaultProductName = payload.productName || '6-Month Course Program';
+        const cached = productCacheByName.get(defaultProductName);
+        if (cached) {
+          productId = cached;
+        } else {
+          const createProductBody = { name: defaultProductName, description: payload.productDescription };
+          const prodResp = await fetchJsonWithRetry(`${CONFIG.TL_BASE}/products`, {
+            method: 'POST', headers, body: JSON.stringify(createProductBody)
+          }, { retries: 3, retryDelayMs: 700 });
+          if (!prodResp.ok) {
+            return res.status(prodResp.status).json({ success: false, error: 'Failed to create product', details: prodResp.data || prodResp.rawText });
+          }
+          const prodData = prodResp.data?.data || prodResp.data || {};
+          productId = prodData._id || prodData.id || prodData.productId;
+          if (!productId) {
+            return res.status(500).json({ success: false, error: 'Product create returned no ID' });
+          }
+          productCacheByName.set(defaultProductName, productId);
+        }
+      }
+
+      // 2) Create plan (amount expected in MINOR units; accept amountMinor or convert amount)
+      let amountMinor = payload.amountMinor !== undefined ? payload.amountMinor : (typeof payload.amount === 'number' ? Math.round(payload.amount * 100) : undefined);
+      let currency = payload.currency;
+      let interval = payload.interval;
+      // Defaults: NGN 50,000 per month for a 6-month program
+      if (amountMinor === undefined || !currency || !interval) {
+        amountMinor = amountMinor ?? 5000000; // NGN 50,000.00 in kobo
+        currency = currency || 'NGN';
+        interval = interval || 'month';
+      }
+
+      const createPlanBody = {
+        productId,
+        amount: amountMinor,
+        currency,
+        interval, // day|week|month|quarter|year
+        trialDays: payload.trialDays || 0
+      };
+      const planKey = `${productId}:${createPlanBody.amount}:${createPlanBody.currency}:${createPlanBody.interval}`;
+      const cachedPlan = planCacheByKey.get(planKey);
+      if (cachedPlan) {
+        planId = cachedPlan;
+      } else {
+        const planResp = await fetchJsonWithRetry(`${CONFIG.TL_BASE}/plans`, {
+          method: 'POST', headers, body: JSON.stringify(createPlanBody)
+        }, { retries: 3, retryDelayMs: 700 });
+        if (!planResp.ok) {
+          return res.status(planResp.status).json({ success: false, error: 'Failed to create plan', details: planResp.data || planResp.rawText });
+        }
+        const planData = planResp.data?.data || planResp.data || {};
+        planId = planData._id || planData.id || planData.planId;
+        if (!planId) {
+          return res.status(500).json({ success: false, error: 'Plan create returned no ID' });
+        }
+        planCacheByKey.set(planKey, planId);
+      }
     }
 
     const requestBody = {
-      planId: payload.planId,
+      planId,
       customerEmail: payload.customerEmail,
       metadata: payload.metadata || {},
       success_url: payload.success_url || CONFIG.SUCCESS_URL,
       cancel_url: payload.cancel_url || CONFIG.CANCEL_URL,
+      chargeNow: typeof payload.chargeNow === 'boolean' ? payload.chargeNow : true
     };
 
     const subResult = await fetchJsonWithRetry(`${CONFIG.TL_BASE}/subscriptions`, {
@@ -428,6 +508,76 @@ app.post('/api/create-subscription', async (req, res) => {
       message: 'create-subscription failed', 
       error: error.message 
     });
+  }
+});
+
+// Create a product (bridge → TransactLab sandbox)
+app.post('/api/create-product', async (req, res) => {
+  try {
+    const payload = req.body || {};
+    const headers = { 'content-type': 'application/json', ...getAuthHeaders() };
+
+    if (!payload.name) {
+      return res.status(400).json({ success: false, error: 'name is required' });
+    }
+
+    const requestBody = {
+      name: payload.name,
+      description: payload.description || undefined
+    };
+
+    const result = await fetchJsonWithRetry(`${CONFIG.TL_BASE}/products`, {
+      method: 'POST',
+      headers,
+      body: JSON.stringify(requestBody)
+    }, { retries: 3, retryDelayMs: 700 });
+
+    if (!result.ok) {
+      return res.status(result.status).json({ success: false, error: 'Provider error', details: result.data || result.rawText });
+    }
+
+    return res.json({ success: true, data: result.data?.data || result.data });
+  } catch (error) {
+    logError('create-product', error, { body: req.body });
+    return res.status(500).json({ success: false, message: 'create-product failed', error: error.message });
+  }
+});
+
+// Create a plan (bridge → TransactLab sandbox)
+// Note: amount should be in MINOR units (e.g., 1000 = 10.00)
+app.post('/api/create-plan', async (req, res) => {
+  try {
+    const payload = req.body || {};
+    const headers = { 'content-type': 'application/json', ...getAuthHeaders() };
+
+    const required = ['productId', 'amount', 'currency', 'interval'];
+    const missing = required.filter(k => !(k in payload));
+    if (missing.length) {
+      return res.status(400).json({ success: false, error: 'Missing fields', details: { missing } });
+    }
+
+    const requestBody = {
+      productId: payload.productId,
+      amount: payload.amount, // minor units
+      currency: payload.currency,
+      interval: payload.interval, // day|week|month|quarter|year
+      trialDays: payload.trialDays || 0
+    };
+
+    const result = await fetchJsonWithRetry(`${CONFIG.TL_BASE}/plans`, {
+      method: 'POST',
+      headers,
+      body: JSON.stringify(requestBody)
+    }, { retries: 3, retryDelayMs: 700 });
+
+    if (!result.ok) {
+      return res.status(result.status).json({ success: false, error: 'Provider error', details: result.data || result.rawText });
+    }
+
+    return res.json({ success: true, data: result.data?.data || result.data });
+  } catch (error) {
+    logError('create-plan', error, { body: req.body });
+    return res.status(500).json({ success: false, message: 'create-plan failed', error: error.message });
   }
 });
 

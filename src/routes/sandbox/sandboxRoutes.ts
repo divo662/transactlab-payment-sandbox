@@ -26,6 +26,10 @@ router.get('/checkout-url/:sessionId', SandboxController.getCheckoutUrl);
 // Quick create customer + session
 router.post('/customers/quick-session', SandboxController.createCustomerWithSession);
 
+// Fraud settings (sandbox-only)
+router.get('/fraud/settings', SandboxController.getFraudSettings);
+router.put('/fraud/settings', SandboxController.updateFraudSettings);
+
 // Payment processing
 router.post('/sessions/:sessionId/process-payment', SandboxController.processPayment);
 

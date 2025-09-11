@@ -5,6 +5,11 @@ import compression from 'compression';
 import rateLimit from 'express-rate-limit';
 import { logger } from './utils/helpers/logger';
 import { SandboxSession, SandboxConfig, SandboxApiKey } from './models';
+import SandboxFraudDecision from './models/SandboxFraudDecision';
+import { FraudDetectionService } from './services/analytics/fraudDetectionService';
+import WebhookService from './services/sandbox/WebhookService';
+import SandboxFraudReview from './models/SandboxFraudReview';
+import { Types } from 'mongoose';
 
 // Import middleware
 import { requestLogger } from './middleware/logging/requestLogger';
@@ -231,6 +236,87 @@ app.post('/api/v1/checkout/process/:sessionId', async (req, res) => {
     const session = await SandboxSession.findOne({ sessionId });
     if (!session) {
       return res.status(404).json({ success: false, message: 'Session not found' });
+    }
+
+    // Pre-processing fraud/risk check (sandbox)
+    try {
+      const riskAnalysis = await FraudDetectionService.analyzeTransaction({
+        transactionId: session.sessionId,
+        amount: session.amount, // minor units
+        currency: session.currency,
+        description: session.description,
+        customerEmail: session.customerEmail,
+        merchantId: (() => { try { return new Types.ObjectId((session as any).userId); } catch { return new Types.ObjectId(); } })(),
+        createdAt: new Date(),
+        ipAddress: (req.headers['x-forwarded-for'] as string) || req.ip,
+        isNewCustomer: false
+      });
+
+      // Persist decision for observability
+      try {
+        await SandboxFraudDecision.create({
+          sessionId: session.sessionId,
+          userId: (session as any).userId,
+          amountMinor: session.amount,
+          currency: session.currency,
+          action: riskAnalysis.action,
+          riskScore: riskAnalysis.riskScore.score,
+          riskLevel: riskAnalysis.riskScore.level,
+          factors: riskAnalysis.riskScore.factors,
+          recommendations: riskAnalysis.riskScore.recommendations
+        });
+      } catch (persistErr) {
+        logger.warn('Failed to persist fraud decision', persistErr);
+      }
+
+      // Emit fraud webhooks by action and create review item if needed
+      try {
+        const webhookService = new WebhookService();
+        const eventBase = 'fraud';
+        const payload = {
+          sessionId: session.sessionId,
+          userId: (session as any).userId,
+          action: riskAnalysis.action,
+          risk: riskAnalysis.riskScore,
+          timestamp: new Date().toISOString()
+        };
+        if (riskAnalysis.action === 'review') {
+          try {
+            await SandboxFraudReview.create({
+              sessionId: session.sessionId,
+              userId: (session as any).userId,
+              riskScore: riskAnalysis.riskScore.score,
+              riskLevel: riskAnalysis.riskScore.level,
+              factors: riskAnalysis.riskScore.factors,
+              status: 'pending'
+            });
+          } catch (revErr) {
+            logger.warn('Failed to create fraud review item', revErr);
+          }
+        }
+        if (riskAnalysis.action === 'block') {
+          await webhookService.sendWebhooks((session as any).userId, `${eventBase}.blocked`, payload);
+        } else if (riskAnalysis.action === 'review') {
+          await webhookService.sendWebhooks((session as any).userId, `${eventBase}.review_required`, payload);
+        } else if (riskAnalysis.action === 'flag') {
+          await webhookService.sendWebhooks((session as any).userId, `${eventBase}.flagged`, payload);
+        } else {
+          await webhookService.sendWebhooks((session as any).userId, `${eventBase}.cleared`, payload);
+        }
+      } catch (whErr) {
+        logger.warn('Failed to emit fraud webhook', whErr);
+      }
+
+      if (riskAnalysis.action === 'block') {
+        return res.status(403).json({ success: false, error: 'blocked_by_fraud', risk: riskAnalysis });
+      }
+      if (riskAnalysis.action === 'review') {
+        return res.status(202).json({ success: false, error: 'review_required', risk: riskAnalysis });
+      }
+      // For 'flag' or 'allow', continue; attach risk for observability
+      (req as any).riskAnalysis = riskAnalysis;
+    } catch (e) {
+      logger.warn('Fraud analysis failed, proceeding in sandbox:', e);
     }
 
     // Try to resolve sandbox secret from DB (SandboxConfig or SandboxApiKey)

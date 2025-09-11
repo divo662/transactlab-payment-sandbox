@@ -43,6 +43,9 @@ interface EnvironmentConfig {
   // Analytics
   ANALYTICS_ENABLED: boolean;
   FRAUD_DETECTION_ENABLED: boolean;
+  FRAUD_BLOCK_THRESHOLD: number; // 0-100
+  FRAUD_REVIEW_THRESHOLD: number; // 0-100
+  FRAUD_FLAG_THRESHOLD: number; // 0-100
   
   // Security
   TRUSTED_IPS: string[];
@@ -80,6 +83,9 @@ const DEFAULT_ENV: Partial<EnvironmentConfig> = {
   WEBHOOK_MAX_RETRIES: 3,
   ANALYTICS_ENABLED: true,
   FRAUD_DETECTION_ENABLED: true,
+  FRAUD_BLOCK_THRESHOLD: 70,
+  FRAUD_REVIEW_THRESHOLD: 50,
+  FRAUD_FLAG_THRESHOLD: 30,
   TRUSTED_IPS: [],
   CORS_ORIGINS: [
     'https://transactlab-payment-sandbox.vercel.app',
@@ -175,6 +181,9 @@ export const validateEnvironment = (): EnvironmentConfig => {
     // Analytics
     ANALYTICS_ENABLED: getEnv('ANALYTICS_ENABLED', 'boolean'),
     FRAUD_DETECTION_ENABLED: getEnv('FRAUD_DETECTION_ENABLED', 'boolean'),
+    FRAUD_BLOCK_THRESHOLD: getEnv('FRAUD_BLOCK_THRESHOLD', 'number', false),
+    FRAUD_REVIEW_THRESHOLD: getEnv('FRAUD_REVIEW_THRESHOLD', 'number', false),
+    FRAUD_FLAG_THRESHOLD: getEnv('FRAUD_FLAG_THRESHOLD', 'number', false),
     
     // Security
     TRUSTED_IPS: getEnv('TRUSTED_IPS', 'array', false),
