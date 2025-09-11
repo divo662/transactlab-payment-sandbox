@@ -441,9 +441,12 @@ app.post('/api/create-subscription', async (req, res) => {
       chargeNow: typeof payload.chargeNow === 'boolean' ? payload.chargeNow : true
     };
 
+    // Some sandbox routes expect Bearer auth; include both for compatibility
+    const authSecret = headers['x-sandbox-secret'];
+    const subHeaders = { ...headers, ...(authSecret ? { Authorization: `Bearer ${authSecret}` } : {}) };
     const subResult = await fetchJsonWithRetry(`${CONFIG.TL_BASE}/subscriptions`, {
       method: 'POST',
-      headers,
+      headers: subHeaders,
       body: JSON.stringify(requestBody)
     }, { retries: 3, retryDelayMs: 700 });
 

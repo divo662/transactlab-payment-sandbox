@@ -1024,7 +1024,7 @@ export class SandboxController {
             const SandboxFraudReview = (await import('../../models/SandboxFraudReview')).default;
             await SandboxFraudReview.create({
               sessionId: session.sessionId,
-              userId: session.userId,
+              userId: session.userId?.toString?.() || (session as any).userId,
               riskScore: analysis.riskScore.score,
               riskLevel: analysis.riskScore.level,
               factors: analysis.riskScore.factors,

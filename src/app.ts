@@ -275,7 +275,7 @@ app.post('/api/v1/checkout/process/:sessionId', async (req, res) => {
         const eventBase = 'fraud';
         const payload = {
           sessionId: session.sessionId,
-          userId: (session as any).userId,
+          userId: (session as any).userId?.toString?.() || (session as any).userId,
           action: riskAnalysis.action,
           risk: riskAnalysis.riskScore,
           timestamp: new Date().toISOString()
