@@ -4,7 +4,7 @@ import helmet from 'helmet';
 import compression from 'compression';
 import rateLimit from 'express-rate-limit';
 import { logger } from './utils/helpers/logger';
-import { SandboxSession } from './models';
+import { SandboxSession, SandboxConfig, SandboxApiKey } from './models';
 
 // Import middleware
 import { requestLogger } from './middleware/logging/requestLogger';
@@ -227,10 +227,29 @@ app.get('/checkout/:sessionId', async (req, res) => {
 app.post('/api/v1/checkout/process/:sessionId', async (req, res) => {
   try {
     const { sessionId } = req.params;
-    const host = `${req.protocol}://${req.get('host')}`;
-    const resp = await fetch(`${host}/api/v1/internal/checkout/sessions/${sessionId}/process`, {
+    // Resolve workspace owner from session to scope the secret
+    const session = await SandboxSession.findOne({ sessionId });
+    if (!session) {
+      return res.status(404).json({ success: false, message: 'Session not found' });
+    }
+
+    // Try to resolve sandbox secret from DB (SandboxConfig or SandboxApiKey)
+    let sandboxSecret: string | undefined;
+    const cfg = await SandboxConfig.findOne({ userId: session.userId });
+    if (cfg?.testSecretKey) sandboxSecret = cfg.testSecretKey as any;
+    if (!sandboxSecret) {
+      const key = await SandboxApiKey.findOne({ userId: session.userId, isActive: true });
+      if (key?.secretKey) sandboxSecret = (key as any).secretKey;
+    }
+    if (!sandboxSecret) {
+      return res.status(500).json({ success: false, message: 'Sandbox secret not configured' });
+    }
+
+    // Call provider process endpoint directly with secret
+    const providerBase = `${req.protocol}://${req.get('host')}/api/v1/sandbox`;
+    const resp = await fetch(`${providerBase}/sessions/${sessionId}/process-payment`, {
       method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
+      headers: { 'Content-Type': 'application/json', 'x-sandbox-secret': sandboxSecret },
       body: JSON.stringify({})
     });
     const text = await resp.text();

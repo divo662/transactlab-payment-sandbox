@@ -259,17 +259,17 @@ const CheckoutPage: React.FC = () => {
       }
       // Navigate to success page with context; fallback to successUrl if present
       const callbackUrl = session.successUrl || session.success_url;
-      navigate('/checkout/success', {
-        state: {
-          sessionId: session.sessionId,
-          amount: session.amount,
-          currency: session.currency,
-          customerEmail: session.customerEmail,
-          description: session.description,
+        navigate('/checkout/success', { 
+          state: { 
+            sessionId: session.sessionId, 
+            amount: session.amount, 
+            currency: session.currency,
+            customerEmail: session.customerEmail,
+            description: session.description,
           callbackUrl,
           source: callbackUrl ? 'external' : 'dashboard'
-        }
-      });
+          } 
+        });
     } catch (e: any) {
       setError(e?.message || 'An unexpected error occurred. Please try again.');
     } finally {
