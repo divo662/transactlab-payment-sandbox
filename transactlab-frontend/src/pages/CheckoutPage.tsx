@@ -46,8 +46,9 @@ interface PaymentFormData {
 
 // Public backend origin for read-only checkout session (no secrets required)
 const PUBLIC_BACKEND_ORIGIN = 'https://transactlab-backend.onrender.com';
-// Course server base for server-side processing (keeps secrets on server)
-const COURSE_SERVER_BASE = (import.meta as any)?.env?.VITE_COURSE_API_BASE || 'http://localhost:3000';
+// Generic proxy base for server-side processing (keeps secrets on server)
+// Developers should set VITE_TL_PROXY_BASE to their own backend that forwards to TransactLab
+const TL_PROXY_BASE: string | undefined = (import.meta as any)?.env?.VITE_TL_PROXY_BASE;
 
 const CheckoutPage: React.FC = () => {
   const { sessionId } = useParams<{ sessionId: string }>();
@@ -246,8 +247,13 @@ const CheckoutPage: React.FC = () => {
     setError(null);
     try {
       const [mm, yy] = formData.expiryDate.split('/');
-      // Use course server proxy to process payment (server adds sandbox secret)
-      const res = await fetch(`${COURSE_SERVER_BASE}/internal/checkout/sessions/${session.sessionId}/process`, {
+      // Require a proxy base; processing must occur server-side to protect secrets
+      if (!TL_PROXY_BASE) {
+        setError('Payment proxy not configured. Set VITE_TL_PROXY_BASE to your server URL.');
+        setProcessing(false);
+        return;
+      }
+      const res = await fetch(`${TL_PROXY_BASE.replace(/\/$/, '')}/proxy/checkout/sessions/${session.sessionId}/process`, {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json'

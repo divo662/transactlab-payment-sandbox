@@ -136,7 +136,15 @@ function logError(context, error, additionalData = {}) {
 
 // CORS + static + JSON body with enhanced error handling
 app.use(cors({
-  origin: process.env.FRONTEND_URL || 'http://localhost:3000',
+  origin: (origin, cb) => {
+    const allow = [
+      'http://localhost:3000',
+      'http://127.0.0.1:3000',
+      CONFIG.FRONTEND_URL
+    ].filter(Boolean);
+    if (!origin) return cb(null, true);
+    return cb(null, allow.some(o => String(origin).startsWith(String(o))));
+  },
   credentials: true
 }));
 
