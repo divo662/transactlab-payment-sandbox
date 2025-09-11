@@ -28,6 +28,50 @@ const CONFIG = {
   FRONTEND_URL: 'https://transactlab-payment-sandbox.vercel.app',
 };
 
+// ---- Robust fetch helper with retries and JSON sniffing ----
+async function fetchJsonWithRetry(url, options = {}, { retries = 3, retryDelayMs = 600, expectJson = true } = {}) {
+  let lastError;
+  for (let attempt = 0; attempt <= retries; attempt++) {
+    try {
+      const resp = await fetch(url, {
+        // Ensure we always ask for JSON; providers may return HTML on 5xx
+        headers: { Accept: 'application/json', ...(options.headers || {}) },
+        ...options
+      });
+
+      const contentType = resp.headers.get('content-type') || '';
+      const isJson = contentType.includes('application/json');
+      const text = await resp.text();
+      let data = null;
+      if (isJson) {
+        try { data = text ? JSON.parse(text) : {}; } catch (e) {
+          // If provider sent invalid JSON but status is 2xx, surface raw text
+          if (resp.ok) {
+            return { ok: resp.ok, status: resp.status, data: null, rawText: text };
+          }
+          throw new Error(`Invalid JSON from provider (status ${resp.status})`);
+        }
+      }
+
+      // On non-OK, retry only for 5xx
+      if (!resp.ok && resp.status >= 500 && attempt < retries) {
+        await new Promise(r => setTimeout(r, retryDelayMs * (attempt + 1)));
+        continue;
+      }
+
+      return { ok: resp.ok, status: resp.status, data, rawText: isJson ? undefined : text };
+    } catch (e) {
+      lastError = e;
+      if (attempt < retries) {
+        await new Promise(r => setTimeout(r, retryDelayMs * (attempt + 1)));
+        continue;
+      }
+      throw e;
+    }
+  }
+  throw lastError || new Error('Unknown fetch error');
+}
+
 // In‑memory stores with better error handling
 const enrollments = new Map(); // key: email+offer
 const webhookEvents = new Set();
@@ -161,41 +205,27 @@ app.post('/api/create-session', async (req, res) => {
       body: requestBody
     });
 
-    const resp = await fetch(`${CONFIG.TL_BASE}/sessions`, {
+    const result = await fetchJsonWithRetry(`${CONFIG.TL_BASE}/sessions`, {
       method: 'POST',
       headers,
-      body: JSON.stringify(requestBody),
-    });
+      body: JSON.stringify(requestBody)
+    }, { retries: 3, retryDelayMs: 700 });
 
-    const responseText = await resp.text();
-    let data;
-    
-    try {
-      data = responseText ? JSON.parse(responseText) : {};
-    } catch (parseError) {
-      logError('create-session', parseError, { responseText, status: resp.status });
-      return res.status(500).json({
-        success: false,
-        error: 'Invalid JSON response from payment provider',
-        details: responseText.substring(0, 200)
-      });
-    }
-
-    if (!resp.ok) {
+    if (!result.ok) {
       logError('create-session', new Error('API request failed'), { 
-        status: resp.status, 
-        response: data,
+        status: result.status, 
+        response: result.data || result.rawText,
         requestBody 
       });
-      return res.status(resp.status).json({
+      return res.status(result.status).json({
         success: false,
-        error: data.error || data.message || 'Payment provider error',
-        details: data
+        error: (result.data && (result.data.error || result.data.message)) || 'Payment provider error',
+        details: result.data || (result.rawText ? String(result.rawText).slice(0, 500) : undefined)
       });
     }
 
     // Normalize the checkout URL
-    const normalized = normalizeCheckoutUrl(data);
+    const normalized = normalizeCheckoutUrl(result.data);
     
     // Store enrollment info
     const email = payload.customerEmail || payload.customer?.email;
@@ -329,42 +359,28 @@ app.post('/api/create-subscription', async (req, res) => {
       cancel_url: payload.cancel_url || CONFIG.CANCEL_URL,
     };
 
-    const resp = await fetch(`${CONFIG.TL_BASE}/subscriptions`, {
+    const subResult = await fetchJsonWithRetry(`${CONFIG.TL_BASE}/subscriptions`, {
       method: 'POST',
       headers,
-      body: JSON.stringify(requestBody),
-    });
+      body: JSON.stringify(requestBody)
+    }, { retries: 3, retryDelayMs: 700 });
 
-    const responseText = await resp.text();
-    let data;
-    
-    try {
-      data = responseText ? JSON.parse(responseText) : {};
-    } catch (parseError) {
-      logError('create-subscription', parseError, { responseText, status: resp.status });
-      return res.status(500).json({
-        success: false,
-        error: 'Invalid JSON response from payment provider',
-        details: responseText.substring(0, 200)
-      });
-    }
-
-    if (!resp.ok) {
+    if (!subResult.ok) {
       logError('create-subscription', new Error('API request failed'), { 
-        status: resp.status, 
-        response: data,
+        status: subResult.status, 
+        response: subResult.data || subResult.rawText,
         requestBody 
       });
-      return res.status(resp.status).json({
+      return res.status(subResult.status).json({
         success: false,
-        error: data.error || data.message || 'Payment provider error',
-        details: data
+        error: (subResult.data && (subResult.data.error || subResult.data.message)) || 'Payment provider error',
+        details: subResult.data || (subResult.rawText ? String(subResult.rawText).slice(0, 500) : undefined)
       });
     }
 
     // Normalize the checkout URL
-    const normalized = normalizeCheckoutUrl(data);
-    const subscriptionId = data?.data?.subscriptionId || data?.subscriptionId || data?.id;
+    const normalized = normalizeCheckoutUrl(subResult.data);
+    const subscriptionId = subResult.data?.data?.subscriptionId || subResult.data?.subscriptionId || subResult.data?.id;
 
     // Store enrollment info
     const email = payload.customerEmail;

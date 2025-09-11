@@ -92,9 +92,19 @@ const CheckoutPage: React.FC = () => {
         }
         // Public endpoint returns { success, data: {...} }
         const s = json.data;
+        // Derive minor units. Provider may return formatted amount string (e.g., "NGN 300,000.00").
+        const amountMinor = (() => {
+          const val = (s as any)?.amount;
+          if (typeof val === 'number') return val; // already minor units
+          if (typeof val === 'string') {
+            const numeric = parseFloat(val.replace(/[^0-9.]/g, ''));
+            if (Number.isFinite(numeric)) return Math.round(numeric * 100);
+          }
+          return 0;
+        })();
         const normalized: CheckoutSession = {
           sessionId: s.sessionId,
-          amount: s.amount,
+          amount: amountMinor,
           currency: s.currency,
           description: s.description,
           customerEmail: s.customerEmail,
