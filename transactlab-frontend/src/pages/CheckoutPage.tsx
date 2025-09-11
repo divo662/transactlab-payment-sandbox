@@ -46,9 +46,7 @@ interface PaymentFormData {
 
 // Public backend origin for read-only checkout session (no secrets required)
 const PUBLIC_BACKEND_ORIGIN = 'https://transactlab-backend.onrender.com';
-// Generic proxy base for server-side processing (keeps secrets on server)
-// Developers should set VITE_TL_PROXY_BASE to their own backend that forwards to TransactLab
-const TL_PROXY_BASE: string | undefined = (import.meta as any)?.env?.VITE_TL_PROXY_BASE;
+// Using Hosted Checkout (Option A). No proxy or secrets required in the browser.
 
 const CheckoutPage: React.FC = () => {
   const { sessionId } = useParams<{ sessionId: string }>();
@@ -246,61 +244,8 @@ const CheckoutPage: React.FC = () => {
     setProcessing(true);
     setError(null);
     try {
-      const [mm, yy] = formData.expiryDate.split('/');
-      // Require a proxy base; processing must occur server-side to protect secrets
-      if (!TL_PROXY_BASE) {
-        setError('Payment proxy not configured. Set VITE_TL_PROXY_BASE to your server URL.');
-        setProcessing(false);
-        return;
-      }
-      const res = await fetch(`${TL_PROXY_BASE.replace(/\/$/, '')}/proxy/checkout/sessions/${session.sessionId}/process`, {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json'
-        },
-        body: JSON.stringify({
-          paymentMethod: selectedMethod,
-          cardDetails: selectedMethod === 'card' ? {
-            number: formData.cardNumber.replace(/\s/g, ''),
-            expiryMonth: mm,
-            expiryYear: yy,
-            cvv: formData.cvv
-          } : undefined,
-          mobileMoney: selectedMethod === 'mobile_money' ? { phone: formData.phone } : undefined,
-          customer: {
-            email: formData.email,
-            name: formData.cardholderName,
-            phone: formData.phone
-          },
-          billingAddress: {
-            line1: formData.addressLine1,
-            line2: formData.addressLine2,
-            city: formData.city,
-            state: formData.state,
-            postalCode: formData.postalCode,
-            country: formData.country,
-            phone: formData.phone
-          }
-        })
-      });
-      const json = await res.json();
-      if (!res.ok || !json?.success) {
-        throw new Error(json?.message || 'Payment failed.');
-      }
-      setSuccess(true);
-      setTimeout(() => {
-        navigate('/checkout/success', { 
-          state: { 
-            sessionId: session.sessionId, 
-            amount: session.amount, 
-            currency: session.currency,
-            customerEmail: session.customerEmail,
-            description: session.description,
-            callbackUrl: (session.successUrl || session.success_url) as any,
-            source: (session.successUrl || session.success_url) ? 'external' : 'dashboard'
-          } 
-        });
-      }, 1200);
+      // Hosted Checkout: simply redirect to provider-hosted page
+      window.location.assign(`${PUBLIC_BACKEND_ORIGIN}/checkout/${session.sessionId}`);
     } catch (e: any) {
       setError(e?.message || 'An unexpected error occurred. Please try again.');
     } finally {

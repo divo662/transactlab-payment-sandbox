@@ -105,14 +105,10 @@ function normalizeCheckoutUrl(apiResponse) {
     throw new Error('No sessionId found in API response');
   }
 
-  // Always prefer the frontend URL when provided so users land on your UI
-  const frontendUrl = CONFIG.FRONTEND_URL;
+  // Option A (Hosted Checkout): always prefer provider-hosted checkout URL
   const backendOrigin = (() => { try { return new URL(CONFIG.TL_BASE).origin; } catch { return 'https://transactlab-backend.onrender.com'; } })();
-  const providerCheckoutUrl = data?.checkoutUrl;
-
-  const checkoutUrl = frontendUrl
-    ? `${frontendUrl.replace(/\/$/, '')}/checkout/${sessionId}`
-    : (providerCheckoutUrl || `${backendOrigin}/checkout/${sessionId}`);
+  const providerCheckoutUrl = data?.checkoutUrl || `${backendOrigin}/checkout/${sessionId}`;
+  const checkoutUrl = providerCheckoutUrl;
   
   console.log('🔗 Generated checkout URL:', checkoutUrl);
   console.log('📋 Session ID:', sessionId);
@@ -709,6 +705,39 @@ app.get('/internal/checkout/sessions/:id', async (req, res) => {
 
 // Proxy: process payment (sandbox completes and fires webhooks)
 app.post('/internal/checkout/sessions/:id/process', async (req, res) => {
+  try {
+    const headers = { 'content-type': 'application/json', ...getAuthHeaders() };
+    const resp = await fetch(`${CONFIG.TL_BASE}/sessions/${req.params.id}/process-payment`, {
+      method: 'POST',
+      headers,
+      body: JSON.stringify({})
+    });
+    const text = await resp.text();
+    let json = {};
+    try { json = text ? JSON.parse(text) : {}; } catch { /* keep raw */ }
+    return res.status(resp.status).json(json || {});
+  } catch (e) {
+    return res.status(500).json({ success: false, error: String(e) });
+  }
+});
+
+// --- Neutral proxy aliases (recommended for third-party developers) ---
+// GET: fetch session via your server (no browser secrets)
+app.get('/proxy/checkout/sessions/:id', async (req, res) => {
+  try {
+    const headers = { 'content-type': 'application/json', ...getAuthHeaders() };
+    const resp = await fetch(`${CONFIG.TL_BASE}/sessions/${req.params.id}`, { headers });
+    const text = await resp.text();
+    let json = {};
+    try { json = text ? JSON.parse(text) : {}; } catch { /* keep raw */ }
+    return res.status(resp.status).json(json || {});
+  } catch (e) {
+    return res.status(500).json({ success: false, error: String(e) });
+  }
+});
+
+// POST: process payment via your server (adds sandbox secret server-side)
+app.post('/proxy/checkout/sessions/:id/process', async (req, res) => {
   try {
     const headers = { 'content-type': 'application/json', ...getAuthHeaders() };
     const resp = await fetch(`${CONFIG.TL_BASE}/sessions/${req.params.id}/process-payment`, {

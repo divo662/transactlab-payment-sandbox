@@ -1,9 +1,7 @@
 import { useEffect } from "react";
 import { Link } from "react-router-dom";
 import { Button } from "@/components/ui/button";
-import { Input } from "@/components/ui/input";
-import { Card, CardContent } from "@/components/ui/card";
-import { Play, Code, Webhook, Database, Zap, Shield, Globe, Rocket } from "lucide-react";
+import { Play, Code, Webhook, Database, Zap, Shield, Globe, Rocket, ChevronDown } from "lucide-react";
 
 const Index = () => {
   useEffect(() => {
@@ -13,31 +11,30 @@ const Index = () => {
   return (
     <div className="min-h-screen bg-white">
       {/* Header/Navigation */}
-      <header className="sticky top-0 z-50 bg-white/80 backdrop-blur-md border-b border-gray-100">
+      <header className="sticky top-0 z-50 bg-white/70 backdrop-blur supports-[backdrop-filter]:bg-white/50">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-          <div className="flex justify-between items-center h-16">
-            <div className="flex items-center">
-              <Link to="/" className="text-2xl font-bold text-[#0a164d]">
-                TransactLab
-              </Link>
+          <div className="flex items-center justify-between h-16">
+            <div className="hidden md:flex items-center gap-6 text-sm text-gray-700">
+              <a href="#" className="inline-flex items-center gap-1 hover:text-black">
+                Personal <ChevronDown className="w-4 h-4" />
+              </a>
+              <a href="#" className="inline-flex items-center gap-1 hover:text-black">
+                Business <ChevronDown className="w-4 h-4" />
+              </a>
+              <a href="#" className="inline-flex items-center gap-1 hover:text-black">
+                Company <ChevronDown className="w-4 h-4" />
+              </a>
             </div>
-            <nav className="hidden md:flex space-x-8">
-              <a href="#home" className="text-gray-700 hover:text-[#0a164d] font-medium">Home</a>
-              <a href="#features" className="text-gray-700 hover:text-[#0a164d] font-medium">Features</a>
-              <a href="#sandbox" className="text-gray-700 hover:text-[#0a164d] font-medium">Sandbox</a>
-              <a href="#developers" className="text-gray-700 hover:text-[#0a164d] font-medium">Developers</a>
-              <a href="#how-it-works" className="text-gray-700 hover:text-[#0a164d] font-medium">How It Works</a>
-            </nav>
-            <div className="flex items-center gap-3">
-              <Link to="/auth/login">
-                <Button variant="outline" className="border-gray-200">
-                  Login
-                </Button>
-              </Link>
-              <Link to="/auth/login">
-                <Button className="bg-[#0a164d] hover:bg-[#0a164d]/90 text-white">
-                  Get Started
-                </Button>
+            <Link to="/" className="text-xl font-semibold tracking-tight text-black">
+              TransactLab
+            </Link>
+            <div className="flex items-center gap-4 text-sm">
+              <a href="#help" className="text-gray-700 hover:text-black hidden sm:inline">Help</a>
+              <a href="#blog" className="text-gray-700 hover:text-black hidden sm:inline">Blog</a>
+              <a href="#lang" className="text-gray-700 hover:text-black hidden md:inline">EN</a>
+              <Link to="/auth/login" className="text-gray-700 hover:text-black">Log in</Link>
+              <Link to="/auth/register">
+                <Button className="h-8 rounded-full px-4 bg-black text-white hover:bg-black/90">Sign up</Button>
               </Link>
             </div>
           </div>
@@ -45,57 +42,48 @@ const Index = () => {
       </header>
 
       {/* Hero Section */}
-      <section id="home" className="relative bg-gradient-to-br from-[#0a164d] via-blue-700 to-[#0a164d] py-20">
-        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 text-center">
-          <div className="inline-flex items-center px-3 py-1 rounded-full bg-white/20 text-white text-sm font-medium mb-6 backdrop-blur-sm">
-            <Zap className="w-4 h-4 mr-2" />
-            Developer Sandbox Platform
-          </div>
-          
-          <h1 className="text-5xl md:text-6xl font-bold text-white mb-6 leading-tight">
-            Developer Sandbox for{" "}
-            <span className="relative">
-              Payment Testing
-              <svg className="absolute -top-2 -right-8 w-8 h-8 text-yellow-300" fill="currentColor" viewBox="0 0 20 20">
-                <path d="M2 11a1 1 0 011-1h2a1 1 0 011 1v5a1 1 0 01-1 1H3a1 1 0 01-1-1v-5zM8 7a1 1 0 011-1h2a1 1 0 011 1v9a1 1 0 01-1 1H9a1 1 0 01-1-1V7zM14 4a1 1 0 011-1h2a1 1 0 011 1v12a1 1 0 01-1 1h-2a1 1 0 01-1-1V4z" />
-              </svg>
-            </span>{" "}
-            and{" "}
-            <span className="relative">
-              Integration
-              <svg className="absolute -top-2 -right-8 w-8 h-8 text-green-300" fill="currentColor" viewBox="0 0 20 20">
-                <path fillRule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zm3.707-9.293a1 1 0 00-1.414-1.414L9 10.586 7.707 9.293a1 1 0 00-1.414 1.414l2 2a1 1 0 001.414 0l4-4z" clipRule="evenodd" />
-              </svg>
-            </span>
-          </h1>
-          
-          <p className="text-xl text-blue-100 mb-8 max-w-3xl mx-auto">
-            TransactLab provides a production-ready sandbox environment that emulates real payment processors like Paystack, Stripe, and Flutterwave - designed specifically for developers to test, debug, and perfect their payment integrations.
-          </p>
-          
-          <div className="flex flex-col sm:flex-row gap-4 justify-center mb-12">
-            <Link to="/auth/login">
-              <Button size="lg" className="bg-white hover:bg-gray-100 hover:text-black text-[#0a164d] px-8 py-3 text-lg font-semibold">
-                Get Started
-              </Button>
-            </Link>
-            <Link to="/auth/register">
-              <Button size="lg" variant="outline" className="border-white/30 text-black hover:bg-white/10 hover:text-white px-8 py-3 text-lg backdrop-blur-sm">
-                Create Account
-              </Button>
-            </Link>
-          </div>
-          
-          <div className="text-center">
-            <p className="text-sm font-semibold text-blue-200 uppercase tracking-wider mb-4">
-             SANDBOX ALTERNATIVE FOR
-            </p>
-            <div className="flex justify-center items-center space-x-8 opacity-80">
-              <span className="text-white font-semibold">Paystack</span>
-              <span className="text-white font-semibold">Stripe</span>
-              <span className="text-white font-semibold">Flutterwave</span>
-              <span className="text-white font-semibold">PayPal</span>
-              <span className="text-white font-semibold">Square</span>
+      <section id="home" className="py-10 sm:py-14 bg-white">
+        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+          <div className="relative overflow-hidden rounded-3xl bg-black text-white">
+            {/* glow */}
+            <div className="pointer-events-none absolute inset-0 bg-[radial-gradient(60%_60%_at_10%_0%,rgba(34,197,94,0.25),transparent_60%),radial-gradient(40%_40%_at_90%_10%,rgba(59,130,246,0.2),transparent_60%)]" />
+            {/* subtle grid */}
+            <div className="pointer-events-none absolute inset-0 opacity-[0.08] bg-[linear-gradient(transparent_23px,rgba(255,255,255,0.08)_24px),linear-gradient(90deg,transparent_23px,rgba(255,255,255,0.08)_24px)] bg-[length:24px_24px]" />
+
+            <div className="relative px-6 sm:px-12 pt-16 pb-20">
+              <h1 className="text-5xl sm:text-6xl font-semibold leading-tight tracking-tight">
+                Your money is
+                <br />
+                <span className="text-white/90">where you are</span>
+              </h1>
+              <p className="mt-5 max-w-xl text-white/70">
+                Spend, save and manage your money, all in one place. Open a full
+                bank account on your phone, for free.
+              </p>
+              <div className="mt-8">
+                <Link to="/auth/register">
+                  <Button className="rounded-full bg-white text-black hover:bg-white/90 h-11 px-6">
+                    Open TransactLab account
+                  </Button>
+                </Link>
+              </div>
+
+              {/* lower preview bar */}
+              <div className="mt-14 rounded-2xl bg-white/5 ring-1 ring-white/10 p-4 sm:p-5">
+                <div className="flex items-center justify-between text-sm text-white/70">
+                  <div className="flex items-center gap-2">
+                    <div className="size-6 rounded-full bg-white/10 flex items-center justify-center">
+                      <Play className="w-3.5 h-3.5" />
+                    </div>
+                    <span>Cards dashboard preview</span>
+                  </div>
+                  <div className="hidden sm:flex items-center gap-2">
+                    <span className="h-2 w-2 rounded-full bg-emerald-400" />
+                    <span>Live</span>
+                  </div>
+                </div>
+                <div className="mt-4 h-28 sm:h-32 rounded-xl bg-gradient-to-br from-white/5 to-white/0 ring-1 ring-white/10" />
+              </div>
             </div>
           </div>
         </div>
