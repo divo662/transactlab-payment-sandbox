@@ -733,18 +733,25 @@ export class SandboxController {
         });
       }
 
-      const { amount, amount_minor, currency, description, customerEmail, customerName, metadata, success_url, cancel_url, successUrl, cancelUrl } = req.body;
+      const { amount, currency, description, customerEmail, customerName, metadata, success_url, cancel_url, successUrl, cancelUrl } = req.body;
+      
+      // Debug logging
+      console.log('🔍 [createSession] Request body received:', {
+        amount,
+        currency,
+        description,
+        customerEmail,
+        hasAmount: !!amount,
+        amountType: typeof amount
+      });
       
       // Validation with field hints
       const errors: string[] = [];
-      if (!amount && !amount_minor) {
+      if (amount === undefined || amount === null) {
         errors.push('missing amount');
       }
-      if (amount && typeof amount !== 'number') {
+      if (amount !== undefined && amount !== null && typeof amount !== 'number') {
         errors.push('invalid amount (must be number)');
-      }
-      if (amount_minor && typeof amount_minor !== 'number') {
-        errors.push('invalid amount_minor (must be number)');
       }
       if (currency && typeof currency !== 'string') {
         errors.push('invalid currency (must be string)');
@@ -772,6 +779,7 @@ export class SandboxController {
       }
       
       if (errors.length > 0) {
+        console.log('❌ [createSession] Validation failed:', { errors, receivedBody: req.body, amount });
         return res.status(400).json({
           success: false,
           error: 'Bad Request',
@@ -780,10 +788,10 @@ export class SandboxController {
         });
       }
       
-      // Accept standard major units by default; allow explicit minor units via amount_minor
-      const computedAmountMinor = typeof amount_minor === 'number' && amount_minor > 0
-        ? Math.round(amount_minor)
-        : (typeof amount === 'number' && amount > 0 ? Math.round(amount * 100) : 1000);
+      // Convert major units amount to minor units (e.g., NGN kobo, USD cents)
+      const computedAmountMinor = (typeof amount === 'number' && amount > 0)
+        ? Math.round(amount * 100)
+        : 1000;
         
       const session = (new SandboxSession({
           userId: userId.toString(),

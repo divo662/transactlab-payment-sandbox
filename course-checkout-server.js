@@ -21,32 +21,25 @@ const app = express();
 const port = process.env.PORT || 3000;
 
 const CONFIG = {
-  TL_BASE: process.env.TL_BASE || 'https://transactlab-backend.onrender.com/api/v1/sandbox',
-  SUCCESS_URL: process.env.SUCCESS_URL || 'http://localhost:3000/?payment=success',
-  CANCEL_URL: process.env.CANCEL_URL || 'http://localhost:3000/?payment=cancelled',
-  TL_WEBHOOK_SECRET: process.env.TL_WEBHOOK_SECRET || '',
-  FRONTEND_URL: process.env.FRONTEND_URL || 'https://transactlab-payment-sandbox.vercel.app',
+  TL_BASE: 'https://transactlab-backend.onrender.com/api/v1/sandbox',
+  SUCCESS_URL: 'http://localhost:3000/?payment=success',
+  CANCEL_URL: 'http://localhost:3000/?payment=cancelled',
+  TL_WEBHOOK_SECRET: 'jZ3W82Qbh0Ydl2XboZo7vJxc1chSJRS9',
+  FRONTEND_URL: 'https://transactlab-payment-sandbox.vercel.app',
 };
 
 // In‑memory stores with better error handling
 const enrollments = new Map(); // key: email+offer
 const webhookEvents = new Set();
 
-// Enhanced auth header detection
+// Hardcoded auth headers for testing
 function getAuthHeaders() {
-  const headers = {};
-  if (process.env.TL_SECRET) {
-    headers['x-sandbox-secret'] = process.env.TL_SECRET;
-  } else if (process.env.TL_SECRET_KEY) {
-    headers['x-api-key'] = process.env.TL_SECRET_KEY;
-  } else if (process.env.TL_TOKEN) {
-    headers['authorization'] = process.env.TL_TOKEN.startsWith('Bearer ') 
-      ? process.env.TL_TOKEN 
-      : `Bearer ${process.env.TL_TOKEN}`;
-  } else {
-    console.warn('Warning: No authentication method found. Set TL_SECRET, TL_SECRET_KEY, or TL_TOKEN');
-  }
-  return headers;
+  const secret = 'sk_test_secret_mfdyeivx_6a8462bd27c4bc1ec7fb328646ec6649';
+  console.log('🔑 Using sandbox secret:', secret.substring(0, 20) + '...');
+  return {
+    'x-sandbox-secret': secret,
+    'Content-Type': 'application/json'
+  };
 }
 
 function enrollmentKey(email = '', offer = '') {
@@ -70,6 +63,10 @@ function normalizeCheckoutUrl(apiResponse) {
 
   // Use our internal proxy route for workspace-bound checkout
   const checkoutUrl = `${CONFIG.FRONTEND_URL}/checkout/${sessionId}`;
+  
+  console.log('🔗 Generated checkout URL:', checkoutUrl);
+  console.log('📋 Session ID:', sessionId);
+  console.log('🌐 Frontend URL:', CONFIG.FRONTEND_URL);
 
   return {
     sessionId: sessionId,
@@ -124,16 +121,23 @@ app.post('/api/create-session', async (req, res) => {
       ...getAuthHeaders() 
     };
 
-    console.log('Creating session with payload:', {
+    console.log('📝 Creating session with payload:', {
       amount: payload.amount,
       currency: payload.currency,
       customerEmail: payload.customerEmail,
-      description: payload.description
+      description: payload.description,
+      fullPayload: payload
     });
 
+    // Convert amount to minor units (kobo for NGN)
+    const amount = payload.amount;
+    const currency = payload.currency || 'NGN';
+    
+    console.log('💰 Amount:', { original: amount, currency: currency });
+
     const requestBody = {
-      amount: payload.amount,
-      currency: payload.currency || 'NGN',
+      amount: amount,
+      currency: currency,
       description: payload.description || 'Course Registration',
       customer: payload.customer,
       customerEmail: payload.customerEmail || payload.customer?.email,
@@ -142,6 +146,12 @@ app.post('/api/create-session', async (req, res) => {
       cancel_url: payload.cancel_url || CONFIG.CANCEL_URL,
       metadata: payload.metadata || {},
     };
+
+    console.log('🚀 Sending request to TransactLab:', {
+      url: `${CONFIG.TL_BASE}/sessions`,
+      headers: headers,
+      body: requestBody
+    });
 
     const resp = await fetch(`${CONFIG.TL_BASE}/sessions`, {
       method: 'POST',
@@ -629,61 +639,17 @@ app.post('/internal/checkout/sessions/:id/process', async (req, res) => {
 app.get('/api/checkout-url/:sessionId', (req, res) => {
   const id = req.params.sessionId;
   if (!id) return res.status(400).json({ success: false, error: 'sessionId required' });
-  let base = CONFIG.TL_CHECKOUT_BASE.replace(/\/$/, '');
-  base = base.replace(/\/checkout$/, '');
-  const url = `${base}/checkout/${id}`;
+  const url = `${CONFIG.FRONTEND_URL}/checkout/${id}`;
   res.json({ success: true, url });
 });
 
-// Minimal hosted checkout page (optional) served by this server
+// Redirect to TransactLab's workspace-bound hosted checkout
 app.get('/checkout/:sessionId', (req, res) => {
   const { sessionId } = req.params;
-  const successUrl = CONFIG.SUCCESS_URL;
-  const cancelUrl = CONFIG.CANCEL_URL;
-  res.setHeader('content-type', 'text/html; charset=utf-8');
-  res.end(`<!doctype html>
-<html><head><meta charset="utf-8"/><meta name="viewport" content="width=device-width, initial-scale=1"/>
-<title>Checkout</title>
-<style>body{font-family:system-ui,Segoe UI,Roboto,Arial;padding:24px;max-width:720px;margin:0 auto}button{padding:10px 14px;border:0;border-radius:8px;background:#0a164d;color:#fff;font-weight:700;cursor:pointer}button:disabled{opacity:.6;cursor:not-allowed}.panel{border:1px solid #e6e9ef;border-radius:12px;padding:16px;margin-top:12px}</style>
-</head><body>
-<h1>Sandbox Checkout</h1>
-<div id="msg">Loading session...</div>
-<div class="panel" id="details" style="display:none"></div>
-<div style="margin-top:12px">
-  <button id="pay">Complete Test Payment</button>
-  <button id="cancel" style="margin-left:8px;background:#666">Cancel</button>
-</div>
-<script>
-const id = ${JSON.stringify(sessionId)};
-const successUrl = ${JSON.stringify(successUrl)};
-const cancelUrl = ${JSON.stringify(cancelUrl)};
-const msg = document.getElementById('msg');
-const details = document.getElementById('details');
-const payBtn = document.getElementById('pay');
-const cancelBtn = document.getElementById('cancel');
-
-fetch('/internal/checkout/sessions/' + id)
-  .then(r=>r.json())
-  .then(s => {
-    if (!s || s.success === false) throw new Error('Unable to load session');
-    msg.textContent = 'Review and complete your sandbox payment';
-    details.style.display='block';
-    const d = s.data || s;
-    details.innerHTML = '<div><b>Description:</b> ' + (d.description||'—') + '</div>'+
-                        '<div><b>Amount:</b> ' + (d.amount||d.amount_minor||'—') + ' ' + (d.currency||'') + '</div>'+
-                        '<div><b>Session:</b> ' + id + '</div>';
-  })
-  .catch(e => { msg.textContent = 'Failed to load session'; console.error(e); });
-
-payBtn.onclick = () => {
-  payBtn.disabled = true;
-  fetch('/internal/checkout/sessions/' + id + '/process', { method:'POST' })
-    .then(r=>r.json())
-    .then(_ => { window.location.href = successUrl; })
-    .catch(e => { payBtn.disabled=false; alert('Failed to process payment'); console.error(e); });
-};
-
-cancelBtn.onclick = () => { window.location.href = cancelUrl; };
-</script>
-</body></html>`);
+  const checkoutUrl = `${CONFIG.FRONTEND_URL}/checkout/${sessionId}`;
+  
+  console.log('🔄 Redirecting from localhost checkout to:', checkoutUrl);
+  console.log('📋 Session ID:', sessionId);
+  
+  res.redirect(302, checkoutUrl);
 });
