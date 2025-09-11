@@ -866,7 +866,7 @@ export class SandboxController {
       // First check if session exists at all
       const sessionExists = await SandboxSession.findOne({ sessionId });
       if (!sessionExists) {
-        return res.status(404).json({
+         return res.status(404).json({
           success: false,
           error: 'Not found',
           message: 'Session not found'
@@ -1177,9 +1177,9 @@ export class SandboxController {
           logger.warn('Sandbox: failed to send payment success email', e);
         }
 
-        res.json({
-          success: true,
-          data: {
+      res.json({
+        success: true,
+        data: {
             status: 'completed',
             transactionId: session.sessionId, // Use sessionId as transactionId
             amount: session.getFormattedAmount(),

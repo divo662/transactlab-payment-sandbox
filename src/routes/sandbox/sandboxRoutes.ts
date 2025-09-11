@@ -2,7 +2,7 @@ import { Router } from 'express';
 import { SandboxController } from '../../controllers/sandbox/sandboxController';
 import { sandboxFlexibleAuth } from '../../middleware/auth/sandboxFlexibleAuth';
 import { applyWorkspaceScope } from '../../middleware/auth/applyWorkspaceScope';
-import { getFraudSummary, getRecentFraudDecisions } from '../../controllers/analytics/reportController';
+import { getFraudSummary, getRecentFraudDecisions, listFraudReviews, approveFraudReview, denyFraudReview } from '../../controllers/analytics/reportController';
 
 const router = Router();
 
@@ -34,6 +34,9 @@ router.put('/fraud/settings', SandboxController.updateFraudSettings);
 // Fraud read-only summaries (sandbox-auth)
 router.get('/fraud/summary', getFraudSummary);
 router.get('/fraud/decisions', getRecentFraudDecisions);
+router.get('/fraud/reviews', listFraudReviews);
+router.post('/fraud/reviews/:id/approve', approveFraudReview);
+router.post('/fraud/reviews/:id/deny', denyFraudReview);
 
 // Payment processing
 router.post('/sessions/:sessionId/process-payment', SandboxController.processPayment);

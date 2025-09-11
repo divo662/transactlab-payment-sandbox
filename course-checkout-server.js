@@ -175,7 +175,7 @@ app.post('/api/create-session', async (req, res) => {
   try {
     const payload = req.body || {};
     const headers = { 
-      ...getAuthHeaders()
+      ...getAuthHeaders() 
     };
 
     console.log('📝 Creating session with payload:', {
@@ -363,8 +363,8 @@ app.post('/api/create-subscription', async (req, res) => {
       if (!hasPlanBits) missing.push('amount, currency, interval');
 
       if (missing.length) {
-        return res.status(400).json({
-          success: false,
+      return res.status(400).json({
+        success: false,
           error: 'Missing fields',
           details: { missing, hint: 'Provide planId OR productId/productName with amount, currency, interval' }
         });

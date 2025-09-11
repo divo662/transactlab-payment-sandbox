@@ -519,7 +519,7 @@ export default ReportController;
 // --- Minimal Fraud Review Handlers ---
 export const listFraudReviews = async (req: Request, res: Response): Promise<void> => {
   try {
-    const userId = (req.user as any)?._id?.toString?.() || (req.user as any)?.id || (req.query.userId as string);
+    const userId = (req.user as any)?._id?.toString?.() || (req.user as any)?.id || (req.query.userId as string) || (req.headers['x-owner-id'] as string);
     const status = (req.query.status as string) || 'pending';
     if (!userId) {
       res.status(400).json({ success: false, error: 'Missing userId' });
