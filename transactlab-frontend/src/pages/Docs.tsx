@@ -355,8 +355,8 @@ window.location.href = 'https://transactlab-payment-sandbox.vercel.app/checkout/
         <div className="mt-3 p-3 bg-blue-50 border border-blue-200 rounded-lg">
           <p className="text-sm font-medium text-blue-800 mb-1">Internal Proxy Routes (for workspace-bound checkout)</p>
           <ul className="text-xs text-blue-700 list-disc list-inside space-y-1">
-            <li>GET /internal/checkout/sessions/:id - Fetch session data (no auth required)</li>
-            <li>POST /internal/checkout/sessions/:id/process - Process payment (no auth required)</li>
+            <li>GET &lt;backend-origin&gt;/checkout/:id - Public session JSON (no auth required)</li>
+            <li>POST &lt;your-course-server&gt;/internal/checkout/sessions/:id/process - Process payment via your server proxy</li>
           </ul>
         </div>
       </section>

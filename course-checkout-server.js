@@ -61,12 +61,18 @@ function normalizeCheckoutUrl(apiResponse) {
     throw new Error('No sessionId found in API response');
   }
 
-  // Use our internal proxy route for workspace-bound checkout
-  const checkoutUrl = `${CONFIG.FRONTEND_URL}/checkout/${sessionId}`;
+  // Always prefer the frontend URL when provided so users land on your UI
+  const frontendUrl = CONFIG.FRONTEND_URL;
+  const backendOrigin = (() => { try { return new URL(CONFIG.TL_BASE).origin; } catch { return 'https://transactlab-backend.onrender.com'; } })();
+  const providerCheckoutUrl = data?.checkoutUrl;
+
+  const checkoutUrl = frontendUrl
+    ? `${frontendUrl.replace(/\/$/, '')}/checkout/${sessionId}`
+    : (providerCheckoutUrl || `${backendOrigin}/checkout/${sessionId}`);
   
   console.log('🔗 Generated checkout URL:', checkoutUrl);
   console.log('📋 Session ID:', sessionId);
-  console.log('🌐 Frontend URL:', CONFIG.FRONTEND_URL);
+  console.log('🏢 Backend Origin:', backendOrigin);
 
   return {
     sessionId: sessionId,
@@ -117,8 +123,7 @@ app.post('/api/create-session', async (req, res) => {
   try {
     const payload = req.body || {};
     const headers = { 
-      'content-type': 'application/json', 
-      ...getAuthHeaders() 
+      ...getAuthHeaders()
     };
 
     console.log('📝 Creating session with payload:', {
@@ -129,11 +134,14 @@ app.post('/api/create-session', async (req, res) => {
       fullPayload: payload
     });
 
-    // Convert amount to minor units (kobo for NGN)
+    // Send amount in major units (API handles conversion internally)
     const amount = payload.amount;
     const currency = payload.currency || 'NGN';
     
-    console.log('💰 Amount:', { original: amount, currency: currency });
+    console.log('💰 Amount being sent:', {
+      amount: amount,
+      currency: currency
+    });
 
     const requestBody = {
       amount: amount,
@@ -231,6 +239,64 @@ app.post('/api/create-session', async (req, res) => {
       message: 'create-session failed', 
       error: error.message 
     });
+  }
+});
+
+// Create a session and redirect the browser to the frontend checkout URL
+app.post('/api/create-session-redirect', async (req, res) => {
+  try {
+    const payload = req.body || {};
+    const headers = { 
+      ...getAuthHeaders()
+    };
+
+    const amount = payload.amount;
+    const currency = payload.currency || 'NGN';
+
+    const requestBody = {
+      amount: amount,
+      currency: currency,
+      description: payload.description || 'Course Registration',
+      customer: payload.customer,
+      customerEmail: payload.customerEmail || payload.customer?.email,
+      items: payload.items,
+      success_url: payload.success_url || CONFIG.SUCCESS_URL,
+      cancel_url: payload.cancel_url || CONFIG.CANCEL_URL,
+      metadata: payload.metadata || {},
+    };
+
+    const resp = await fetch(`${CONFIG.TL_BASE}/sessions`, {
+      method: 'POST',
+      headers,
+      body: JSON.stringify(requestBody),
+    });
+
+    const text = await resp.text();
+    const data = text ? JSON.parse(text) : {};
+
+    if (!resp.ok) {
+      return res.status(resp.status).json({ success: false, error: 'Payment provider error', details: data });
+    }
+
+    const normalized = normalizeCheckoutUrl(data);
+    return res.redirect(302, normalized.checkoutUrl);
+  } catch (error) {
+    logError('create-session-redirect', error, { body: req.body });
+    return res.status(500).json({ success: false, message: 'create-session-redirect failed', error: error.message });
+  }
+});
+
+// Public session proxy (no secret): returns provider's public checkout JSON
+app.get('/api/public-sessions/:id', async (req, res) => {
+  try {
+    const backendOrigin = (() => { try { return new URL(CONFIG.TL_BASE).origin; } catch { return 'https://transactlab-backend.onrender.com'; } })();
+    const resp = await fetch(`${backendOrigin}/checkout/${req.params.id}`);
+    const text = await resp.text();
+    let json = {};
+    try { json = text ? JSON.parse(text) : {}; } catch { /* keep raw */ }
+    return res.status(resp.status).json(json || {});
+  } catch (e) {
+    return res.status(500).json({ success: false, error: String(e) });
   }
 });
 

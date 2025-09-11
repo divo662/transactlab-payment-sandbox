@@ -44,7 +44,10 @@ interface PaymentFormData {
   saveCard: boolean;
 }
 
-const API_BASE = 'https://transactlab-backend.onrender.com/api/v1';
+// Public backend origin for read-only checkout session (no secrets required)
+const PUBLIC_BACKEND_ORIGIN = 'https://transactlab-backend.onrender.com';
+// Course server base for server-side processing (keeps secrets on server)
+const COURSE_SERVER_BASE = (import.meta as any)?.env?.VITE_COURSE_API_BASE || 'http://localhost:3000';
 
 const CheckoutPage: React.FC = () => {
   const { sessionId } = useParams<{ sessionId: string }>();
@@ -81,12 +84,13 @@ const CheckoutPage: React.FC = () => {
   useEffect(() => {
     const fetchSession = async () => {
       try {
-        const res = await fetch(`${API_BASE}/internal/checkout/sessions/${sessionId}`);
+        // Fetch public session data from backend (no auth, no secrets)
+        const res = await fetch(`${PUBLIC_BACKEND_ORIGIN}/checkout/${sessionId}`);
         const json = await res.json();
         if (!res.ok || !json?.success) {
           throw new Error(json?.message || 'Failed to load checkout session');
         }
-        // Backend returns data as session object
+        // Public endpoint returns { success, data: {...} }
         const s = json.data;
         const normalized: CheckoutSession = {
           sessionId: s.sessionId,
@@ -232,7 +236,8 @@ const CheckoutPage: React.FC = () => {
     setError(null);
     try {
       const [mm, yy] = formData.expiryDate.split('/');
-      const res = await fetch(`${API_BASE}/internal/checkout/sessions/${session.sessionId}/process`, {
+      // Use course server proxy to process payment (server adds sandbox secret)
+      const res = await fetch(`${COURSE_SERVER_BASE}/internal/checkout/sessions/${session.sessionId}/process`, {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json'
