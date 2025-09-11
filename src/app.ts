@@ -284,7 +284,7 @@ app.post('/api/v1/checkout/process/:sessionId', async (req, res) => {
           try {
             await SandboxFraudReview.create({
               sessionId: session.sessionId,
-              userId: (session as any).userId,
+              userId: (session as any).userId?.toString?.() || (session as any).userId,
               riskScore: riskAnalysis.riskScore.score,
               riskLevel: riskAnalysis.riskScore.level,
               factors: riskAnalysis.riskScore.factors,

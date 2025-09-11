@@ -58,6 +58,7 @@ const CheckoutPage: React.FC = () => {
   const [session, setSession] = useState<CheckoutSession | null>(null);
   const [loading, setLoading] = useState(true);
   const [processing, setProcessing] = useState(false);
+  const [decision, setDecision] = useState<null | { action: 'review' | 'block'; risk?: any }>(null);
   const [showCvv, setShowCvv] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [success, setSuccess] = useState(false);
@@ -254,6 +255,16 @@ const CheckoutPage: React.FC = () => {
         body: JSON.stringify({})
       });
       const json = await res.json();
+      // Friendly handling of fraud outcomes
+      if (res.status === 202 || json?.error === 'review_required') {
+        setDecision({ action: 'review', risk: json?.risk });
+        setError('Thanks! Your payment is being reviewed for your security. This usually takes a few minutes. We\'ll notify you by email once it\'s cleared.');
+        return;
+      }
+      if (res.status === 403 || json?.error === 'blocked_by_fraud') {
+        setDecision({ action: 'block', risk: json?.risk });
+        throw new Error('We couldn\'t complete this payment. Please try another card or contact support.');
+      }
       if (!res.ok || json?.success === false) {
         throw new Error(json?.message || json?.error || 'Payment failed.');
       }
@@ -549,20 +560,42 @@ const CheckoutPage: React.FC = () => {
                   </div>
                 </div>
 
-                {/* Error Message */}
-                  {error && (
-                  <div className="bg-red-50 border border-red-200 rounded-lg p-4">
-                      <div className="flex items-center">
-                        <AlertCircle className="w-5 h-5 text-red-500 mr-2" />
-                        <p className="text-red-700">{error}</p>
+                {/* Decision / Error Message */}
+                {decision?.action === 'review' && (
+                  <div className="bg-amber-50 border border-amber-200 rounded-lg p-4">
+                    <div className="flex items-start gap-2">
+                      <AlertCircle className="w-5 h-5 text-amber-500 mt-0.5" />
+                      <div className="text-amber-800 text-sm">
+                        <div className="font-semibold mb-1">Payment under review</div>
+                        <p>For your security, we\'re taking a quick look at this payment. You don\'t need to do anything now — we\'ll email you when it\'s cleared. You can also try a different payment method.</p>
                       </div>
+                    </div>
                   </div>
-                  )}
+                )}
+                {decision?.action === 'block' && (
+                  <div className="bg-red-50 border border-red-200 rounded-lg p-4">
+                    <div className="flex items-start gap-2">
+                      <AlertCircle className="w-5 h-5 text-red-500 mt-0.5" />
+                      <div className="text-red-700 text-sm">
+                        <div className="font-semibold mb-1">We couldn\'t complete the payment</div>
+                        <p>Please try a different card or payment method. If this keeps happening, contact support and share your session ID: <span className="font-mono">{session.sessionId}</span>.</p>
+                      </div>
+                    </div>
+                  </div>
+                )}
+                {error && !decision && (
+                  <div className="bg-red-50 border border-red-200 rounded-lg p-4">
+                    <div className="flex items-center">
+                      <AlertCircle className="w-5 h-5 text-red-500 mr-2" />
+                      <p className="text-red-700">{error}</p>
+                    </div>
+                  </div>
+                )}
 
                 {/* Submit Button */}
                 <button
                   type="submit"
-                  disabled={processing || session.status !== 'pending'}
+                  disabled={processing || session.status !== 'pending' || decision?.action === 'review'}
                   className="w-full bg-[#0a164d] text-white py-3 sm:py-4 px-4 sm:px-6 rounded-lg font-semibold hover:bg-[#0a164d]/90 disabled:opacity-50 disabled:cursor-not-allowed transition-all transform hover:scale-[1.02] active:scale-[0.98] text-sm sm:text-base md:text-lg"
                 >
                   {processing ? (
