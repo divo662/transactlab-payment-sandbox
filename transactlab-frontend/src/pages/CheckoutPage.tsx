@@ -18,6 +18,7 @@ interface CheckoutSession {
   currency: string;
   description: string;
   customerEmail?: string;
+  checkoutUrl?: string;
   status: 'pending' | 'processing' | 'completed' | 'failed' | 'expired' | 'cancelled';
   expiresAt: string;
   // optional callback info if backend includes it
@@ -106,6 +107,7 @@ const CheckoutPage: React.FC = () => {
           amount: amountMinor,
           currency: s.currency,
           description: s.description,
+          checkoutUrl: s.checkoutUrl || `${PUBLIC_BACKEND_ORIGIN}/checkout/${s.sessionId}`,
           customerEmail: s.customerEmail,
           status: s.status,
           expiresAt: s.expiresAt,
@@ -244,8 +246,9 @@ const CheckoutPage: React.FC = () => {
     setProcessing(true);
     setError(null);
     try {
-      // Hosted Checkout: simply redirect to provider-hosted page
-      window.location.assign(`${PUBLIC_BACKEND_ORIGIN}/checkout/${session.sessionId}`);
+      // Hosted Checkout: redirect to provider-hosted checkout URL from the session
+      const target = session.checkoutUrl || `${PUBLIC_BACKEND_ORIGIN}/checkout/${session.sessionId}`;
+      window.location.assign(target);
     } catch (e: any) {
       setError(e?.message || 'An unexpected error occurred. Please try again.');
     } finally {

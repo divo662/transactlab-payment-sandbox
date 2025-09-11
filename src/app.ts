@@ -195,10 +195,8 @@ app.get('/checkout/:sessionId', async (req, res) => {
       });
     }
 
-    // For now, return session data with checkout URL
-    // In a full implementation, this would render a checkout page
+    // Return JSON; frontend handles redirect to hosted checkout
     const checkoutUrl = `${req.protocol}://${req.get('host')}/checkout/${sessionId}`;
-    
     res.json({
       success: true,
       data: {

@@ -1,4 +1,4 @@
-import { useEffect } from "react";
+import { useEffect, useState } from "react";
 import { Link } from "react-router-dom";
 import { Button } from "@/components/ui/button";
 import { Play, Code, Webhook, Database, Zap, Shield, Globe, Rocket, ChevronDown } from "lucide-react";
@@ -14,24 +14,19 @@ const Index = () => {
       <header className="sticky top-0 z-50 bg-white/70 backdrop-blur supports-[backdrop-filter]:bg-white/50">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
           <div className="flex items-center justify-between h-16">
-            <div className="hidden md:flex items-center gap-6 text-sm text-gray-700">
-              <a href="#" className="inline-flex items-center gap-1 hover:text-black">
-                Personal <ChevronDown className="w-4 h-4" />
-              </a>
-              <a href="#" className="inline-flex items-center gap-1 hover:text-black">
-                Business <ChevronDown className="w-4 h-4" />
-              </a>
-              <a href="#" className="inline-flex items-center gap-1 hover:text-black">
-                Company <ChevronDown className="w-4 h-4" />
-              </a>
-            </div>
+            <nav className="hidden md:flex items-center gap-6 text-sm text-gray-700">
+              <a href="#home" className="hover:text-black">Overview</a>
+              <a href="#features" className="hover:text-black">Features</a>
+              <a href="#sandbox" className="hover:text-black">Sandbox</a>
+              <a href="#developers" className="hover:text-black">Developers</a>
+              <a href="#how-it-works" className="hover:text-black">How it works</a>
+              <a href="#test-data" className="hover:text-black">Test data</a>
+              <a href="/docs" className="hover:text-black">Docs</a>
+            </nav>
             <Link to="/" className="text-xl font-semibold tracking-tight text-black">
               TransactLab
-            </Link>
+              </Link>
             <div className="flex items-center gap-4 text-sm">
-              <a href="#help" className="text-gray-700 hover:text-black hidden sm:inline">Help</a>
-              <a href="#blog" className="text-gray-700 hover:text-black hidden sm:inline">Blog</a>
-              <a href="#lang" className="text-gray-700 hover:text-black hidden md:inline">EN</a>
               <Link to="/auth/login" className="text-gray-700 hover:text-black">Log in</Link>
               <Link to="/auth/register">
                 <Button className="h-8 rounded-full px-4 bg-black text-white hover:bg-black/90">Sign up</Button>
@@ -43,8 +38,8 @@ const Index = () => {
 
       {/* Hero Section */}
       <section id="home" className="py-10 sm:py-14 bg-white">
-        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-          <div className="relative overflow-hidden rounded-3xl bg-black text-white">
+        <div className="max-w-[90rem] mx-auto px-4 sm:px-6 lg:px-8">
+          <div className="relative overflow-hidden rounded-3xl sm:rounded-4xl bg-black text-white">
             {/* glow */}
             <div className="pointer-events-none absolute inset-0 bg-[radial-gradient(60%_60%_at_10%_0%,rgba(34,197,94,0.25),transparent_60%),radial-gradient(40%_40%_at_90%_10%,rgba(59,130,246,0.2),transparent_60%)]" />
             {/* subtle grid */}
@@ -55,37 +50,439 @@ const Index = () => {
                 Your money is
                 <br />
                 <span className="text-white/90">where you are</span>
-              </h1>
+          </h1>
               <p className="mt-5 max-w-xl text-white/70">
-                Spend, save and manage your money, all in one place. Open a full
-                bank account on your phone, for free.
+                Stand up a production‑like payment gateway sandbox. Generate API keys,
+                create checkout sessions and simulate end‑to‑end webhooks for Paystack,
+                Stripe, Flutterwave and more — with zero real money involved.
               </p>
               <div className="mt-8">
-                <Link to="/auth/register">
+            <Link to="/auth/register">
                   <Button className="rounded-full bg-white text-black hover:bg-white/90 h-11 px-6">
-                    Open TransactLab account
-                  </Button>
-                </Link>
+                    Get Sandbox Access
+              </Button>
+            </Link>
+          </div>
+          
+              {/* key bullets from README */}
+              <div className="mt-10 grid gap-4 sm:grid-cols-3 max-w-4xl text-white/80 text-sm">
+                <div className="rounded-xl bg-white/5 ring-1 ring-white/10 p-4">
+                  <p className="font-medium text-white">Gateway sandbox</p>
+                  <p className="mt-1">Alternative to Paystack, Stripe, Flutterwave, PayPal and Square for safe testing.</p>
+                </div>
+                <div className="rounded-xl bg-white/5 ring-1 ring-white/10 p-4">
+                  <p className="font-medium text-white">Webhook simulation</p>
+                  <p className="mt-1">Test delivery, retries and error scenarios with realistic payloads.</p>
+                </div>
+                <div className="rounded-xl bg-white/5 ring-1 ring-white/10 p-4">
+                  <p className="font-medium text-white">API keys & sessions</p>
+                  <p className="mt-1">Create API keys, checkout sessions and end‑to‑end payment flows.</p>
+                </div>
               </div>
 
-              {/* lower preview bar */}
-              <div className="mt-14 rounded-2xl bg-white/5 ring-1 ring-white/10 p-4 sm:p-5">
+              {/* mock dashboard */}
+              <div className="mt-14 rounded-2xl bg-white/5 ring-1 ring-white/10 p-4 sm:p-6">
                 <div className="flex items-center justify-between text-sm text-white/70">
                   <div className="flex items-center gap-2">
                     <div className="size-6 rounded-full bg-white/10 flex items-center justify-center">
                       <Play className="w-3.5 h-3.5" />
                     </div>
-                    <span>Cards dashboard preview</span>
+                    <span>Sandbox dashboard</span>
                   </div>
                   <div className="hidden sm:flex items-center gap-2">
                     <span className="h-2 w-2 rounded-full bg-emerald-400" />
                     <span>Live</span>
                   </div>
                 </div>
-                <div className="mt-4 h-28 sm:h-32 rounded-xl bg-gradient-to-br from-white/5 to-white/0 ring-1 ring-white/10" />
+                <div className="mt-5 grid gap-4 sm:grid-cols-2 lg:grid-cols-4">
+                  <div className="rounded-xl bg-black/40 ring-1 ring-white/10 p-4">
+                    <p className="text-xs text-white/60">API calls today</p>
+                    <p className="mt-2 text-2xl font-semibold">0</p>
+                    <p className="text-xs text-white/50 mt-1">sandbox requests</p>
+                  </div>
+                  <div className="rounded-xl bg-black/40 ring-1 ring-white/10 p-4">
+                    <p className="text-xs text-white/60">Webhook deliveries</p>
+                    <p className="mt-2 text-2xl font-semibold">0</p>
+                    <p className="text-xs text-white/50 mt-1">last 24h</p>
+                  </div>
+                  <div className="rounded-xl bg-black/40 ring-1 ring-white/10 p-4">
+                    <p className="text-xs text-white/60">Checkout sessions</p>
+                    <p className="mt-2 text-2xl font-semibold">0</p>
+                    <p className="text-xs text-white/50 mt-1">active</p>
+                  </div>
+                  <div className="rounded-xl bg-black/40 ring-1 ring-white/10 p-4">
+                    <p className="text-xs text-white/60">Subscriptions</p>
+                    <p className="mt-2 text-2xl font-semibold">0</p>
+                    <p className="text-xs text-white/50 mt-1">test plans</p>
+                  </div>
+                </div>
+                <div className="mt-4 rounded-xl h-36 bg-gradient-to-br from-white/5 to-white/0 ring-1 ring-white/10" />
               </div>
             </div>
           </div>
+        </div>
+      </section>
+
+   
+
+      {/* Daily Finance / Transfer Section */}
+      <section className="py-20 bg-white">
+        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+          <div className="text-center mb-16">
+            <div className="inline-flex items-center px-3 py-1 rounded-full bg-emerald-50 text-emerald-700 text-xs font-semibold mb-4 border border-emerald-100">
+              Sandbox Capabilities
+            </div>
+            <h2 className="text-4xl md:text-5xl font-semibold tracking-tight text-gray-900">
+              Efficiency for developers: a payment
+              <br /> gateway sandbox
+            </h2>
+            <p className="mt-3 text-gray-500">Build, test and debug payment integrations with realistic data and webhooks.</p>
+          </div>
+
+          <div className="grid lg:grid-cols-2 gap-10 items-center">
+            {/* left copy */}
+            <div>
+              <div className="inline-flex items-center px-2.5 py-1 rounded-full bg-emerald-50 text-emerald-700 text-xs font-semibold border border-emerald-100">
+                Checkout & Transfers
+              </div>
+              <h3 className="mt-4 text-3xl font-semibold text-gray-900">Global payments: your
+                <br /> gateway to secure
+                <br /> transactions
+              </h3>
+              <p className="mt-4 text-gray-600 max-w-prose">
+                TransactLab emulates popular gateways so you can prototype checkout, payments,
+                refunds and transfers using sample data, FX rates and realistic response codes.
+              </p>
+            </div>
+
+            {/* right mock card */}
+            <div className="relative">
+              <div className="mx-auto w-full max-w-md rounded-3xl bg-gray-50 border border-gray-200 p-6 shadow-sm">
+                <div className="rounded-2xl bg-white shadow-sm border border-gray-100 p-5">
+                  <p className="text-gray-800 font-medium">Amount</p>
+                  <p className="text-xs text-gray-500 mt-1">Send Money</p>
+                  <div className="mt-3 flex items-center justify-between rounded-xl bg-gray-50 border border-gray-200 px-4 py-3">
+                    <div>
+                      <div className="text-lg font-semibold">€2,129</div>
+                      <div className="text-[11px] text-gray-500">Balance: €5,950.00</div>
+                    </div>
+                    <div className="flex items-center gap-2 text-sm text-gray-700">
+                      <div className="h-6 w-6 rounded-full bg-blue-600" /> EUR
+                    </div>
+                  </div>
+
+                  <p className="mt-6 text-xs text-gray-500">Who are you sending money to?</p>
+                  <div className="mt-2 flex items-center justify-between rounded-xl bg-gray-50 border border-gray-200 px-4 py-3">
+                    <div className="flex items-center gap-3">
+                      <div className="h-7 w-7 rounded-full bg-purple-500 text-white text-xs flex items-center justify-center">JS</div>
+                      <span className="text-sm text-gray-800">John Smith</span>
+                    </div>
+                    <div className="h-5 w-5 rounded-full bg-gray-200" />
+                  </div>
+
+                  <Button className="mt-6 w-full h-11 rounded-full bg-black text-white hover:bg-black/90">Confirm and Send</Button>
+                </div>
+              </div>
+            </div>
+          </div>
+
+          {/* 3 soft cards tailored to sandbox */}
+          <div className="mt-16 grid sm:grid-cols-2 lg:grid-cols-3 gap-6">
+            <div className="rounded-3xl bg-gray-50 border border-gray-200 p-6">
+              <h4 className="text-lg font-semibold text-gray-900">API Analytics</h4>
+              <p className="mt-2 text-sm text-gray-600">Inspect per‑gateway request counts and latency statistics.</p>
+              <div className="mt-5 space-y-3">
+                <div className="flex items-center justify-between rounded-xl bg-white border border-gray-200 px-3 py-2">
+                  <div className="flex items-center gap-2">
+                    <span className="h-4 w-4 rounded-full bg-emerald-500" />
+                    <span className="text-sm text-gray-800">Paystack</span>
+                  </div>
+                  <span className="text-sm text-gray-600">0 req • 0 ms</span>
+                </div>
+                <div className="flex items-center justify-between rounded-xl bg-white border border-gray-200 px-3 py-2">
+                  <div className="flex items-center gap-2">
+                    <span className="h-4 w-4 rounded-full bg-indigo-500" />
+                    <span className="text-sm text-gray-800">Stripe</span>
+                  </div>
+                  <span className="text-sm text-gray-600">0 req • 0 ms</span>
+                </div>
+                <div className="flex items-center justify-between rounded-xl bg-white border border-gray-200 px-3 py-2">
+                  <div className="flex items-center gap-2">
+                    <span className="h-4 w-4 rounded-full bg-yellow-500" />
+                    <span className="text-sm text-gray-800">Flutterwave</span>
+                  </div>
+                  <span className="text-sm text-gray-600">0 req • 0 ms</span>
+                </div>
+              </div>
+            </div>
+
+            <div className="rounded-3xl bg-gray-50 border border-gray-200 p-6">
+              <h4 className="text-lg font-semibold text-gray-900">Webhook Testing</h4>
+              <p className="mt-2 text-sm text-gray-600">Simulate events and verify delivery, retries, and signatures.</p>
+              <div className="mt-5 space-y-3">
+                <div className="rounded-xl bg-white border border-gray-200 px-4 py-3">
+                  <div className="text-sm text-gray-800">0</div>
+                  <div className="text-[11px] text-gray-500">Delivered • last 24h</div>
+                </div>
+                <div className="rounded-xl bg-white border border-gray-200 px-4 py-3">
+                  <div className="text-sm text-gray-800">0</div>
+                  <div className="text-[11px] text-gray-500">Retries • last 24h</div>
+                </div>
+              </div>
+            </div>
+
+            <div className="rounded-3xl bg-gray-50 border border-gray-200 p-6">
+              <h4 className="text-lg font-semibold text-gray-900">Test Data</h4>
+              <p className="mt-2 text-sm text-gray-600">Work with generated customers, products and cards.</p>
+              <div className="mt-5 space-y-3">
+                <div className="flex items-center justify-between rounded-xl bg-white border border-gray-200 px-4 py-2">
+                  <div className="flex items-center gap-2">
+                    <span className="h-3 w-3 rounded-full bg-sky-400" />
+                    <span className="text-sm text-gray-800">Customers</span>
+                  </div>
+                  <span className="text-sm text-gray-600">25+</span>
+                </div>
+                <div className="flex items-center justify-between rounded-xl bg-white border border-gray-200 px-4 py-2">
+                  <div className="flex items-center gap-2">
+                    <span className="h-3 w-3 rounded-full bg-rose-400" />
+                    <span className="text-sm text-gray-800">Products</span>
+                  </div>
+                  <span className="text-sm text-gray-600">15+</span>
+                </div>
+                <div className="flex items-center justify-between rounded-xl bg-white border border-gray-200 px-4 py-2">
+                  <div className="flex items-center gap-2">
+                    <span className="h-3 w-3 rounded-full bg-emerald-400" />
+                    <span className="text-sm text-gray-800">Test cards</span>
+                  </div>
+                  <span className="text-sm text-gray-600">Multiple</span>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+      </section>
+
+   {/* Feature Timeline Section */}
+   <section id="feature-timeline" className="py-20 bg-white">
+        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+          <div className="text-center mb-12">
+            <div className="inline-flex items-center px-3 py-1 rounded-full bg-emerald-50 text-emerald-700 text-xs font-semibold mb-4 border border-emerald-100">
+              Feature Timeline
+            </div>
+            <h2 className="text-4xl font-semibold tracking-tight text-gray-900">Explore TransactLab features</h2>
+            <p className="mt-3 text-gray-600">Click a feature to preview its sandbox experience.</p>
+          </div>
+          <div className="mx-auto max-w-5xl mb-10 text-sm text-gray-600">
+            <div className="rounded-2xl border border-gray-200 bg-gray-50 p-5">
+              <ul className="grid sm:grid-cols-2 lg:grid-cols-3 gap-3 list-disc pl-5">
+                <li><span className="font-medium text-gray-800">API Keys</span>: Workspace‑scoped keys for server/client; rotate and revoke safely.</li>
+                <li><span className="font-medium text-gray-800">Webhook Simulation</span>: Send test events with signatures, latency and retry controls.</li>
+                <li><span className="font-medium text-gray-800">Checkout Sessions</span>: Canonical redirect returns an absolute hosted URL for customers.</li>
+                <li><span className="font-medium text-gray-800">Transactions</span>: Create, fail or pend payments to test success and error paths.</li>
+                <li><span className="font-medium text-gray-800">Subscriptions</span>: Plans, renewals and cancellations with realistic schedule math.</li>
+                <li><span className="font-medium text-gray-800">Fraud Flagging</span>: Toggle common risk signals (velocity, IP mismatch, BIN rules).</li>
+                <li><span className="font-medium text-gray-800">Team Collaboration</span>: Invite roles to share API keys, webhooks and data.</li>
+                <li><span className="font-medium text-gray-800">Workspaces</span>: Isolated sandboxes for multi‑project or multi‑client setups.</li>
+              </ul>
+            </div>
+          </div>
+
+          {(() => {
+            const featureItems = [
+              { key: "api-keys", label: "API Keys", description: "Generate, scope and rotate test keys for your workspace.", how: "Use publishable keys on the client and secret keys on the server. Rotate any key instantly and audit usage by environment." },
+              { key: "webhooks", label: "Webhook Simulation", description: "Trigger events and verify signatures with retry logic.", how: "Configure an endpoint and send signed events. Adjust delays and simulate 2xx/4xx responses to test retries." },
+              { key: "checkout", label: "Checkout Sessions", description: "Create sessions and redirect users to a hosted test checkout.", how: "Create a session via API and redirect customers to the canonical absolute URL. Supports success/cancel return URLs." },
+              { key: "transactions", label: "Transactions", description: "Create, capture and refund test payments with realistic states.", how: "Drive transactions through success, failure or pending states and inspect structured error objects for debugging." },
+              { key: "subscriptions", label: "Subscriptions", description: "Test recurring billing, plan changes and cancellations.", how: "Emulate trial periods, proration and renewal events. Fire webhook notices for invoice.created/paid." },
+              { key: "fraud", label: "Fraud Flagging", description: "Surface risky signals and flagged test transactions.", how: "Flip flags like velocity_high or ip_mismatch to see how your app responds to risk assessment." },
+              { key: "team", label: "Team Collaboration", description: "Invite teammates and share sandbox resources.", how: "Assign roles (Owner/Developer/Viewer) and limit access to keys, sessions and webhooks by workspace." },
+              { key: "workspaces", label: "Workspaces", description: "Isolated environments for keys, data and settings.", how: "Create multiple sandboxes to separate clients or projects. Each workspace has its own keys and data." }
+            ];
+
+            const [activeKey, setActiveKey] = useState<string>(featureItems[0].key);
+
+            const Preview = () => {
+              switch (activeKey) {
+                case "api-keys":
+                  return (
+                    <div className="rounded-3xl bg-gray-50 border border-gray-200 p-6 shadow-sm">
+                      <div className="rounded-2xl bg-white border border-gray-100 p-5">
+                        <p className="text-sm font-medium text-gray-900">Test API Keys</p>
+                        <div className="mt-4 space-y-3">
+                          <div className="flex items-center justify-between rounded-xl bg-gray-50 border border-gray-200 px-4 py-3">
+                            <div>
+                              <div className="text-xs text-gray-500">Publishable</div>
+                              <div className="font-mono text-sm">tl_pk_test_1a2b…9z</div>
+                            </div>
+                            <Button className="h-8 px-3 rounded-full bg-black text-white hover:bg-black/90">Rotate</Button>
+                          </div>
+                          <div className="flex items-center justify-between rounded-xl bg-gray-50 border border-gray-200 px-4 py-3">
+                            <div>
+                              <div className="text-xs text-gray-500">Secret</div>
+                              <div className="font-mono text-sm">tl_sk_test_2c3d…8y</div>
+                            </div>
+                            <Button className="h-8 px-3 rounded-full bg-black text-white hover:bg-black/90">Reveal</Button>
+                          </div>
+                        </div>
+                      </div>
+                    </div>
+                  );
+                case "webhooks":
+                  return (
+                    <div className="rounded-3xl bg-gray-50 border border-gray-200 p-6 shadow-sm">
+                      <div className="rounded-2xl bg-white border border-gray-100 p-5">
+                        <p className="text-sm font-medium text-gray-900">Webhook Delivery</p>
+                        <div className="mt-4 grid sm:grid-cols-2 gap-3">
+                          <div className="rounded-xl bg-gray-50 border border-gray-200 p-4">
+                            <div className="text-xs text-gray-500">Endpoint</div>
+                            <div className="font-mono text-xs truncate">https://example.com/webhook</div>
+                          </div>
+                          <div className="rounded-xl bg-gray-50 border border-gray-200 p-4">
+                            <div className="text-xs text-gray-500">Event</div>
+                            <div className="text-sm">transaction.completed</div>
+                          </div>
+                        </div>
+                        <Button className="mt-4 rounded-full bg-black text-white hover:bg-black/90 h-10 px-5">Send Test Event</Button>
+                      </div>
+                    </div>
+                  );
+                case "checkout":
+                  return (
+                    <div className="rounded-3xl bg-gray-50 border border-gray-200 p-6 shadow-sm">
+                      <div className="rounded-2xl bg-white border border-gray-100 p-5">
+                        <p className="text-sm font-medium text-gray-900">Hosted Checkout</p>
+                        <div className="mt-4 rounded-xl h-32 bg-gradient-to-br from-gray-50 to-white ring-1 ring-gray-200" />
+                        <div className="mt-3 text-xs text-gray-500">Canonical redirect with absolute checkout URL</div>
+                      </div>
+                    </div>
+                  );
+                case "transactions":
+                  return (
+                    <div className="rounded-3xl bg-gray-50 border border-gray-200 p-6 shadow-sm">
+                      <div className="rounded-2xl bg-white border border-gray-100 p-5">
+                        <p className="text-sm font-medium text-gray-900">Transaction Simulation</p>
+                        <div className="mt-4 grid grid-cols-3 gap-3">
+                          {["Success", "Failed", "Pending"].map(s => (
+                            <div key={s} className="rounded-xl bg-gray-50 border border-gray-200 p-4 text-center">
+                              <div className="text-sm font-medium text-gray-800">{s}</div>
+                              <div className="text-[11px] text-gray-500">card • NGN</div>
+                            </div>
+                          ))}
+                        </div>
+                      </div>
+                    </div>
+                  );
+                case "subscriptions":
+                  return (
+                    <div className="rounded-3xl bg-gray-50 border border-gray-200 p-6 shadow-sm">
+                      <div className="rounded-2xl bg-white border border-gray-100 p-5">
+                        <p className="text-sm font-medium text-gray-900">Subscriptions</p>
+                        <div className="mt-4 grid sm:grid-cols-3 gap-3">
+                          <div className="rounded-xl bg-gray-50 border border-gray-200 p-4">
+                            <div className="text-xs text-gray-500">Plan</div>
+                            <div className="text-sm">Starter • $9/mo</div>
+                          </div>
+                          <div className="rounded-xl bg-gray-50 border border-gray-200 p-4">
+                            <div className="text-xs text-gray-500">Status</div>
+                            <div className="text-sm">Active</div>
+                          </div>
+                          <div className="rounded-xl bg-gray-50 border border-gray-200 p-4">
+                            <div className="text-xs text-gray-500">Next charge</div>
+                            <div className="text-sm">in 30 days</div>
+                          </div>
+                        </div>
+                      </div>
+                    </div>
+                  );
+                case "fraud":
+                  return (
+                    <div className="rounded-3xl bg-gray-50 border border-gray-200 p-6 shadow-sm">
+                      <div className="rounded-2xl bg-white border border-gray-100 p-5">
+                        <p className="text-sm font-medium text-gray-900">Fraud Signals</p>
+                        <div className="mt-4 space-y-2">
+                          {["velocity_high", "ip_mismatch", "stolen_card_test"].map(tag => (
+                            <div key={tag} className="flex items-center justify-between rounded-xl bg-gray-50 border border-gray-200 px-4 py-2">
+                              <span className="text-sm text-gray-800">{tag}</span>
+                              <span className="text-xs rounded-full px-2 py-0.5 bg-amber-100 text-amber-700 border border-amber-200">flagged</span>
+                            </div>
+                          ))}
+                        </div>
+                      </div>
+                    </div>
+                  );
+                case "team":
+                  return (
+                    <div className="rounded-3xl bg-gray-50 border border-gray-200 p-6 shadow-sm">
+                      <div className="rounded-2xl bg-white border border-gray-100 p-5">
+                        <p className="text-sm font-medium text-gray-900">Team Collaboration</p>
+                        <div className="mt-4 grid sm:grid-cols-3 gap-3 text-sm">
+                          {["Owner", "Developer", "Viewer"].map(role => (
+                            <div key={role} className="rounded-xl bg-gray-50 border border-gray-200 p-4">
+                              <div className="font-medium text-gray-800">{role}</div>
+                              <div className="text-[11px] text-gray-500">sample permissions</div>
+                            </div>
+                          ))}
+                        </div>
+                      </div>
+                    </div>
+                  );
+                case "workspaces":
+                default:
+                  return (
+                    <div className="rounded-3xl bg-gray-50 border border-gray-200 p-6 shadow-sm">
+                      <div className="rounded-2xl bg-white border border-gray-100 p-5">
+                        <p className="text-sm font-medium text-gray-900">Workspaces</p>
+                        <div className="mt-4 grid sm:grid-cols-2 gap-3">
+                          <div className="rounded-xl bg-gray-50 border border-gray-200 p-4">
+                            <div className="text-xs text-gray-500">Sandbox A</div>
+                            <div className="text-sm">api-keys • webhooks • data</div>
+                          </div>
+                          <div className="rounded-xl bg-gray-50 border border-gray-200 p-4">
+                            <div className="text-xs text-gray-500">Sandbox B</div>
+                            <div className="text-sm">isolated environment</div>
+                          </div>
+                        </div>
+                      </div>
+                    </div>
+                  );
+              }
+            };
+
+            return (
+              <div className="grid lg:grid-cols-12 gap-8 items-start">
+                <aside className="lg:col-span-4">
+                  <ol className="space-y-2">
+                    {featureItems.map(item => (
+                      <li key={item.key}>
+                        <button
+                          onClick={() => setActiveKey(item.key)}
+                          className={`w-full text-left rounded-xl border px-4 py-3 transition ${
+                            activeKey === item.key
+                              ? "bg-emerald-50 border-emerald-200 text-emerald-900"
+                              : "bg-white border-gray-200 hover:bg-gray-50 text-gray-800"
+                          }`}
+                        >
+                          <div className="flex items-center gap-3">
+                            <span className={`h-2.5 w-2.5 rounded-full ${activeKey === item.key ? "bg-emerald-500" : "bg-gray-300"}`} />
+                            <div>
+                              <div className="font-medium">{item.label}</div>
+                              <div className="text-xs text-gray-500">{item.description}</div>
+                            </div>
+                          </div>
+                        </button>
+                      </li>
+                    ))}
+                  </ol>
+                </aside>
+                <div className="lg:col-span-8">
+                  <Preview />
+                  <div className="mt-4 text-sm text-gray-600">
+                    {featureItems.find(f => f.key === activeKey)?.how}
+                  </div>
+                </div>
+              </div>
+            );
+          })()}
         </div>
       </section>
 

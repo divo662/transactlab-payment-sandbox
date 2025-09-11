@@ -105,14 +105,12 @@ function normalizeCheckoutUrl(apiResponse) {
     throw new Error('No sessionId found in API response');
   }
 
-  // Option A (Hosted Checkout): always prefer provider-hosted checkout URL
-  const backendOrigin = (() => { try { return new URL(CONFIG.TL_BASE).origin; } catch { return 'https://transactlab-backend.onrender.com'; } })();
-  const providerCheckoutUrl = data?.checkoutUrl || `${backendOrigin}/checkout/${sessionId}`;
-  const checkoutUrl = providerCheckoutUrl;
+  // Force redirect to your frontend Checkout page
+  const frontendBase = (CONFIG.FRONTEND_URL || 'http://localhost:3000').replace(/\/$/, '');
+  const checkoutUrl = `${frontendBase}/checkout/${sessionId}`;
   
-  console.log('🔗 Generated checkout URL:', checkoutUrl);
+  console.log('🔗 Generated checkout URL (frontend):', checkoutUrl);
   console.log('📋 Session ID:', sessionId);
-  console.log('🏢 Backend Origin:', backendOrigin);
 
   return {
     sessionId: sessionId,
