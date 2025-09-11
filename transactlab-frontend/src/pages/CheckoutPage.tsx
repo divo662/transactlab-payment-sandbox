@@ -45,9 +45,10 @@ interface PaymentFormData {
   saveCard: boolean;
 }
 
-// Public backend origin for read-only checkout session (no secrets required)
+// Backend origin (public read + bridge processing)
 const PUBLIC_BACKEND_ORIGIN = 'https://transactlab-backend.onrender.com';
-// Using Hosted Checkout (Option A). No proxy or secrets required in the browser.
+const BACKEND_BASE = PUBLIC_BACKEND_ORIGIN;
+// Using Hosted Checkout (Option A) via secure server bridge; no secrets in browser.
 
 const CheckoutPage: React.FC = () => {
   const { sessionId } = useParams<{ sessionId: string }>();
@@ -246,9 +247,29 @@ const CheckoutPage: React.FC = () => {
     setProcessing(true);
     setError(null);
     try {
-      // Hosted Checkout: redirect to provider-hosted checkout URL from the session
-      const target = session.checkoutUrl || `${PUBLIC_BACKEND_ORIGIN}/checkout/${session.sessionId}`;
-      window.location.assign(target);
+      // Process via server bridge (no secrets in browser)
+      const res = await fetch(`${BACKEND_BASE}/api/v1/checkout/process/${session.sessionId}`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({})
+      });
+      const json = await res.json();
+      if (!res.ok || json?.success === false) {
+        throw new Error(json?.message || json?.error || 'Payment failed.');
+      }
+      // Navigate to success page with context; fallback to successUrl if present
+      const callbackUrl = session.successUrl || session.success_url;
+      navigate('/checkout/success', {
+        state: {
+          sessionId: session.sessionId,
+          amount: session.amount,
+          currency: session.currency,
+          customerEmail: session.customerEmail,
+          description: session.description,
+          callbackUrl,
+          source: callbackUrl ? 'external' : 'dashboard'
+        }
+      });
     } catch (e: any) {
       setError(e?.message || 'An unexpected error occurred. Please try again.');
     } finally {

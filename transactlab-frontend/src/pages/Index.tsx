@@ -486,72 +486,55 @@ const Index = () => {
         </div>
       </section>
 
-      {/* Sandbox Features Section */}
+      {/* Sandbox Features Section (redesigned) */}
       <section id="features" className="py-20 bg-white">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-          <div className="text-center mb-16">
-            <h2 className="text-4xl font-bold text-gray-900 mb-4">
-              Complete Developer Sandbox Environment
-            </h2>
-            <p className="text-xl text-gray-600 max-w-3xl mx-auto">
-              TransactLab provides a comprehensive testing environment that mirrors real payment processors, enabling developers to build and test payment integrations without the risk of real transactions.
-            </p>
+          <div className="text-center mb-12">
+            <div className="inline-flex items-center px-3 py-1 rounded-full bg-emerald-50 text-emerald-700 text-xs font-semibold mb-4 border border-emerald-100">Why TransactLab</div>
+            <h2 className="text-4xl font-semibold tracking-tight text-gray-900">Complete developer sandbox</h2>
+            <p className="mt-3 text-gray-600 max-w-3xl mx-auto">Mirror real payment processor behavior with zero‑risk data and events.</p>
           </div>
-          
-          <div className="grid md:grid-cols-3 gap-8">
-            <div className="text-center">
-              <div className="w-16 h-16 bg-blue-100 rounded-full flex items-center justify-center mx-auto mb-4">
-                <Code className="w-8 h-8 text-blue-600" />
+          <div className="grid md:grid-cols-3 gap-6">
+            <div className="rounded-3xl bg-gray-50 border border-gray-200 p-6">
+              <div className="w-10 h-10 bg-blue-100 rounded-full flex items-center justify-center mb-3">
+                <Code className="w-5 h-5 text-blue-600" />
               </div>
-              <h3 className="text-xl font-semibold text-gray-900 mb-2">API Testing</h3>
-              <p className="text-gray-600">
-                Test payment APIs with real-time simulated responses that match actual payment gateway behavior, including success, failure, and pending states.
-              </p>
+              <h3 className="text-lg font-semibold text-gray-900">API testing</h3>
+              <p className="text-sm text-gray-600 mt-1">Drive endpoints through success, failure and pending states with structured errors.</p>
             </div>
-            
-            <div className="text-center">
-              <div className="w-16 h-16 bg-purple-100 rounded-full flex items-center justify-center mx-auto mb-4">
-                <Webhook className="w-8 h-8 text-purple-600" />
+            <div className="rounded-3xl bg-gray-50 border border-gray-200 p-6">
+              <div className="w-10 h-10 bg-purple-100 rounded-full flex items-center justify-center mb-3">
+                <Webhook className="w-5 h-5 text-purple-600" />
               </div>
-              <h3 className="text-xl font-semibold text-gray-900 mb-2">Webhook Simulation</h3>
-              <p className="text-gray-600">
-                Simulate webhook delivery for all payment events, allowing you to test your webhook handling logic in a controlled environment.
-              </p>
+              <h3 className="text-lg font-semibold text-gray-900">Webhook simulation</h3>
+              <p className="text-sm text-gray-600 mt-1">Send signed events, tweak delays and retries, and observe delivery logs.</p>
             </div>
-            
-            <div className="text-center">
-              <div className="w-16 h-16 bg-green-100 rounded-full flex items-center justify-center mx-auto mb-4">
-                <Database className="w-8 h-8 text-green-600" />
+            <div className="rounded-3xl bg-gray-50 border border-gray-200 p-6">
+              <div className="w-10 h-10 bg-green-100 rounded-full flex items-center justify-center mb-3">
+                <Database className="w-5 h-5 text-green-600" />
               </div>
-              <h3 className="text-xl font-semibold text-gray-900 mb-2">Sample Data</h3>
-              <p className="text-gray-600">
-                Access pre-generated test data including customer profiles, transaction histories, and payment methods for comprehensive testing scenarios.
-              </p>
+              <h3 className="text-lg font-semibold text-gray-900">Sample data</h3>
+              <p className="text-sm text-gray-600 mt-1">Seeded customers, products and cards for end‑to‑end UX development.</p>
             </div>
           </div>
         </div>
       </section>
 
-      {/* Sandbox Tools Section */}
+      {/* Sandbox Tools Section (redesigned) */}
       <section id="sandbox" className="py-20 bg-gradient-to-br from-gray-50 to-blue-50">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-          <div className="text-center mb-16">
-            <h2 className="text-4xl font-bold text-gray-900 mb-4">
-              Powerful Sandbox Tools for Developers
-          </h2>
-          <p className="text-xl text-gray-600 max-w-3xl mx-auto">
-              Everything you need to test, debug, and perfect your payment integrations before going live.
-          </p>
-        </div>
+          <div className="text-center mb-12">
+            <div className="inline-flex items-center px-3 py-1 rounded-full bg-blue-50 text-blue-700 text-xs font-semibold mb-4 border border-blue-100">Developer tools</div>
+            <h2 className="text-4xl font-semibold tracking-tight text-gray-900">Powerful tools for testing</h2>
+            <p className="mt-3 text-gray-600 max-w-3xl mx-auto">Everything you need to validate integrations before going live.</p>
+          </div>
 
           <div className="grid lg:grid-cols-2 gap-16 items-center">
             <div>
               <h3 className="text-3xl font-bold text-gray-900 mb-6">
                 API Key Management & Testing
               </h3>
-              <p className="text-lg text-gray-600 mb-8">
-                Generate test API keys, manage authentication, and test your API calls with comprehensive logging and debugging tools.
-              </p>
+              <p className="text-lg text-gray-600 mb-8">Generate keys, configure webhooks and inspect logs with a consistent developer experience.</p>
               
               <div className="space-y-6">
                 <div className="flex items-start">
@@ -587,24 +570,23 @@ const Index = () => {
             </div>
             
             <div className="relative">
-              <div className="bg-white rounded-2xl shadow-2xl p-8 border border-gray-100">
-                <div className="space-y-6">
-                  <div className="flex items-center gap-3">
-                    <div className="w-3 h-3 bg-red-500 rounded-full"></div>
-                    <div className="w-3 h-3 bg-yellow-500 rounded-full"></div>
-                    <div className="w-3 h-3 bg-green-500 rounded-full"></div>
+              <div className="bg-white rounded-2xl shadow-2xl p-6 border border-gray-100">
+                <div className="rounded-xl border border-gray-200 bg-gray-50 p-4">
+                  <div className="text-xs text-gray-500">Example</div>
+                  <pre className="mt-2 overflow-x-auto text-sm"><code className="font-mono">curl -X POST\n https://localhost:3000/api/v1/sandbox/sessions\n -H "x-sandbox-secret: tl_sk_test_123"\n -H "Content-Type: application/json"\n -d '&#123;"amount":5000,"currency":"USD"&#125;'</code></pre>
+                </div>
+                <div className="mt-4 grid sm:grid-cols-3 gap-3 text-sm">
+                  <div className="rounded-xl bg-gray-50 border border-gray-200 p-3">
+                    <div className="text-xs text-gray-500">Response</div>
+                    <div className="font-mono truncate">200 OK</div>
                   </div>
-                  <div className="space-y-4">
-                    <div className="h-4 bg-gray-200 rounded w-3/4"></div>
-                    <div className="h-4 bg-gray-200 rounded w-1/2"></div>
-                    <div className="h-4 bg-gray-200 rounded w-5/6"></div>
-                    <div className="h-4 bg-gray-200 rounded w-2/3"></div>
+                  <div className="rounded-xl bg-gray-50 border border-gray-200 p-3">
+                    <div className="text-xs text-gray-500">Webhook</div>
+                    <div className="font-mono truncate">checkout.session.created</div>
                   </div>
-                  <div className="bg-blue-50 p-4 rounded-lg">
-                    <div className="text-sm text-blue-800">
-                      <div className="font-mono">POST /api/v1/transactions</div>
-                      <div className="text-xs mt-1">Status: 200 OK</div>
-                  </div>
+                  <div className="rounded-xl bg-gray-50 border border-gray-200 p-3">
+                    <div className="text-xs text-gray-500">Redirect</div>
+                    <div className="font-mono truncate">https://sandbox/checkout/:id</div>
                   </div>
                 </div>
               </div>
@@ -613,63 +595,40 @@ const Index = () => {
         </div>
       </section>
 
-      {/* Developer Benefits Section */}
+      {/* Developer Benefits Section (redesigned) */}
       <section id="developers" className="py-20 bg-white">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-          <div className="text-center mb-16">
-            <h2 className="text-4xl font-bold text-gray-900 mb-4">
-              Why Developers Choose TransactLab
-            </h2>
-            <p className="text-xl text-gray-600 max-w-3xl mx-auto">
-              Built by developers, for developers. Get the tools you need to ship payment integrations with confidence.
-            </p>
+          <div className="text-center mb-12">
+            <div className="inline-flex items-center px-3 py-1 rounded-full bg-gray-100 text-gray-700 text-xs font-semibold mb-4 border border-gray-200">Built for developers</div>
+            <h2 className="text-4xl font-semibold tracking-tight text-gray-900">Why teams choose TransactLab</h2>
+            <p className="mt-3 text-gray-600 max-w-3xl mx-auto">Focus on your product while the sandbox handles payments complexity.</p>
           </div>
-          
-          <div className="grid md:grid-cols-2 lg:grid-cols-4 gap-8">
-            <div className="text-center">
-              <div className="w-16 h-16 bg-blue-100 rounded-full flex items-center justify-center mx-auto mb-4">
-                <Zap className="w-8 h-8 text-blue-600" />
-                  </div>
-              <h3 className="text-lg font-semibold text-gray-900 mb-2">Fast Setup</h3>
-              <p className="text-gray-600 text-sm">
-                Get started in minutes with instant sandbox access and pre-configured test environments.
-              </p>
-                  </div>
-            
-            <div className="text-center">
-              <div className="w-16 h-16 bg-purple-100 rounded-full flex items-center justify-center mx-auto mb-4">
-                <Shield className="w-8 h-8 text-purple-600" />
-                </div>
-              <h3 className="text-lg font-semibold text-gray-900 mb-2">Zero Risk</h3>
-              <p className="text-gray-600 text-sm">
-                Test with confidence knowing no real money is involved and all transactions are simulated.
-              </p>
-                </div>
-            
-            <div className="text-center">
-              <div className="w-16 h-16 bg-green-100 rounded-full flex items-center justify-center mx-auto mb-4">
-                <Globe className="w-8 h-8 text-green-600" />
-                  </div>
-              <h3 className="text-lg font-semibold text-gray-900 mb-2">Realistic Testing</h3>
-              <p className="text-gray-600 text-sm">
-                Experience production-like behavior with realistic API responses, webhooks, and error scenarios.
-              </p>
-                </div>
-            
-            <div className="text-center">
-              <div className="w-16 h-16 bg-orange-100 rounded-full flex items-center justify-center mx-auto mb-4">
-                <Rocket className="w-8 h-8 text-orange-600" />
-                  </div>
-              <h3 className="text-lg font-semibold text-gray-900 mb-2">Ship Faster</h3>
-              <p className="text-gray-600 text-sm">
-                Reduce development time and catch issues early with comprehensive testing tools.
-              </p>
-                </div>
+          <div className="grid md:grid-cols-2 lg:grid-cols-4 gap-6">
+            <div className="rounded-3xl bg-gray-50 border border-gray-200 p-6 text-center">
+              <div className="w-12 h-12 bg-blue-100 rounded-full flex items-center justify-center mx-auto mb-3"><Zap className="w-6 h-6 text-blue-600" /></div>
+              <h3 className="text-base font-semibold text-gray-900">Fast setup</h3>
+              <p className="mt-1 text-sm text-gray-600">Start in minutes with opinionated defaults and sample data.</p>
+            </div>
+            <div className="rounded-3xl bg-gray-50 border border-gray-200 p-6 text-center">
+              <div className="w-12 h-12 bg-purple-100 rounded-full flex items-center justify-center mx-auto mb-3"><Shield className="w-6 h-6 text-purple-600" /></div>
+              <h3 className="text-base font-semibold text-gray-900">Zero risk</h3>
+              <p className="mt-1 text-sm text-gray-600">No real money, but realistic payloads, errors and events.</p>
+            </div>
+            <div className="rounded-3xl bg-gray-50 border border-gray-200 p-6 text-center">
+              <div className="w-12 h-12 bg-green-100 rounded-full flex items-center justify-center mx-auto mb-3"><Globe className="w-6 h-6 text-green-600" /></div>
+              <h3 className="text-base font-semibold text-gray-900">Realistic testing</h3>
+              <p className="mt-1 text-sm text-gray-600">Mimic Paystack/Stripe/Flutterwave behavior without provider lock‑in.</p>
+            </div>
+            <div className="rounded-3xl bg-gray-50 border border-gray-200 p-6 text-center">
+              <div className="w-12 h-12 bg-orange-100 rounded-full flex items-center justify-center mx-auto mb-3"><Rocket className="w-6 h-6 text-orange-600" /></div>
+              <h3 className="text-base font-semibold text-gray-900">Ship faster</h3>
+              <p className="mt-1 text-sm text-gray-600">Catch issues early with webhooks, logs and mock analytics.</p>
+            </div>
           </div>
         </div>
       </section>
 
-      {/* CTA Section */}
+      {/* CTA Section (redesigned) */}
       <section className="py-20 bg-gradient-to-r from-[#0a164d] to-blue-700">
         <div className="max-w-4xl mx-auto text-center px-4 sm:px-6 lg:px-8">
           <h2 className="text-4xl font-bold text-white mb-6">
@@ -693,7 +652,7 @@ const Index = () => {
         </div>
       </section>
 
-      {/* How It Works Section */}
+      {/* How It Works Section (redesigned) */}
       <section id="how-it-works" className="py-20 bg-gradient-to-br from-gray-50 to-blue-50">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
           <div className="text-center mb-16">
@@ -705,41 +664,19 @@ const Index = () => {
             </p>
           </div>
           
-          <div className="grid md:grid-cols-3 gap-8">
-            <div className="text-center">
-              <div className="w-16 h-16 bg-blue-100 rounded-full flex items-center justify-center mx-auto mb-6">
-                <span className="text-2xl font-bold text-blue-600">1</span>
+          <div className="grid md:grid-cols-3 gap-6">
+            {[{ num: "1", title: "Create account", text: "Sign up and get an isolated workspace with sample data." }, { num: "2", title: "Generate keys", text: "Create publishable/secret keys and configure webhooks." }, { num: "3", title: "Start testing", text: "Create sessions, process transactions and inspect events." }].map(step => (
+              <div key={step.num} className="rounded-3xl bg-white border border-gray-200 p-6 text-center">
+                <div className="w-12 h-12 bg-gray-100 rounded-full flex items-center justify-center mx-auto mb-3 text-lg font-semibold text-gray-800">{step.num}</div>
+                <h3 className="text-base font-semibold text-gray-900">{step.title}</h3>
+                <p className="mt-1 text-sm text-gray-600">{step.text}</p>
               </div>
-              <h3 className="text-xl font-semibold text-gray-900 mb-4">Create Your Account</h3>
-              <p className="text-gray-600">
-                Sign up for free and get instant access to our sandbox environment. No credit card required.
-              </p>
-            </div>
-            
-            <div className="text-center">
-              <div className="w-16 h-16 bg-purple-100 rounded-full flex items-center justify-center mx-auto mb-6">
-                <span className="text-2xl font-bold text-purple-600">2</span>
-              </div>
-              <h3 className="text-xl font-semibold text-gray-900 mb-4">Generate API Keys</h3>
-              <p className="text-gray-600">
-                Create test API keys and configure your webhook endpoints. All keys are safe for testing.
-              </p>
-            </div>
-            
-            <div className="text-center">
-              <div className="w-16 h-16 bg-green-100 rounded-full flex items-center justify-center mx-auto mb-6">
-                <span className="text-2xl font-bold text-green-600">3</span>
-              </div>
-              <h3 className="text-xl font-semibold text-gray-900 mb-4">Start Testing</h3>
-              <p className="text-gray-600">
-                Integrate our APIs into your application and test payment flows with realistic data.
-              </p>
-            </div>
+            ))}
           </div>
         </div>
       </section>
 
-      {/* Test Data Section */}
+      {/* Test Data Section (redesigned) */}
       <section className="py-20 bg-gradient-to-br from-blue-50 to-purple-50">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
           <div className="text-center mb-16">
@@ -752,24 +689,24 @@ const Index = () => {
           </div>
           
           <div className="grid md:grid-cols-2 gap-8">
-            <div className="bg-white rounded-2xl p-8 shadow-lg">
-              <h3 className="text-2xl font-bold text-gray-900 mb-6">Test Credit Cards</h3>
+            <div className="bg-white rounded-3xl p-8 border border-gray-200">
+              <h3 className="text-2xl font-bold text-gray-900 mb-6">Test credit cards</h3>
               <div className="space-y-4">
-                <div className="flex items-center justify-between p-4 bg-green-50 rounded-lg">
+                <div className="flex items-center justify-between p-4 rounded-xl bg-green-50">
                   <div>
                     <p className="font-semibold text-green-800">Success</p>
                     <p className="text-sm text-green-600">4242 4242 4242 4242</p>
                   </div>
                   <span className="text-green-600 font-bold">✓</span>
                 </div>
-                <div className="flex items-center justify-between p-4 bg-red-50 rounded-lg">
+                <div className="flex items-center justify-between p-4 rounded-xl bg-red-50">
                   <div>
                     <p className="font-semibold text-red-800">Insufficient Funds</p>
                     <p className="text-sm text-red-600">4000 0000 0000 9995</p>
                   </div>
                   <span className="text-red-600 font-bold">✗</span>
                 </div>
-                <div className="flex items-center justify-between p-4 bg-yellow-50 rounded-lg">
+                <div className="flex items-center justify-between p-4 rounded-xl bg-yellow-50">
                   <div>
                     <p className="font-semibold text-yellow-800">3D Secure Required</p>
                     <p className="text-sm text-yellow-600">4000 0027 6000 3184</p>
@@ -778,47 +715,14 @@ const Index = () => {
                 </div>
               </div>
             </div>
-            
-            <div className="bg-white rounded-2xl p-8 shadow-lg">
-              <h3 className="text-2xl font-bold text-gray-900 mb-6">Test Scenarios</h3>
-              <div className="space-y-4">
-                <div className="flex items-start">
-                  <div className="w-6 h-6 bg-blue-100 rounded-full flex items-center justify-center mr-3 mt-1">
-                    <span className="text-xs font-bold text-blue-600">1</span>
-                  </div>
-                  <div>
-                    <p className="font-semibold text-gray-900">Payment Success</p>
-                    <p className="text-sm text-gray-600">Test successful payment flows and webhook delivery</p>
-                  </div>
-                </div>
-                <div className="flex items-start">
-                  <div className="w-6 h-6 bg-blue-100 rounded-full flex items-center justify-center mr-3 mt-1">
-                    <span className="text-xs font-bold text-blue-600">2</span>
-                  </div>
-                  <div>
-                    <p className="font-semibold text-gray-900">Payment Failures</p>
-                    <p className="text-sm text-gray-600">Simulate declined cards and processing errors</p>
-                  </div>
-                </div>
-                <div className="flex items-start">
-                  <div className="w-6 h-6 bg-blue-100 rounded-full flex items-center justify-center mr-3 mt-1">
-                    <span className="text-xs font-bold text-blue-600">3</span>
-                  </div>
-                  <div>
-                    <p className="font-semibold text-gray-900">Refunds & Disputes</p>
-                    <p className="text-sm text-gray-600">Test refund processing and dispute handling</p>
-                  </div>
-                </div>
-                <div className="flex items-start">
-                  <div className="w-6 h-6 bg-blue-100 rounded-full flex items-center justify-center mr-3 mt-1">
-                    <span className="text-xs font-bold text-blue-600">4</span>
-                  </div>
-                  <div>
-                    <p className="font-semibold text-gray-900">Subscriptions</p>
-                    <p className="text-sm text-gray-600">Test recurring payments and subscription management</p>
-                  </div>
-                </div>
-              </div>
+            <div className="bg-white rounded-3xl p-8 border border-gray-200">
+              <h3 className="text-2xl font-bold text-gray-900 mb-6">Test scenarios</h3>
+              <ol className="space-y-4">
+                <li className="flex items-start"><div className="w-6 h-6 bg-blue-100 rounded-full flex items-center justify-center mr-3 mt-1 text-xs font-bold text-blue-600">1</div><div><p className="font-semibold text-gray-900">Payment success</p><p className="text-sm text-gray-600">Simulate successful charges and webhook delivery.</p></div></li>
+                <li className="flex items-start"><div className="w-6 h-6 bg-blue-100 rounded-full flex items-center justify-center mr-3 mt-1 text-xs font-bold text-blue-600">2</div><div><p className="font-semibold text-gray-900">Payment failures</p><p className="text-sm text-gray-600">Declined cards, processor errors and timeouts.</p></div></li>
+                <li className="flex items-start"><div className="w-6 h-6 bg-blue-100 rounded-full flex items-center justify-center mr-3 mt-1 text-xs font-bold text-blue-600">3</div><div><p className="font-semibold text-gray-900">Refunds & disputes</p><p className="text-sm text-gray-600">Full/partial refunds with corresponding events.</p></div></li>
+                <li className="flex items-start"><div className="w-6 h-6 bg-blue-100 rounded-full flex items-center justify-center mr-3 mt-1 text-xs font-bold text-blue-600">4</div><div><p className="font-semibold text-gray-900">Subscriptions</p><p className="text-sm text-gray-600">Recurring billing, renewals and cancellations.</p></div></li>
+              </ol>
             </div>
           </div>
         </div>

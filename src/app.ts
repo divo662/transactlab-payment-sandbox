@@ -195,7 +195,7 @@ app.get('/checkout/:sessionId', async (req, res) => {
       });
     }
 
-    // Return JSON; frontend handles redirect to hosted checkout
+    // Return JSON only; frontend handles UI and bridge processing
     const checkoutUrl = `${req.protocol}://${req.get('host')}/checkout/${sessionId}`;
     res.json({
       success: true,
@@ -220,6 +220,26 @@ app.get('/checkout/:sessionId', async (req, res) => {
       error: 'Internal server error',
       message: 'Failed to access checkout session'
     });
+  }
+});
+
+// Frontend bridge: process payment securely from React (no secrets in browser)
+app.post('/api/v1/checkout/process/:sessionId', async (req, res) => {
+  try {
+    const { sessionId } = req.params;
+    const host = `${req.protocol}://${req.get('host')}`;
+    const resp = await fetch(`${host}/api/v1/internal/checkout/sessions/${sessionId}/process`, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({})
+    });
+    const text = await resp.text();
+    let json: any = {};
+    try { json = text ? JSON.parse(text) : {}; } catch { /* keep raw */ }
+    return res.status(resp.status).json(json || {});
+  } catch (error) {
+    logger.error('Bridge process error:', error);
+    return res.status(500).json({ success: false, message: 'Failed to process payment' });
   }
 });
 
