@@ -258,12 +258,12 @@ const CheckoutPage: React.FC = () => {
       // Friendly handling of fraud outcomes
       if (res.status === 202 || json?.error === 'review_required') {
         setDecision({ action: 'review', risk: json?.risk });
-        setError('Thanks! Your payment is being reviewed for your security. This usually takes a few minutes. We\'ll notify you by email once it\'s cleared.');
+        setError(`Thanks! Your payment is being reviewed for your security. This usually takes a few minutes. We'll notify you by email once it's cleared.`);
         return;
       }
       if (res.status === 403 || json?.error === 'blocked_by_fraud') {
         setDecision({ action: 'block', risk: json?.risk });
-        throw new Error('We couldn\'t complete this payment. Please try another card or contact support.');
+        throw new Error(`We couldn't complete this payment. Please try another card or contact support.`);
       }
       if (!res.ok || json?.success === false) {
         throw new Error(json?.message || json?.error || 'Payment failed.');
@@ -567,7 +567,7 @@ const CheckoutPage: React.FC = () => {
                       <AlertCircle className="w-5 h-5 text-amber-500 mt-0.5" />
                       <div className="text-amber-800 text-sm">
                         <div className="font-semibold mb-1">Payment under review</div>
-                        <p>For your security, we\'re taking a quick look at this payment. You don\'t need to do anything now — we\'ll email you when it\'s cleared. You can also try a different payment method.</p>
+                        <p>For your security, we're taking a quick look at this payment. You don't need to do anything now — we'll email you when it's cleared. You can also try a different payment method.</p>
                       </div>
                     </div>
                   </div>
@@ -577,7 +577,7 @@ const CheckoutPage: React.FC = () => {
                     <div className="flex items-start gap-2">
                       <AlertCircle className="w-5 h-5 text-red-500 mt-0.5" />
                       <div className="text-red-700 text-sm">
-                        <div className="font-semibold mb-1">We couldn\'t complete the payment</div>
+                        <div className="font-semibold mb-1">We couldn't complete the payment</div>
                         <p>Please try a different card or payment method. If this keeps happening, contact support and share your session ID: <span className="font-mono">{session.sessionId}</span>.</p>
                       </div>
                     </div>
