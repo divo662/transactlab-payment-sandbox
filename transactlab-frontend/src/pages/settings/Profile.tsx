@@ -944,7 +944,7 @@ const FraudReviewSection: React.FC = () => {
   const load = async () => {
     try {
       setLoading(true);
-      const res = await fetch(`https://transactlab-backend.onrender.com/api/v1/analytics/fraud/reviews?status=pending`, { headers: headers() });
+      const res = await fetch(`${API_BASE}/fraud/reviews?status=pending`, { headers: headers() });
       const json = await res.json();
       setItems(json?.data?.reviews || []);
     } finally { setLoading(false); }
@@ -955,7 +955,7 @@ const FraudReviewSection: React.FC = () => {
   const act = async (id: string, action: 'approve'|'deny') => {
     try {
       setLoading(true);
-      const res = await fetch(`https://transactlab-backend.onrender.com/api/v1/analytics/fraud/reviews/${id}/${action}`, { method: 'POST', headers: headers() });
+      const res = await fetch(`${API_BASE}/fraud/reviews/${id}/${action}`, { method: 'POST', headers: headers() });
       const json = await res.json();
       if (!json?.success) throw new Error(json?.message || 'Action failed');
       toast({ title: `Review ${action}d` });
