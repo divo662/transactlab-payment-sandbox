@@ -576,7 +576,7 @@ export const denyFraudReview = async (req: Request, res: Response): Promise<void
 // --- Fraud risk summaries (sandbox/read-only) ---
 export const getFraudSummary = async (req: Request, res: Response): Promise<void> => {
   try {
-    const userId = (req.user as any)?.id || (req.query.userId as string);
+    const userId = (req.user as any)?._id?.toString?.() || (req.user as any)?.id || (req.query.userId as string) || (req.headers['x-owner-id'] as string);
     if (!userId) {
       res.status(400).json({ success: false, error: 'Missing userId' });
       return;
@@ -611,7 +611,7 @@ export const getFraudSummary = async (req: Request, res: Response): Promise<void
 
 export const getRecentFraudDecisions = async (req: Request, res: Response): Promise<void> => {
   try {
-    const userId = (req.user as any)?.id || (req.query.userId as string);
+    const userId = (req.user as any)?._id?.toString?.() || (req.user as any)?.id || (req.query.userId as string) || (req.headers['x-owner-id'] as string);
     if (!userId) {
       res.status(400).json({ success: false, error: 'Missing userId' });
       return;
