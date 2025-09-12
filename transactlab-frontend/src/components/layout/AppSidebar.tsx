@@ -42,7 +42,6 @@ const mainItems = [
 const paymentItems = [
   { title: "Transactions", url: "/sandbox/transactions", icon: DollarSign },
   { title: "Checkout Sessions", url: "/sandbox/sessions", icon: CreditCard },
-  { title: "Disputes", url: "/sandbox/disputes", icon: Shield },
 ];
 
 // Recurring payments section

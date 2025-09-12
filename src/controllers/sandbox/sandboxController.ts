@@ -2245,12 +2245,16 @@ export class SandboxController {
       
       // Fetch plan and product details
       const [plans, products] = await Promise.all([
-        SandboxPlan.find({ planId: { $in: planIds }, userId: userId.toString() }).lean(),
+        SandboxPlan.find({ $or: [{ planId: { $in: planIds } }, { _id: { $in: planIds } }], userId: userId.toString() }).lean(),
         SandboxProduct.find({ _id: { $in: productIds }, userId: userId.toString() }).lean()
       ]);
       
-      // Create lookup maps
-      const planMap = new Map(plans.map(plan => [plan.planId, plan]));
+      // Create lookup maps - check both planId and _id
+      const planMap = new Map();
+      plans.forEach(plan => {
+        planMap.set(plan.planId, plan);
+        planMap.set(plan._id.toString(), plan);
+      });
       const productMap = new Map(products.map(product => [product._id.toString(), product]));
       
       // Transform the data to include plan details
@@ -2293,7 +2297,7 @@ export class SandboxController {
       
       // Get plan and product details
       const [plan, product] = await Promise.all([
-        SandboxPlan.findOne({ planId: sub.planId, userId: userId.toString() }).lean(),
+        SandboxPlan.findOne({ $or: [{ planId: sub.planId }, { _id: sub.planId }], userId: userId.toString() }).lean(),
         SandboxProduct.findOne({ _id: sub.productId, userId: userId.toString() }).lean()
       ]);
       
