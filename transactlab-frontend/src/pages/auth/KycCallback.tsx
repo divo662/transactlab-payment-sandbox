@@ -91,9 +91,16 @@ const KycCallback = () => {
         try {
           console.log('KYC Callback: Checking status with backend');
           const response = await api.getKycStatus(finalSessionId);
-          console.log('KYC Callback: Backend response', response.data);
+          console.log('KYC Callback: Backend response', response);
           
-          if (response.data.success && response.data.data.completed) {
+          // Handle different response structures
+          const responseData = response?.data || response;
+          const isSuccess = responseData?.success;
+          const isCompleted = responseData?.data?.completed;
+          
+          console.log('KYC Callback: Parsed response', { isSuccess, isCompleted, responseData });
+          
+          if (isSuccess && isCompleted) {
             console.log('KYC Callback: Verification completed, showing success');
             setStatus('success');
             setMessage('KYC verification completed successfully!');
@@ -110,6 +117,22 @@ const KycCallback = () => {
           }
         } catch (error) {
           console.log('KYC Callback: Error checking status', error);
+          // If we can't verify via API, try to check user profile directly
+          try {
+            const profile = await api.getProfile();
+            if (profile.data?.user?.isKycVerified) {
+              console.log('KYC Callback: User is already verified via profile check');
+              setStatus('success');
+              setMessage('KYC verification completed successfully!');
+              setTimeout(() => {
+                navigate('/dashboard');
+              }, 2000);
+              return;
+            }
+          } catch (profileError) {
+            console.log('KYC Callback: Could not check profile either', profileError);
+          }
+          
           // If we can't verify, show retry option
           setStatus('retry');
           setMessage('Unable to verify KYC status. If you completed verification, click the button below to manually complete it.');
@@ -130,8 +153,17 @@ const KycCallback = () => {
     
     setIsCompleting(true);
     try {
+      console.log('Manual KYC completion: Starting', sessionId);
       const response = await api.completeKyc(sessionId);
-      if (response.data.success) {
+      console.log('Manual KYC completion: Response', response);
+      
+      // Handle different response structures
+      const responseData = response?.data || response;
+      const isSuccess = responseData?.success;
+      
+      console.log('Manual KYC completion: Parsed response', { isSuccess, responseData });
+      
+      if (isSuccess) {
         setStatus('success');
         setMessage('KYC verification completed successfully!');
         
