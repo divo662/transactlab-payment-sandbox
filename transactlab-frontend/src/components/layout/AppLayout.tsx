@@ -4,6 +4,7 @@ import { SidebarProvider, SidebarTrigger } from "@/components/ui/sidebar";
 import { SearchModal } from "@/components/ui/search-modal";
 import { useState, useEffect } from "react";
 import { useAuth } from "@/contexts/AuthContext";
+import apiService from "@/lib/api";
 import { useWorkspaceInvites } from "@/contexts/WorkspaceInviteContext";
 import WorkspaceInviteNotification from "@/components/WorkspaceInviteNotification";
 import { Search, Command } from "lucide-react";
@@ -90,6 +91,35 @@ const Header = () => {
 
 const AppLayout = () => {
   const { pendingInvites, acceptInvite, rejectInvite, dismissNotification, showNotification } = useWorkspaceInvites();
+  const { user } = useAuth();
+  const [kycTimeoutId, setKycTimeoutId] = useState<number | null>(null);
+
+  const startKyc = async () => {
+    try {
+      const returnUrl = typeof window !== 'undefined' ? `${window.location.origin}/auth/kyc/callback` : undefined;
+      const res = await apiService.startKyc(returnUrl);
+      const hostedUrl = res?.data?.hostedUrl;
+      if (hostedUrl && typeof window !== 'undefined') {
+        window.location.href = hostedUrl;
+      }
+    } catch (e) {
+      console.warn('Failed to start KYC:', e);
+    }
+  };
+
+  useEffect(() => {
+    // Auto-redirect to KYC after 2 minutes if user hasn't acted
+    if (user && user.isVerified && (user as any).isKycVerified === false) {
+      const id = window.setTimeout(() => {
+        void startKyc();
+      }, 120000);
+      setKycTimeoutId(id);
+      return () => {
+        if (id) window.clearTimeout(id);
+      };
+    }
+    return () => {};
+  }, [user]);
 
   return (
     <SidebarProvider>
@@ -97,6 +127,22 @@ const AppLayout = () => {
         <AppSidebar />
         <div className="flex-1 flex flex-col">
           <Header />
+          {user && user.isVerified && (user as any).isKycVerified === false && (
+            <div className="mx-6 mt-4 mb-0 p-4 rounded-lg border bg-amber-50 border-amber-200 text-amber-900 flex items-start justify-between gap-4">
+              <div>
+                <div className="font-semibold">Complete your KYC verification</div>
+                <div className="text-sm opacity-90">For security, please verify your identity to continue using TransactLab. You will be redirected automatically in 2 minutes.</div>
+              </div>
+              <div className="flex items-center gap-2">
+                <button
+                  onClick={() => void startKyc()}
+                  className="px-3 py-2 rounded-md bg-[#0a164d] text-white text-sm font-medium hover:bg-[#0a164d]/90 transition-colors"
+                >
+                  Complete KYC
+                </button>
+              </div>
+            </div>
+          )}
           <main className="p-6">
             <Outlet />
           </main>

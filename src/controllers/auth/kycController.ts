@@ -13,8 +13,13 @@ export default class KycController {
 
       const providerBase = process.env.KYC_PROVIDER_BASE_URL || 'https://kycplayground.vercel.app';
       const apiKey = process.env.KYC_PROVIDER_API_KEY || 'kyc_mel3jx6r_qhountyxygk';
+      const defaultFrontend = process.env.FRONTEND_BASE || 'https://transactlab-payment-sandbox.vercel.app';
       const webhookUrl = process.env.KYC_PROVIDER_WEBHOOK_URL || `${process.env.TL_BASE || ''}/api/v1/auth/webhooks/kyc`;
-      const returnUrl = req.body?.returnUrl || `${process.env.TL_BASE || ''}/auth/kyc/callback`;
+      // Use caller-provided returnUrl unless it is localhost; otherwise, prefer configured front-end base
+      let returnUrl = req.body?.returnUrl || process.env.KYC_PROVIDER_RETURN_URL || `${defaultFrontend}/auth/kyc/callback`;
+      if (returnUrl && /localhost:\d+/i.test(returnUrl)) {
+        returnUrl = process.env.KYC_PROVIDER_RETURN_URL || `${defaultFrontend}/auth/kyc/callback`;
+      }
 
       const resCreate = await fetch(`${providerBase}/api/verifications/create`, {
         method: 'POST',
@@ -27,7 +32,13 @@ export default class KycController {
       }
       const data = await resCreate.json();
       const sessionId = data.sessionId || data.verificationId || data.id;
-      const hostedUrl = data.redirectUrl || data.hostedUrl || `${providerBase}/verify/${sessionId}`;
+      // Prefer explicit verificationUrl if provider supplies it
+      let hostedUrl = data.verificationUrl || data.redirectUrl || data.hostedUrl || `${providerBase}/verify/${sessionId}`;
+      // Sanitize: never return localhost; enforce providerBase and public path
+      const needsFix = !hostedUrl || /localhost:\d+/i.test(hostedUrl) || hostedUrl.startsWith('/');
+      if (needsFix || (providerBase && !hostedUrl.startsWith(providerBase))) {
+        hostedUrl = `${providerBase.replace(/\/$/, '')}/verify/${sessionId}`;
+      }
 
       await User.findByIdAndUpdate(userId, { $set: { 'kyc.lastSessionId': sessionId, 'kyc.lastStatus': 'created' } });
 
