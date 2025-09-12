@@ -51,10 +51,12 @@ const KycCallback = () => {
         const finalSessionId = currentSessionId;
         
         if (!finalSessionId) {
-          // If no session ID, check if user is already KYC verified
+          // If no session ID, check if user has a recent KYC session
           try {
             const profile = await api.getProfile();
-            if (profile.data?.user?.isKycVerified) {
+            const user = profile.data?.user;
+            
+            if (user?.isKycVerified) {
               console.log('KYC Callback: User already verified, redirecting to dashboard');
               setStatus('success');
               setMessage('KYC verification already completed!');
@@ -63,12 +65,22 @@ const KycCallback = () => {
               }, 2000);
               return;
             }
+            
+            // If user has a recent KYC session but no session ID in URL, 
+            // try to complete the verification manually
+            if (user?.kyc?.lastSessionId) {
+              console.log('KYC Callback: Found recent session, attempting manual completion', user.kyc.lastSessionId);
+              setSessionId(user.kyc.lastSessionId);
+              setStatus('retry');
+              setMessage('KYC verification session found. If you completed verification, click the button below to complete it.');
+              return;
+            }
           } catch (error) {
             console.log('KYC Callback: Could not check user profile', error);
           }
           
           setStatus('error');
-          setMessage('No session ID found in callback URL. Please try starting KYC verification again.');
+          setMessage('No KYC session found. Please start a new verification session.');
           return;
         }
 
@@ -142,6 +154,19 @@ const KycCallback = () => {
     navigate('/dashboard');
   };
 
+  const handleStartNewKyc = async () => {
+    try {
+      const returnUrl = `${window.location.origin}/auth/kyc/callback`;
+      const response = await api.startKyc(returnUrl);
+      if (response.data?.hostedUrl) {
+        window.location.href = response.data.hostedUrl;
+      }
+    } catch (error) {
+      console.error('Failed to start new KYC session:', error);
+      setMessage('Failed to start new KYC session. Please try again.');
+    }
+  };
+
   return (
     <div className="min-h-screen bg-gray-50 flex items-center justify-center p-4">
       <Card className="w-full max-w-md">
@@ -177,9 +202,14 @@ const KycCallback = () => {
             </p>
           )}
           {status === 'error' && (
-            <Button onClick={handleGoToDashboard} className="w-full">
-              Go to Dashboard
-            </Button>
+            <div className="space-y-3">
+              <Button onClick={handleStartNewKyc} className="w-full">
+                Start New KYC Verification
+              </Button>
+              <Button onClick={handleGoToDashboard} variant="outline" className="w-full">
+                Go to Dashboard
+              </Button>
+            </div>
           )}
           {status === 'retry' && (
             <div className="space-y-4">
