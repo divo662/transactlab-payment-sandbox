@@ -5,6 +5,13 @@ import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import api from '@/lib/api';
 
+// Extend window interface for our flag
+declare global {
+  interface Window {
+    kycCallbackActive?: boolean;
+  }
+}
+
 const KycCallback = () => {
   const [searchParams] = useSearchParams();
   const navigate = useNavigate();
@@ -13,9 +20,25 @@ const KycCallback = () => {
   const [sessionId, setSessionId] = useState<string | null>(null);
   const [isCompleting, setIsCompleting] = useState(false);
 
+  // Prevent any automatic redirects while on this page
+  useEffect(() => {
+    console.log('KYC Callback: Component mounted, preventing redirects');
+    // Add a flag to prevent other components from redirecting
+    window.kycCallbackActive = true;
+    
+    return () => {
+      window.kycCallbackActive = false;
+    };
+  }, []);
+
   useEffect(() => {
     const processKycCallback = async () => {
       try {
+        console.log('KYC Callback: Processing callback', {
+          currentUrl: window.location.href,
+          searchParams: Object.fromEntries(searchParams.entries())
+        });
+
         // Get session ID from URL params or query string
         const currentSessionId = searchParams.get('sessionId') || searchParams.get('id') || searchParams.get('session');
         
@@ -26,23 +49,31 @@ const KycCallback = () => {
         }
 
         setSessionId(currentSessionId);
+        console.log('KYC Callback: Session ID found', currentSessionId);
 
         // Verify the session status with our backend
         try {
+          console.log('KYC Callback: Checking status with backend');
           const response = await api.getKycStatus(currentSessionId);
+          console.log('KYC Callback: Backend response', response.data);
+          
           if (response.data.success && response.data.data.completed) {
+            console.log('KYC Callback: Verification completed, showing success');
             setStatus('success');
             setMessage('KYC verification completed successfully!');
             
             // Redirect to dashboard after 3 seconds
             setTimeout(() => {
+              console.log('KYC Callback: Redirecting to dashboard');
               navigate('/dashboard');
             }, 3000);
           } else {
+            console.log('KYC Callback: Verification not completed, showing retry');
             setStatus('retry');
             setMessage('KYC verification is still processing. If you completed verification, click the button below to manually complete it.');
           }
         } catch (error) {
+          console.log('KYC Callback: Error checking status', error);
           // If we can't verify, show retry option
           setStatus('retry');
           setMessage('Unable to verify KYC status. If you completed verification, click the button below to manually complete it.');

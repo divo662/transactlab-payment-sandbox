@@ -1,87 +1,182 @@
 import { useEffect, useState } from "react";
 import { Link } from "react-router-dom";
 import { Button } from "@/components/ui/button";
-import { Play, Code, Webhook, Database, Zap, Shield, Globe, Rocket, ChevronDown } from "lucide-react";
+import { Play, Code, Webhook, Database, Zap, Shield, Globe, Rocket, ChevronDown, ArrowRight, Menu, X } from "lucide-react";
+
+function NavItem({
+  label,
+}: {
+  label: string;
+}) {
+  return (
+    <div className="flex items-center text-sm text-gray-300 hover:text-white cursor-pointer">
+      <span>{label}</span>
+    </div>
+  );
+}
+
+function MobileNavItem({ label }: { label: string }) {
+  return (
+    <div className="flex items-center justify-between border-b border-gray-800 pb-2 text-lg text-white">
+      <span>{label}</span>
+      <ArrowRight className="h-4 w-4 text-gray-400" />
+    </div>
+  );
+}
 
 const Index = () => {
+  const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
+
   useEffect(() => {
     document.title = "TransactLab - Developer Sandbox for Payment Testing";
   }, []);
 
   return (
     <div className="min-h-screen bg-white">
-      {/* Header/Navigation */}
-      <header className="sticky top-0 z-50 bg-white/70 backdrop-blur supports-[backdrop-filter]:bg-white/50">
-        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-          <div className="flex items-center justify-between h-16">
-            <nav className="hidden md:flex items-center gap-6 text-sm text-gray-700">
-              <a href="#home" className="hover:text-black">Overview</a>
-              <a href="#features" className="hover:text-black">Features</a>
-              <a href="#sandbox" className="hover:text-black">Sandbox</a>
-              <a href="#developers" className="hover:text-black">Developers</a>
-              <a href="#how-it-works" className="hover:text-black">How it works</a>
-              <a href="#test-data" className="hover:text-black">Test data</a>
-              <a href="/docs" className="hover:text-black">Docs</a>
-            </nav>
-            <Link to="/" className="text-xl font-semibold tracking-tight text-black">
-              TransactLab
-              </Link>
-            <div className="flex items-center gap-4 text-sm">
-              <Link to="/auth/login" className="text-gray-700 hover:text-black">Log in</Link>
-              <Link to="/auth/register">
-                <Button className="h-8 rounded-full px-4 bg-black text-white hover:bg-black/90">Sign up</Button>
-              </Link>
-            </div>
-          </div>
+      {/* New Modern Hero Section */}
+      <section className="relative min-h-screen overflow-hidden bg-black">
+        {/* Gradient background with grain effect */}
+        <div className="flex flex-col items-end absolute -right-60 -top-10 blur-xl z-0">
+          <div className="h-[10rem] rounded-full w-[60rem] z-1 bg-gradient-to-b blur-[6rem] from-purple-600 to-sky-600"></div>
+          <div className="h-[10rem] rounded-full w-[90rem] z-1 bg-gradient-to-b blur-[6rem] from-pink-900 to-yellow-400"></div>
+          <div className="h-[10rem] rounded-full w-[60rem] z-1 bg-gradient-to-b blur-[6rem] from-yellow-600 to-sky-500"></div>
         </div>
-      </header>
+        <div className="absolute inset-0 z-0 bg-noise opacity-30"></div>
 
-      {/* Hero Section */}
-      <section id="home" className="py-10 sm:py-14 bg-white">
-        <div className="max-w-[90rem] mx-auto px-4 sm:px-6 lg:px-8">
-          <div className="relative overflow-hidden rounded-3xl sm:rounded-4xl bg-black text-white">
-            {/* glow */}
-            <div className="pointer-events-none absolute inset-0 bg-[radial-gradient(60%_60%_at_10%_0%,rgba(34,197,94,0.25),transparent_60%),radial-gradient(40%_40%_at_90%_10%,rgba(59,130,246,0.2),transparent_60%)]" />
-            {/* subtle grid */}
-            <div className="pointer-events-none absolute inset-0 opacity-[0.08] bg-[linear-gradient(transparent_23px,rgba(255,255,255,0.08)_24px),linear-gradient(90deg,transparent_23px,rgba(255,255,255,0.08)_24px)] bg-[length:24px_24px]" />
+        {/* Content container */}
+        <div className="relative z-10">
+          {/* Navigation */}
+          <nav className="container mx-auto flex items-center justify-between px-4 py-4 mt-6">
+            <div className="flex items-center">
+              <div className="flex h-8 w-8 items-center justify-center rounded-full bg-white text-black">
+                <span className="font-bold">TL</span>
+              </div>
+              <Link to="/" className="ml-2 text-xl font-bold text-white">TransactLab</Link>
+            </div>
 
-            <div className="relative px-6 sm:px-12 pt-16 pb-20">
-              <h1 className="text-5xl sm:text-6xl font-semibold leading-tight tracking-tight">
-                Your money is
-                <br />
-                <span className="text-white/90">where you are</span>
-          </h1>
-              <p className="mt-5 max-w-xl text-white/70">
-                Stand up a production‑like payment gateway sandbox. Generate API keys,
-                create checkout sessions and simulate end‑to‑end webhooks for Paystack,
-                Stripe, Flutterwave and more — with zero real money involved.
-              </p>
-              <div className="mt-8">
-            <Link to="/auth/register">
-                  <Button className="rounded-full bg-white text-black hover:bg-white/90 h-11 px-6">
-                    Get Sandbox Access
-              </Button>
-            </Link>
-          </div>
-          
-              {/* key bullets from README */}
-              <div className="mt-10 grid gap-4 sm:grid-cols-3 max-w-4xl text-white/80 text-sm">
-                <div className="rounded-xl bg-white/5 ring-1 ring-white/10 p-4">
-                  <p className="font-medium text-white">Gateway sandbox</p>
-                  <p className="mt-1">Alternative to Paystack, Stripe, Flutterwave, PayPal and Square for safe testing.</p>
+            {/* Desktop Navigation */}
+            <div className="hidden md:flex items-center space-x-6">
+              <div className="flex items-center space-x-6">
+                <NavItem label="Features" />
+                <NavItem label="Sandbox" />
+                <NavItem label="Developers" />
+                <NavItem label="Docs" />
+                <NavItem label="Pricing" />
+              </div>
+              <div className="flex items-center space-x-3">
+                <Link to="/auth/login" className="text-gray-300 hover:text-white">
+                  Login
+                </Link>
+                <Link to="/auth/register">
+                  <button className="h-12 rounded-full bg-white px-8 text-base font-medium text-black hover:bg-white/90">
+                    Get Started
+                  </button>
+                </Link>
+              </div>
+            </div>
+
+            {/* Mobile menu button */}
+            <button
+              className="md:hidden"
+              onClick={() => setMobileMenuOpen(!mobileMenuOpen)}
+            >
+              <span className="sr-only">Toggle menu</span>
+              {mobileMenuOpen ? (
+                <X className="h-6 w-6 text-white" />
+              ) : (
+                <Menu className="h-6 w-6 text-white" />
+              )}
+            </button>
+          </nav>
+
+          {/* Mobile Navigation Menu with animation */}
+          {mobileMenuOpen && (
+            <div className="fixed inset-0 z-50 flex flex-col p-4 bg-black/95 md:hidden animate-in slide-in-from-top-5 duration-300">
+                <div className="flex items-center justify-between">
+                  <div className="flex items-center">
+                    <div className="flex h-8 w-8 items-center justify-center rounded-full bg-white text-black">
+                      <span className="font-bold">TL</span>
+                    </div>
+                    <span className="ml-2 text-xl font-bold text-white">
+                      TransactLab
+                    </span>
+                  </div>
+                  <button onClick={() => setMobileMenuOpen(false)}>
+                    <X className="h-6 w-6 text-white" />
+                  </button>
                 </div>
-                <div className="rounded-xl bg-white/5 ring-1 ring-white/10 p-4">
-                  <p className="font-medium text-white">Webhook simulation</p>
-                  <p className="mt-1">Test delivery, retries and error scenarios with realistic payloads.</p>
-                </div>
-                <div className="rounded-xl bg-white/5 ring-1 ring-white/10 p-4">
-                  <p className="font-medium text-white">API keys & sessions</p>
-                  <p className="mt-1">Create API keys, checkout sessions and end‑to‑end payment flows.</p>
+                <div className="mt-8 flex flex-col space-y-6">
+                  <MobileNavItem label="Features" />
+                  <MobileNavItem label="Sandbox" />
+                  <MobileNavItem label="Developers" />
+                  <MobileNavItem label="Docs" />
+                  <MobileNavItem label="Pricing" />
+                  <div className="pt-4">
+                    <Link to="/auth/login" className="w-full justify-start border border-gray-700 text-white">
+                      Log in
+                    </Link>
+                  </div>
+                  <Link to="/auth/register">
+                    <button className="h-12 rounded-full bg-white px-8 text-base font-medium text-black hover:bg-white/90">
+                      Get Started For Free
+                    </button>
+                  </Link>
                 </div>
               </div>
+            )}
 
-              {/* mock dashboard */}
-              <div className="mt-14 rounded-2xl bg-white/5 ring-1 ring-white/10 p-4 sm:p-6">
+          {/* Badge */}
+          <div className="mx-auto mt-6 flex max-w-fit items-center justify-center space-x-2 rounded-full bg-white/10 px-4 py-2 backdrop-blur-sm">
+            <span className="text-sm font-medium text-white">
+              Join thousands of developers today!
+            </span>
+            <ArrowRight className="h-4 w-4 text-white" />
+          </div>
+
+          {/* Hero section */}
+          <div className="container mx-auto mt-12 px-4 text-center">
+            <h1 className="mx-auto max-w-4xl text-5xl font-bold leading-tight text-white md:text-6xl lg:text-7xl">
+              Your money is where you are
+            </h1>
+            <p className="mx-auto mt-6 max-w-2xl text-lg text-gray-300">
+              Stand up a production‑like payment gateway sandbox. Generate API keys,
+              create checkout sessions and simulate end‑to‑end webhooks for Paystack,
+              Stripe, Flutterwave and more — with zero real money involved.
+            </p>
+            <div className="mt-10 flex flex-col items-center justify-center space-y-4 sm:flex-row sm:space-x-4 sm:space-y-0">
+              <Link to="/auth/register">
+                <button className="h-12 rounded-full bg-white px-8 text-base font-medium text-black hover:bg-white/90">
+                  Get Sandbox Access
+                </button>
+              </Link>
+              <Link to="/sandbox">
+                <button className="h-12 rounded-full border border-gray-600 px-8 text-base font-medium text-white hover:bg-white/10">
+                  Explore Sandbox
+                </button>
+              </Link>
+            </div>
+
+            {/* key bullets from README */}
+            <div className="mt-16 grid gap-4 sm:grid-cols-3 max-w-4xl mx-auto text-white/80 text-sm">
+              <div className="rounded-xl bg-white/5 ring-1 ring-white/10 p-4">
+                <p className="font-medium text-white">Gateway sandbox</p>
+                <p className="mt-1">Alternative to Paystack, Stripe, Flutterwave, PayPal and Square for safe testing.</p>
+              </div>
+              <div className="rounded-xl bg-white/5 ring-1 ring-white/10 p-4">
+                <p className="font-medium text-white">Webhook simulation</p>
+                <p className="mt-1">Test delivery, retries and error scenarios with realistic payloads.</p>
+              </div>
+              <div className="rounded-xl bg-white/5 ring-1 ring-white/10 p-4">
+                <p className="font-medium text-white">API keys & sessions</p>
+                <p className="mt-1">Create API keys, checkout sessions and end‑to‑end payment flows.</p>
+              </div>
+            </div>
+
+            {/* mock dashboard */}
+            <div className="relative mx-auto my-20 w-full max-w-6xl">
+              <div className="absolute inset-0 rounded shadow-lg bg-white blur-[10rem] bg-grainy opacity-20" />
+              
+              <div className="relative rounded-2xl bg-white/5 ring-1 ring-white/10 p-4 sm:p-6">
                 <div className="flex items-center justify-between text-sm text-white/70">
                   <div className="flex items-center gap-2">
                     <div className="size-6 rounded-full bg-white/10 flex items-center justify-center">

@@ -109,8 +109,14 @@ const AppLayout = () => {
 
   useEffect(() => {
     // Auto-redirect to KYC after 2 minutes if user hasn't acted
+    // But don't redirect if we're on the KYC callback page
     if (user && user.isVerified && (user as any).isKycVerified === false) {
       const id = window.setTimeout(() => {
+        // Check if we're on the KYC callback page
+        if (window.kycCallbackActive) {
+          console.log('AppLayout: Skipping KYC redirect - on callback page');
+          return;
+        }
         void startKyc();
       }, 120000);
       setKycTimeoutId(id);
