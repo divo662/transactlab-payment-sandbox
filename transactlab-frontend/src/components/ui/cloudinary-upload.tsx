@@ -30,11 +30,19 @@ const CloudinaryUpload: React.FC<CloudinaryUploadProps> = ({
   const uploadToCloudinary = async (file: File) => {
     const formData = new FormData();
     formData.append('file', file);
-    formData.append('upload_preset', 'transactlab_checkout'); // You'll need to create this preset
+    const preset = (import.meta as any).env?.VITE_CLOUDINARY_UPLOAD_PRESET || (process.env as any).REACT_APP_CLOUDINARY_UPLOAD_PRESET || 'transactlab_checkout';
+    const cloudName = (import.meta as any).env?.VITE_CLOUDINARY_CLOUD_NAME || (process.env as any).REACT_APP_CLOUDINARY_CLOUD_NAME || 'demo';
+    if (!preset || preset === 'transactlab_checkout') {
+      throw new Error('Cloudinary upload preset not configured. Set VITE_CLOUDINARY_UPLOAD_PRESET');
+    }
+    if (!cloudName || cloudName === 'demo') {
+      throw new Error('Cloudinary cloud name not configured. Set VITE_CLOUDINARY_CLOUD_NAME');
+    }
+    formData.append('upload_preset', preset);
     formData.append('folder', folder);
 
     try {
-      const response = await fetch(`https://api.cloudinary.com/v1_1/${process.env.REACT_APP_CLOUDINARY_CLOUD_NAME || 'demo'}/image/upload`, {
+      const response = await fetch(`https://api.cloudinary.com/v1_1/${cloudName}/image/upload`, {
         method: 'POST',
         body: formData
       });

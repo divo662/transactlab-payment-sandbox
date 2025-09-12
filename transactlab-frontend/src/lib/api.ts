@@ -33,7 +33,7 @@ class ApiService {
     }
 
     try {
-      const response = await fetch(url, config);
+      let response = await fetch(url, config);
       
       if (!response.ok) {
         let errorData: any = {};
@@ -74,7 +74,23 @@ class ApiService {
           }
           throw new Error('Too many requests. Please wait a moment and try again.');
         } else if (response.status === 401) {
-          throw new Error('Please log in to continue.');
+          // Try refresh once, then retry original request
+          if (retryCount === 0) {
+            try {
+              await this.refreshToken();
+              const newToken = localStorage.getItem('accessToken');
+              if (newToken) {
+                config.headers = { ...(config.headers || {}), Authorization: `Bearer ${newToken}` };
+              }
+              response = await fetch(url, config);
+              if (!response.ok) throw new Error('Unauthorized');
+              // continue below to parse normally
+            } catch (_) {
+              throw new Error('Please log in to continue.');
+            }
+          } else {
+            throw new Error('Please log in to continue.');
+          }
         } else if (response.status === 403) {
           throw new Error('You don\'t have permission to perform this action.');
         } else if (response.status === 404) {

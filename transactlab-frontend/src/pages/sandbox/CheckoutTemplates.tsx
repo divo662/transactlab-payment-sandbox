@@ -25,6 +25,7 @@ const CheckoutTemplates: React.FC = () => {
   const [previewData, setPreviewData] = useState<any>(null);
   const [previewSessionId, setPreviewSessionId] = useState<string>('');
   const [activeTab, setActiveTab] = useState('brand');
+  const [previewNonce, setPreviewNonce] = useState<number>(0);
 
   const fetchAll = async () => {
     setLoading(true);
@@ -75,6 +76,7 @@ const CheckoutTemplates: React.FC = () => {
       // Also load merged config preview for possible inspector uses (optional)
       const res = await api.previewCheckoutConfig({});
       setPreviewData(res.data);
+      setPreviewNonce(Date.now());
     } catch (e:any) {
       toast({ title: 'Error', description: e?.message || 'Failed to load preview', variant: 'destructive' });
     }
@@ -340,7 +342,7 @@ const CheckoutTemplates: React.FC = () => {
             <CardContent>
               <div className="border rounded-lg overflow-hidden" style={{ height: '600px' }}>
                 <iframe
-                  src={previewSessionId ? `/checkout/${previewSessionId}` : '/checkout-demo'}
+                  src={previewSessionId ? `/checkout/${previewSessionId}?v=${previewNonce}` : `/checkout-demo?v=${previewNonce}`}
                   className="w-full h-full border-0"
                   title="Checkout Preview"
                 />
