@@ -38,6 +38,7 @@
   "author": "TransactLab Team",
   "license": "MIT",
   "dependencies": {
+    "archiver": "^5.3.2",
     "axios": "^1.6.2",
     "bcryptjs": "^2.4.3",
     "cloudinary": "^2.7.0",

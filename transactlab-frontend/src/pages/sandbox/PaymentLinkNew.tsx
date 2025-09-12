@@ -48,8 +48,11 @@ const PaymentLinkNew: React.FC = () => {
       }
       const res = await api.createQuickPaymentLink(payload);
       const data = res?.data || {};
-      if (data.checkoutUrl) setResultUrl(data.checkoutUrl);
-      if (data.sessionId) setSessionId(data.sessionId);
+      const sid = data.sessionId || data.id || '';
+      setSessionId(sid);
+      const frontendBase = typeof window !== 'undefined' ? window.location.origin.replace(/\/$/, '') : '';
+      const normalizedUrl = sid ? `${frontendBase}/checkout/${sid}` : (data.checkoutUrl || '');
+      if (normalizedUrl) setResultUrl(normalizedUrl);
       toast({ title: 'Link created', description: 'Your payment link is ready to share' });
     } catch (e: any) {
       toast({ title: 'Error', description: e?.message || 'Failed to create link', variant: 'destructive' });

@@ -135,7 +135,7 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
       const response = await apiService.login({ email, password, securityAnswer, rememberMe });
       
       if (response.success && response.data) {
-        const { user: userData, tokens: authTokens } = response.data;
+        const { user: userData, tokens: authTokens, requireKyc } = response.data;
         
         setUser(userData);
         setTokens(authTokens);
@@ -147,6 +147,20 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
         // Store user data if remember me is checked
         if (rememberMe) {
           localStorage.setItem('userData', JSON.stringify(userData));
+        }
+
+        // If KYC is required, redirect immediately
+        try {
+          if (requireKyc && typeof window !== 'undefined') {
+            const kycRes = await apiService.startKyc(`${window.location.origin}/auth/kyc/callback`);
+            const hostedUrl = kycRes?.data?.hostedUrl;
+            if (hostedUrl) {
+              window.location.href = hostedUrl;
+              return; // stop normal flow
+            }
+          }
+        } catch (e) {
+          console.warn('KYC start failed (continuing to app):', e);
         }
       } else {
         throw new Error(response.message || 'Login failed');

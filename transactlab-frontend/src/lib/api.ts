@@ -196,6 +196,13 @@ class ApiService {
     return this.request(`/auth/verify-email/${token}`);
   }
 
+  async startKyc(returnUrl?: string): Promise<any> {
+    return this.request('/auth/kyc/start', {
+      method: 'POST',
+      body: JSON.stringify({ returnUrl })
+    });
+  }
+
   async verifyResetToken(token: string): Promise<any> {
     return this.request(`/password/verify-reset-token/${token}`);
   }

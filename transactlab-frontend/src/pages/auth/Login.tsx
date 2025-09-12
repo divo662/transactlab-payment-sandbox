@@ -78,13 +78,13 @@ const Login = () => {
     try {
       await login(data.email, data.password, data.securityAnswer);
       
+      // If KYC is required, AuthContext will redirect to provider immediately.
+      // Otherwise, continue to dashboard.
       toast({ 
         title: "Welcome back!", 
         description: "Successfully signed in to TransactLab.",
         variant: "default"
       });
-
-      // Redirect to dashboard after successful login
       navigate("/dashboard");
     } catch (error: any) {
       // Provide friendlier, case-specific error messages

@@ -11,6 +11,13 @@ export interface IUser extends Document {
   role: 'user' | 'admin';
   isVerified: boolean;
   isActive: boolean;
+  // KYC status
+  isKycVerified?: boolean;
+  kyc?: {
+    provider?: string;
+    lastSessionId?: string;
+    lastStatus?: string;
+  };
   
   // Merchant-specific fields (deprecated in sandbox)
   // businessName: string;
@@ -126,6 +133,16 @@ const userSchema = new Schema<IUser>(
     isActive: {
       type: Boolean,
       default: true
+    },
+    // KYC status
+    isKycVerified: {
+      type: Boolean,
+      default: false
+    },
+    kyc: {
+      provider: { type: String, default: 'kycplayground' },
+      lastSessionId: { type: String },
+      lastStatus: { type: String }
     },
     
     // Merchant-specific fields (deprecated in sandbox)

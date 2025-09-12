@@ -1,5 +1,6 @@
 import { Router } from 'express';
 import { AuthController } from '../../controllers/auth/authController';
+import KycController from '../../controllers/auth/kycController';
 import { rateLimiters } from '../../config/rateLimit';
 import { authenticateToken, requireRole } from '../../middleware/auth';
 import { upload, handleUploadError } from '../../middleware/upload';
@@ -96,5 +97,9 @@ router.post('/reset-security-question-password', rateLimiters.auth, AuthControll
  * @access  Public
  */
 router.post('/unlock-account', rateLimiters.auth, AuthController.unlockAccount);
+
+// KYC
+router.post('/kyc/start', authenticateToken, KycController.startKyc);
+router.post('/webhooks/kyc', KycController.webhook);
 
 export default router; 
