@@ -21,6 +21,16 @@ export default class KycController {
         returnUrl = process.env.KYC_PROVIDER_RETURN_URL || `${defaultFrontend}/auth/kyc/callback`;
       }
 
+      // Log environment variables for debugging
+      logger.info('KYC Environment Variables:', {
+        KYC_PROVIDER_BASE_URL: process.env.KYC_PROVIDER_BASE_URL,
+        FRONTEND_BASE: process.env.FRONTEND_BASE,
+        KYC_PROVIDER_RETURN_URL: process.env.KYC_PROVIDER_RETURN_URL,
+        TL_BASE: process.env.TL_BASE,
+        providerBase,
+        returnUrl
+      });
+
       const resCreate = await fetch(`${providerBase}/api/verifications/create`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json', 'X-API-Key': apiKey },
@@ -32,13 +42,20 @@ export default class KycController {
       }
       const data = await resCreate.json();
       const sessionId = data.sessionId || data.verificationId || data.id;
-      // Prefer explicit verificationUrl if provider supplies it
-      let hostedUrl = data.verificationUrl || data.redirectUrl || data.hostedUrl || `${providerBase}/verify/${sessionId}`;
-      // Sanitize: never return localhost; enforce providerBase and public path
-      const needsFix = !hostedUrl || /localhost:\d+/i.test(hostedUrl) || hostedUrl.startsWith('/');
-      if (needsFix || (providerBase && !hostedUrl.startsWith(providerBase))) {
-        hostedUrl = `${providerBase.replace(/\/$/, '')}/verify/${sessionId}`;
-      }
+      
+      // Log the raw response for debugging
+      logger.info('KYC Provider Response:', { 
+        verificationUrl: data.verificationUrl, 
+        redirectUrl: data.redirectUrl, 
+        hostedUrl: data.hostedUrl,
+        sessionId,
+        providerBase 
+      });
+      
+      // ALWAYS use our own hosted URL - never trust provider URLs
+      const hostedUrl = `${providerBase.replace(/\/$/, '')}/verify/${sessionId}`;
+      
+      logger.info('Final hosted URL:', { hostedUrl });
 
       await User.findByIdAndUpdate(userId, { $set: { 'kyc.lastSessionId': sessionId, 'kyc.lastStatus': 'created' } });
 
