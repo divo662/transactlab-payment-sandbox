@@ -4,6 +4,7 @@ import { CheckCircle, XCircle, Loader2, RefreshCw } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import api from '@/lib/api';
+import { useAuth } from '@/contexts/AuthContext';
 
 // Extend window interface for our flag
 declare global {
@@ -16,6 +17,7 @@ const KycCallback = () => {
   const [searchParams] = useSearchParams();
   const { sessionId: urlSessionId } = useParams();
   const navigate = useNavigate();
+  const { updateUser } = useAuth();
   const [status, setStatus] = useState<'loading' | 'success' | 'error' | 'retry'>('loading');
   const [message, setMessage] = useState('Processing KYC verification...');
   const [sessionId, setSessionId] = useState<string | null>(null);
@@ -60,6 +62,10 @@ const KycCallback = () => {
               console.log('KYC Callback: User already verified, redirecting to dashboard');
               setStatus('success');
               setMessage('KYC verification already completed!');
+              
+              // Update user's KYC status in the auth context (in case it's not already updated)
+              updateUser({ isKycVerified: true });
+              
               setTimeout(() => {
                 navigate('/dashboard');
               }, 2000);
@@ -105,6 +111,9 @@ const KycCallback = () => {
             setStatus('success');
             setMessage('KYC verification completed successfully!');
             
+            // Update user's KYC status in the auth context
+            updateUser({ isKycVerified: true });
+            
             // Redirect to dashboard after 3 seconds
             setTimeout(() => {
               console.log('KYC Callback: Redirecting to dashboard');
@@ -124,6 +133,10 @@ const KycCallback = () => {
               console.log('KYC Callback: User is already verified via profile check');
               setStatus('success');
               setMessage('KYC verification completed successfully!');
+              
+              // Update user's KYC status in the auth context
+              updateUser({ isKycVerified: true });
+              
               setTimeout(() => {
                 navigate('/dashboard');
               }, 2000);
@@ -166,6 +179,9 @@ const KycCallback = () => {
       if (isSuccess) {
         setStatus('success');
         setMessage('KYC verification completed successfully!');
+        
+        // Update user's KYC status in the auth context
+        updateUser({ isKycVerified: true });
         
         // Redirect to dashboard after 2 seconds
         setTimeout(() => {

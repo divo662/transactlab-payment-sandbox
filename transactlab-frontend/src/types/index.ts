@@ -31,6 +31,12 @@ export interface User {
   paymentMethods: string[];
   
   // Security & verification
+  isKycVerified?: boolean;
+  kyc?: {
+    provider?: string;
+    lastSessionId?: string;
+    lastStatus?: string;
+  };
   securityQuestion?: {
     question: string;
     answer: string;

@@ -233,6 +233,56 @@ app.get('/checkout/:sessionId', async (req, res) => {
   }
 });
 
+// Frontend bridge: create subscription securely from React (no secrets in browser)
+app.post('/api/v1/checkout/subscription', async (req, res) => {
+  try {
+    const { planId, customerEmail, metadata, success_url, cancel_url, chargeNow = true } = req.body;
+    
+    if (!planId || !customerEmail) {
+      return res.status(400).json({ success: false, message: 'Missing planId or customerEmail' });
+    }
+
+    // Find the plan to get the userId
+    const plan = await SandboxPlan.findOne({ _id: planId, active: true }).lean();
+    if (!plan) {
+      return res.status(404).json({ success: false, message: 'Plan not found' });
+    }
+
+    // Try to resolve sandbox secret from DB (SandboxConfig or SandboxApiKey)
+    let sandboxSecret: string | undefined;
+    const cfg = await SandboxConfig.findOne({ userId: plan.userId });
+    if (cfg?.testSecretKey) sandboxSecret = cfg.testSecretKey as any;
+    if (!sandboxSecret) {
+      const key = await SandboxApiKey.findOne({ userId: plan.userId, isActive: true });
+      if (key?.secretKey) sandboxSecret = (key as any).secretKey;
+    }
+    if (!sandboxSecret) {
+      return res.status(500).json({ success: false, message: 'Sandbox secret not configured' });
+    }
+
+    // Call the internal subscription endpoint with secret
+    const providerBase = `${req.protocol}://${req.get('host')}/api/v1/sandbox`;
+    const resp = await fetch(`${providerBase}/subscriptions`, {
+      method: 'POST',
+      headers: { 
+        'Content-Type': 'application/json', 
+        'x-sandbox-secret': sandboxSecret,
+        'x-owner-id': plan.userId.toString()
+      },
+      body: JSON.stringify({ planId, customerEmail, metadata, success_url, cancel_url, chargeNow })
+    });
+    
+    const text = await resp.text();
+    let json: any = {};
+    try { json = text ? JSON.parse(text) : {}; } catch { /* keep raw */ }
+    
+    return res.status(resp.status).json(json || {});
+  } catch (error) {
+    logger.error('Subscription bridge error:', error);
+    return res.status(500).json({ success: false, message: 'Failed to create subscription' });
+  }
+});
+
 // Frontend bridge: process payment securely from React (no secrets in browser)
 app.post('/api/v1/checkout/process/:sessionId', async (req, res) => {
   try {

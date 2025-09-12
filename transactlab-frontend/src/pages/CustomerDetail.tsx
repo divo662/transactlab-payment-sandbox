@@ -192,7 +192,7 @@ const CustomerDetail: React.FC = () => {
           if (sessionsRes.ok) {
             const sessionsData = await sessionsRes.json();
             const customerSessions = sessionsData.data.filter((s: any) => 
-              s.customerEmail === foundCustomer.email && s.status === 'completed'
+              s.customerEmail === foundCustomer.email
             );
             // Convert sessions to transaction format for display
             const sessionTransactions = customerSessions.map((s: any) => ({
