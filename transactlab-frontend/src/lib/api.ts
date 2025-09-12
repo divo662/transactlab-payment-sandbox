@@ -203,6 +203,10 @@ class ApiService {
     });
   }
 
+  async getKycStatus(sessionId: string): Promise<any> {
+    return this.request(`/auth/kyc/status/${sessionId}`);
+  }
+
   async verifyResetToken(token: string): Promise<any> {
     return this.request(`/password/verify-reset-token/${token}`);
   }

@@ -21,16 +21,6 @@ export default class KycController {
         returnUrl = process.env.KYC_PROVIDER_RETURN_URL || `${defaultFrontend}/auth/kyc/callback`;
       }
 
-      // Log environment variables for debugging
-      logger.info('KYC Environment Variables:', {
-        KYC_PROVIDER_BASE_URL: process.env.KYC_PROVIDER_BASE_URL,
-        FRONTEND_BASE: process.env.FRONTEND_BASE,
-        KYC_PROVIDER_RETURN_URL: process.env.KYC_PROVIDER_RETURN_URL,
-        TL_BASE: process.env.TL_BASE,
-        providerBase,
-        returnUrl
-      });
-
       const resCreate = await fetch(`${providerBase}/api/verifications/create`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json', 'X-API-Key': apiKey },
@@ -42,20 +32,13 @@ export default class KycController {
       }
       const data = await resCreate.json();
       const sessionId = data.sessionId || data.verificationId || data.id;
-      
-      // Log the raw response for debugging
-      logger.info('KYC Provider Response:', { 
-        verificationUrl: data.verificationUrl, 
-        redirectUrl: data.redirectUrl, 
-        hostedUrl: data.hostedUrl,
-        sessionId,
-        providerBase 
-      });
-      
-      // ALWAYS use our own hosted URL - never trust provider URLs
-      const hostedUrl = `${providerBase.replace(/\/$/, '')}/verify/${sessionId}`;
-      
-      logger.info('Final hosted URL:', { hostedUrl });
+      // Prefer explicit verificationUrl if provider supplies it
+      let hostedUrl = data.verificationUrl || data.redirectUrl || data.hostedUrl || `${providerBase}/verify/${sessionId}`;
+      // Sanitize: never return localhost; enforce providerBase and public path
+      const needsFix = !hostedUrl || /localhost:\d+/i.test(hostedUrl) || hostedUrl.startsWith('/');
+      if (needsFix || (providerBase && !hostedUrl.startsWith(providerBase))) {
+        hostedUrl = `${providerBase.replace(/\/$/, '')}/verify/${sessionId}`;
+      }
 
       await User.findByIdAndUpdate(userId, { $set: { 'kyc.lastSessionId': sessionId, 'kyc.lastStatus': 'created' } });
 
@@ -63,6 +46,41 @@ export default class KycController {
     } catch (e: any) {
       logger.error('startKyc error', e);
       return res.status(500).json({ success: false, message: 'Failed to start KYC' });
+    }
+  }
+
+  static async getKycStatus(req: Request, res: Response) {
+    try {
+      const { sessionId } = req.params;
+      const userId = (req as any).user?._id?.toString();
+      
+      if (!userId) {
+        return res.status(401).json({ success: false, message: 'Unauthorized' });
+      }
+
+      const user = await User.findById(userId);
+      if (!user) {
+        return res.status(404).json({ success: false, message: 'User not found' });
+      }
+
+      // Check if this session ID matches the user's last KYC session
+      const isCurrentSession = user.kyc?.lastSessionId === sessionId;
+      const isVerified = user.isKycVerified;
+      const lastStatus = user.kyc?.lastStatus;
+
+      return res.json({
+        success: true,
+        data: {
+          sessionId,
+          isCurrentSession,
+          isVerified,
+          lastStatus,
+          completed: isVerified && isCurrentSession
+        }
+      });
+    } catch (e: any) {
+      logger.error('getKycStatus error', e);
+      return res.status(500).json({ success: false, message: 'Failed to get KYC status' });
     }
   }
 

@@ -100,6 +100,7 @@ router.post('/unlock-account', rateLimiters.auth, AuthController.unlockAccount);
 
 // KYC
 router.post('/kyc/start', authenticateToken, KycController.startKyc);
+router.get('/kyc/status/:sessionId', authenticateToken, KycController.getKycStatus);
 router.post('/webhooks/kyc', KycController.webhook);
 
 export default router; 

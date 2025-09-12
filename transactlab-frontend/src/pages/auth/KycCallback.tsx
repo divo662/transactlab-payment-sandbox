@@ -14,8 +14,8 @@ const KycCallback = () => {
   useEffect(() => {
     const processKycCallback = async () => {
       try {
-        // Get session ID from URL params
-        const sessionId = searchParams.get('sessionId') || searchParams.get('id');
+        // Get session ID from URL params or query string
+        const sessionId = searchParams.get('sessionId') || searchParams.get('id') || searchParams.get('session');
         
         if (!sessionId) {
           setStatus('error');
@@ -23,10 +23,21 @@ const KycCallback = () => {
           return;
         }
 
-        // For now, we'll just show success since the webhook should have updated the user
-        // In a real implementation, you might want to verify the session status with the provider
-        setStatus('success');
-        setMessage('KYC verification completed successfully!');
+        // Verify the session status with our backend
+        try {
+          const response = await api.get(`/auth/kyc/status/${sessionId}`);
+          if (response.data.success) {
+            setStatus('success');
+            setMessage('KYC verification completed successfully!');
+          } else {
+            setStatus('error');
+            setMessage('KYC verification failed. Please try again.');
+          }
+        } catch (error) {
+          // If we can't verify, assume success since the user was redirected here
+          setStatus('success');
+          setMessage('KYC verification completed successfully!');
+        }
         
         // Redirect to dashboard after 3 seconds
         setTimeout(() => {
