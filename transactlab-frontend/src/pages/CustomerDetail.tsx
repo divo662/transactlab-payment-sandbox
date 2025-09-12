@@ -232,7 +232,15 @@ const CustomerDetail: React.FC = () => {
           
           if (subscriptionsRes.ok) {
             const subscriptionsData = await subscriptionsRes.json();
-            setSubscriptions(subscriptionsData.data || []);
+            // Normalize display fields for safety
+            const normalized = (subscriptionsData.data || []).map((s: any) => ({
+              ...s,
+              planAmount: typeof s.planAmount === 'number' ? s.planAmount : (s.amount || 0),
+              planInterval: s.planInterval || s.interval || 'month',
+              currency: s.currency || 'NGN',
+              subscriptionId: s.subscriptionId || s._id,
+            }));
+            setSubscriptions(normalized);
           }
 
           // Fetch refunds for this customer

@@ -75,6 +75,65 @@ export class EmailService {
   }
 
   private static readonly TEMPLATES: Record<string, EmailTemplate> = {
+    'subscription_started': {
+      name: 'subscription_started',
+      subject: 'Your subscription is active — {{subscriptionId}}',
+      html: `
+        <div style="font-family: Arial, sans-serif; max-width: 600px; margin: 0 auto; padding: 20px;">
+          <div style="background: #0a164d; color: white; padding: 24px; text-align: center; border-radius: 10px 10px 0 0;">
+            <h1 style="margin: 0; font-size: 24px;">Subscription Activated</h1>
+            <p style="margin: 8px 0 0 0; opacity: 0.9;">Thank you for subscribing</p>
+          </div>
+          <div style="background: white; padding: 24px; border-radius: 0 0 10px 10px; box-shadow: 0 4px 6px rgba(0,0,0,0.08);">
+            <p style="font-size: 15px; color: #333;">Hi <strong>{{customerName}}</strong>, your subscription is now active.</p>
+            <div style="background: #f8f9fa; padding: 16px; border-radius: 8px; margin: 16px 0;">
+              <p style="margin: 0; font-size: 14px; color: #333;"><strong>Plan:</strong> {{planName}}</p>
+              <p style="margin: 8px 0 0 0; font-size: 14px; color: #333;"><strong>Amount:</strong> {{amount}} {{currency}} / {{interval}}</p>
+              <p style="margin: 8px 0 0 0; font-size: 14px; color: #333;"><strong>Subscription ID:</strong> {{subscriptionId}}</p>
+              <p style="margin: 8px 0 0 0; font-size: 14px; color: #333;"><strong>Next billing:</strong> {{nextBillingDate}}</p>
+            </div>
+            <p style="font-size: 14px; color: #666;">You can manage your subscription from your account dashboard at any time.</p>
+            <p style="font-size: 13px; color: #999; text-align: center; margin-top: 16px;">Powered by TransactLab Sandbox</p>
+          </div>
+        </div>
+      `,
+      text: `
+        Subscription Activated
+        Hi {{customerName}}, your subscription is now active.
+        Plan: {{planName}}
+        Amount: {{amount}} {{currency}} / {{interval}}
+        Subscription ID: {{subscriptionId}}
+        Next billing: {{nextBillingDate}}
+      `
+    },
+    'subscription_upcoming_invoice': {
+      name: 'subscription_upcoming_invoice',
+      subject: 'Upcoming subscription billing — {{nextBillingDate}}',
+      html: `
+        <div style="font-family: Arial, sans-serif; max-width: 600px; margin: 0 auto; padding: 20px;">
+          <div style="background: #0a164d; color: white; padding: 24px; text-align: center; border-radius: 10px 10px 0 0;">
+            <h1 style="margin: 0; font-size: 24px;">Upcoming Billing</h1>
+            <p style="margin: 8px 0 0 0; opacity: 0.9;">Reminder for your subscription</p>
+          </div>
+          <div style="background: white; padding: 24px; border-radius: 0 0 10px 10px; box-shadow: 0 4px 6px rgba(0,0,0,0.08);">
+            <p style="font-size: 15px; color: #333;">Hi <strong>{{customerName}}</strong>, this is a reminder that your subscription will renew soon.</p>
+            <div style="background: #f8f9fa; padding: 16px; border-radius: 8px; margin: 16px 0;">
+              <p style="margin: 0; font-size: 14px; color: #333;"><strong>Plan:</strong> {{planName}}</p>
+              <p style="margin: 8px 0 0 0; font-size: 14px; color: #333;"><strong>Amount:</strong> {{amount}} {{currency}} / {{interval}}</p>
+              <p style="margin: 8px 0 0 0; font-size: 14px; color: #333;"><strong>Next billing:</strong> {{nextBillingDate}}</p>
+            </div>
+            <p style="font-size: 14px; color: #666;">No action is required. If you need to update your billing details or cancel, visit your account dashboard.</p>
+            <p style="font-size: 13px; color: #999; text-align: center; margin-top: 16px;">Powered by TransactLab Sandbox</p>
+          </div>
+        </div>
+      `,
+      text: `
+        Upcoming Billing Reminder
+        Plan: {{planName}}
+        Amount: {{amount}} {{currency}} / {{interval}}
+        Next billing: {{nextBillingDate}}
+      `
+    },
     'welcome': {
       name: 'welcome',
       subject: 'Welcome to TransactLab Sandbox!',
@@ -659,6 +718,41 @@ export class EmailService {
     }
   ): Promise<EmailResult> {
     return await this.sendTemplatedEmail('subscription_billed', to, data);
+  }
+
+  /**
+   * Send subscription started email
+   */
+  static async sendSubscriptionStartedEmail(
+    to: string,
+    data: {
+      customerName: string;
+      planName: string;
+      amount: number;
+      currency: string;
+      interval: string;
+      subscriptionId: string;
+      nextBillingDate: string;
+    }
+  ): Promise<EmailResult> {
+    return await this.sendTemplatedEmail('subscription_started', to, data);
+  }
+
+  /**
+   * Send upcoming billing reminder email
+   */
+  static async sendUpcomingBillingReminder(
+    to: string,
+    data: {
+      customerName: string;
+      planName: string;
+      amount: number;
+      currency: string;
+      interval: string;
+      nextBillingDate: string;
+    }
+  ): Promise<EmailResult> {
+    return await this.sendTemplatedEmail('subscription_upcoming_invoice', to, data);
   }
 
   /**

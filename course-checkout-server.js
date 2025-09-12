@@ -87,8 +87,7 @@ function getAuthHeaders() {
   const secret = 'sk_test_secret_mfdyeivx_6a8462bd27c4bc1ec7fb328646ec6649';
   console.log('🔑 Using sandbox secret:', secret.substring(0, 20) + '...');
   return {
-    'x-sandbox-secret': secret,
-    'Content-Type': 'application/json'
+    'x-sandbox-secret': secret
   };
 }
 
@@ -352,8 +351,33 @@ app.post('/api/create-subscription', async (req, res) => {
       customerEmail: payload.customerEmail
     });
 
-    // If planId not provided, use configured default; otherwise (as fallback) support auto-create
-    let planId = payload.planId || CONFIG.DEFAULT_PLAN_ID;
+    // Resolve planId: prefer payload, then configured default. Accept either Mongo _id or public plan code (plan_XXXX).
+    let planIdInput = (payload.planId && String(payload.planId).trim()) || (CONFIG.DEFAULT_PLAN_ID && String(CONFIG.DEFAULT_PLAN_ID).trim());
+    if (!planIdInput) {
+      return res.status(400).json({ success: false, error: 'planId required', details: { hint: 'Pass planId (Mongo _id or plan_ code) or configure DEFAULT_PLAN_ID' } });
+    }
+
+    const isMongoId = (s) => /^[a-fA-F0-9]{24}$/.test(String(s));
+
+    // If planId is a human code (e.g., plan_abc), resolve to Mongo _id using sandbox /plans
+    async function resolvePlanId(planCodeOrId) {
+      if (isMongoId(planCodeOrId)) return planCodeOrId;
+      try {
+        const resp = await fetchJsonWithRetry(`${CONFIG.TL_BASE}/plans`, { method: 'GET', headers }, { retries: 2, retryDelayMs: 500 });
+        if (!resp.ok) return planCodeOrId; // fallback; provider will error if invalid
+        const plans = (resp.data && (resp.data.data || resp.data)) || [];
+        const found = Array.isArray(plans)
+          ? plans.find(p => p.planId === planCodeOrId || p._id === planCodeOrId)
+          : null;
+        return (found && (found._id || found.id)) || planCodeOrId;
+      } catch (_) {
+        return planCodeOrId;
+      }
+    }
+
+    let planId = await resolvePlanId(planIdInput);
+
+    // If after resolution we still don't have something, allow legacy auto-create path
     if (!planId) {
       const missing = [];
       const hasProductId = !!payload.productId;
@@ -441,9 +465,12 @@ app.post('/api/create-subscription', async (req, res) => {
       chargeNow: typeof payload.chargeNow === 'boolean' ? payload.chargeNow : true
     };
 
-    // Some sandbox routes expect Bearer auth; include both for compatibility
-    const authSecret = headers['x-sandbox-secret'];
-    const subHeaders = { ...headers, ...(authSecret ? { Authorization: `Bearer ${authSecret}` } : {}) };
+    if (!requestBody.customerEmail) {
+      return res.status(400).json({ success: false, error: 'customerEmail is required' });
+    }
+
+    // Use only x-sandbox-secret for sandbox auth to avoid JWT validation errors
+    const subHeaders = { ...headers };
     const subResult = await fetchJsonWithRetry(`${CONFIG.TL_BASE}/subscriptions`, {
       method: 'POST',
       headers: subHeaders,

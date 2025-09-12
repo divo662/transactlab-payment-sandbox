@@ -21,12 +21,21 @@ interface SuccessState {
   description?: string;
   callbackUrl?: string; // optional external redirect
   source?: 'dashboard' | 'external';
+  // Subscription extras (optional)
+  type?: 'payment' | 'subscription';
+  subscriptionId?: string;
+  interval?: string;
+  nextBillingDate?: string; // ISO
 }
 
 const CheckoutSuccessPage: React.FC = () => {
   const location = useLocation();
   const navigate = useNavigate();
   const [state] = useState<SuccessState | null>(location.state as SuccessState);
+  const search = new URLSearchParams(location.search);
+  const isSubscription = (state?.type === 'subscription') || (search.get('type') === 'subscription');
+  const nextBilling = state?.nextBillingDate || search.get('nextBillingDate') || undefined;
+  const billingInterval = state?.interval || search.get('interval') || undefined;
   const [countdown, setCountdown] = useState(10);
   const [showReceipt, setShowReceipt] = useState(false);
   const receiptRef = useRef<HTMLDivElement>(null);
@@ -229,8 +238,12 @@ const CheckoutSuccessPage: React.FC = () => {
             <div className="w-20 h-20 sm:w-24 sm:h-24 bg-gradient-to-r from-green-500 to-emerald-600 rounded-full flex items-center justify-center mx-auto mb-4 sm:mb-6 shadow-lg">
               <CheckCircle className="w-10 h-10 sm:w-12 sm:h-12 text-white" />
             </div>
-            <h1 className="text-2xl sm:text-3xl md:text-4xl font-bold text-gray-800 mb-2">Payment Successful!</h1>
-            <p className="text-gray-600 text-base sm:text-lg">Your transaction has been completed successfully</p>
+            <h1 className="text-2xl sm:text-3xl md:text-4xl font-bold text-gray-800 mb-2">
+              {isSubscription ? 'Subscription Activated!' : 'Payment Successful!'}
+            </h1>
+            <p className="text-gray-600 text-base sm:text-lg">
+              {isSubscription ? 'Your subscription is now active.' : 'Your transaction has been completed successfully'}
+            </p>
           </div>
         </div>
 
@@ -276,6 +289,15 @@ const CheckoutSuccessPage: React.FC = () => {
                 <span className="text-gray-600 font-medium text-sm sm:text-base">Payment Method</span>
                 <span className="text-gray-800 text-xs sm:text-sm">Credit/Debit Card</span>
               </div>
+              {isSubscription && (
+                <div className="flex justify-between items-center py-2 sm:py-3 border-t border-gray-200">
+                  <span className="text-gray-600 font-medium text-sm sm:text-base">Next Billing</span>
+                  <span className="text-gray-800 text-xs sm:text-sm">
+                    {nextBilling ? new Date(nextBilling).toLocaleString() : 'On schedule'}
+                    {billingInterval ? ` • ${billingInterval}` : ''}
+                  </span>
+                </div>
+              )}
             </div>
           </div>
 
@@ -299,8 +321,12 @@ const CheckoutSuccessPage: React.FC = () => {
                   <Download className="w-3 h-3 sm:w-4 sm:h-4 text-purple-600" />
                 </div>
                 <div>
-                  <h4 className="font-medium text-gray-800 text-sm sm:text-base">Download Receipt</h4>
-                  <p className="text-gray-600 text-xs sm:text-sm">Your receipt is available for download in your account</p>
+                  <h4 className="font-medium text-gray-800 text-sm sm:text-base">{isSubscription ? 'Subscription Details' : 'Download Receipt'}</h4>
+                  <p className="text-gray-600 text-xs sm:text-sm">
+                    {isSubscription
+                      ? 'You can manage your plan and view upcoming invoices in your dashboard.'
+                      : 'Your receipt is available for download in your account'}
+                  </p>
                 </div>
               </div>
               

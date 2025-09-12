@@ -16,6 +16,8 @@ interface SandboxContextType {
   createApiKey: (data: CreateApiKeyData) => Promise<any>;
   getApiKeys: () => Promise<any>;
   deactivateApiKey: (apiKey: string) => Promise<any>;
+  updateApiKey: (apiKey: string, data: Partial<UpdateApiKeyData>) => Promise<any>;
+  rotateApiKey: (apiKey: string) => Promise<any>;
   createSession: (data: CreateSessionData) => Promise<any>;
   getSession: (sessionId: string) => Promise<any>;
   getRecentSessions: () => Promise<any>;
@@ -43,6 +45,16 @@ interface CreateApiKeyData {
   permissions: string[];
   expiresAt?: Date;
   webhookUrl?: string;
+}
+
+interface UpdateApiKeyData {
+  name: string;
+  permissions: string[];
+  expiresAt?: Date;
+  webhookUrl?: string;
+  allowedIps?: string[] | string;
+  rateLimit?: number | { requestsPerHour?: number; requestsPerMinute?: number };
+  isActive?: boolean;
 }
 
 interface CreateSessionData {
@@ -276,6 +288,37 @@ export const SandboxProvider: React.FC<SandboxProviderProps> = ({ children }) =>
         method: 'DELETE',
       });
       await refreshSandboxData(); // Refresh data after deactivation
+      return result;
+    } catch (error) {
+      throw error;
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  const updateApiKey = async (apiKey: string, data: Partial<UpdateApiKeyData>) => {
+    try {
+      setLoading(true);
+      const result = await apiCall(`/api-keys/${apiKey}`, {
+        method: 'PUT',
+        body: JSON.stringify(data),
+      });
+      await refreshSandboxData();
+      return result;
+    } catch (error) {
+      throw error;
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  const rotateApiKey = async (apiKey: string) => {
+    try {
+      setLoading(true);
+      const result = await apiCall(`/api-keys/${apiKey}/rotate`, {
+        method: 'POST',
+      });
+      await refreshSandboxData();
       return result;
     } catch (error) {
       throw error;
@@ -561,6 +604,8 @@ export const SandboxProvider: React.FC<SandboxProviderProps> = ({ children }) =>
     createApiKey,
     getApiKeys,
     deactivateApiKey,
+    updateApiKey,
+    rotateApiKey,
     createSession,
     getSession,
     getRecentSessions,

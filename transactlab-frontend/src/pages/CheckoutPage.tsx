@@ -24,6 +24,8 @@ interface CheckoutSession {
   // optional callback info if backend includes it
   successUrl?: string;
   success_url?: string;
+  cancelUrl?: string;
+  cancel_url?: string;
   paymentConfig?: {
     allowedPaymentMethods?: string[];
   };
@@ -115,6 +117,8 @@ const CheckoutPage: React.FC = () => {
           expiresAt: s.expiresAt,
           successUrl: s.successUrl || s.success_url,
           success_url: s.success_url,
+          cancelUrl: s.cancelUrl || s.cancel_url,
+          cancel_url: s.cancel_url,
           paymentConfig: s.paymentConfig
         };
         setSession(normalized);
@@ -288,6 +292,17 @@ const CheckoutPage: React.FC = () => {
     }
   };
 
+  const handleCancel = () => {
+    if (!session) return;
+    const cancelUrl = session.cancelUrl || session.cancel_url;
+    if (cancelUrl && /^https?:\/\//.test(cancelUrl)) {
+      window.location.href = cancelUrl;
+      return;
+    }
+    // If no external cancel URL, just navigate back in app to dashboard home
+    navigate('/');
+  };
+
   if (loading) {
     return (
       <div className="min-h-screen bg-gray-50 flex items-center justify-center">
@@ -307,10 +322,10 @@ const CheckoutPage: React.FC = () => {
           <h2 className="text-2xl font-bold text-gray-800 mb-2">Session Not Found</h2>
           <p className="text-gray-600 mb-4">This checkout session is invalid or has expired.</p>
           <button
-            onClick={() => navigate('/')}
+            onClick={() => window.close()}
             className="px-6 py-2 bg-[#0a164d] text-white rounded-lg hover:bg-[#0a164d]/90 transition-colors"
           >
-            Go Home
+            Close this page
           </button>
         </div>
       </div>

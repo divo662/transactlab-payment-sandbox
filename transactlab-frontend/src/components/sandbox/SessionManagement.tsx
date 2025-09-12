@@ -1070,14 +1070,16 @@ const SessionManagement: React.FC = () => {
                   <Copy className="w-4 h-4 mr-2"/>
                   Copy Session ID
                 </Button>
-                <Button 
-                  onClick={() => {
-                    window.open(`/checkout/${selectedSession.sessionId}`, '_blank');
-                  }}
-                >
-                  <ExternalLink className="w-4 h-4 mr-2"/>
-                  Open Checkout
-                </Button>
+                {String(selectedSession.status).toLowerCase() === 'pending' && (
+                  <Button 
+                    onClick={() => {
+                      window.open(`/checkout/${selectedSession.sessionId}`, '_blank');
+                    }}
+                  >
+                    <ExternalLink className="w-4 h-4 mr-2"/>
+                    Open Checkout
+                  </Button>
+                )}
               </div>
             </div>
           </div>

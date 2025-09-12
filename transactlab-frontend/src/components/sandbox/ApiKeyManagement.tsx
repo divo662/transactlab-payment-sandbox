@@ -36,7 +36,7 @@ import {
 import { useToast } from '@/hooks/use-toast';
 
 const ApiKeyManagement: React.FC = () => {
-  const { getApiKeys, createApiKey, deactivateApiKey } = useSandbox();
+  const { getApiKeys, createApiKey, deactivateApiKey, updateApiKey, rotateApiKey } = useSandbox();
   const { toast } = useToast();
   const [apiKeys, setApiKeys] = useState<any[]>([]);
   const [loading, setLoading] = useState(false);
@@ -45,6 +45,13 @@ const ApiKeyManagement: React.FC = () => {
   const [newApiKey, setNewApiKey] = useState('');
   const [newSecretKey, setNewSecretKey] = useState('');
   const [selectedKey, setSelectedKey] = useState<any>(null);
+  const [showSettings, setShowSettings] = useState(false);
+  const [editForm, setEditForm] = useState({
+    name: '',
+    expiresAt: '',
+    rateLimit: '',
+    allowedIps: '',
+  });
   const [showKeyValue, setShowKeyValue] = useState<{[key: string]: boolean}>({});
   const [form, setForm] = useState({ 
     name: '', 
@@ -326,7 +333,13 @@ const ApiKeyManagement: React.FC = () => {
                           size="sm"
                           onClick={() => {
                             setSelectedKey(key);
-                            // Open key details modal
+                            setEditForm({
+                              name: key.name || '',
+                              expiresAt: key.expiresAt ? new Date(key.expiresAt).toISOString().slice(0,16) : '',
+                              rateLimit: typeof key.rateLimit === 'object' ? String(key.rateLimit.requestsPerHour || '') : String(key.rateLimit || ''),
+                              allowedIps: Array.isArray(key.allowedIps) ? key.allowedIps.join(', ') : (key.allowedIps || ''),
+                            });
+                            setShowSettings(true);
                           }}
                         >
                           <Settings className="w-4 h-4" />
@@ -489,6 +502,92 @@ const ApiKeyManagement: React.FC = () => {
                 </Button>
               </div>
             </form>
+          </div>
+        </div>
+      )}
+
+      {/* Key Settings Modal */}
+      {showSettings && selectedKey && (
+        <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center p-4 z-50">
+          <div className="bg-white rounded-lg max-w-xl w-full max-h-[90vh] overflow-y-auto">
+            <div className="flex items-center justify-between p-6 border-b">
+              <h2 className="text-xl font-semibold">Manage API Key</h2>
+              <Button variant="ghost" size="sm" onClick={() => setShowSettings(false)}>
+                <X className="w-4 h-4" />
+              </Button>
+            </div>
+
+            <div className="p-6 space-y-6">
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                <div>
+                  <Label>Key Name</Label>
+                  <Input value={editForm.name} onChange={e=>setEditForm(v=>({...v,name:e.target.value}))} />
+                </div>
+                <div>
+                  <Label>Extend Expiry</Label>
+                  <Input type="datetime-local" value={editForm.expiresAt} onChange={e=>setEditForm(v=>({...v,expiresAt:e.target.value}))} />
+                </div>
+              </div>
+
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                <div>
+                  <Label>Rate Limit (requests/hour)</Label>
+                  <Input type="number" value={editForm.rateLimit} onChange={e=>setEditForm(v=>({...v,rateLimit:e.target.value}))} />
+                </div>
+                <div>
+                  <Label>Allowed IPs</Label>
+                  <Input value={editForm.allowedIps} onChange={e=>setEditForm(v=>({...v,allowedIps:e.target.value}))} placeholder="192.168.1.1, 10.0.0.0/8" />
+                </div>
+              </div>
+
+              <div className="flex justify-between pt-4 border-t">
+                <div className="space-x-2">
+                  <Button
+                    variant="outline"
+                    onClick={async ()=>{
+                      try{
+                        const payload:any = {
+                          name: editForm.name || undefined,
+                        };
+                        if (editForm.expiresAt) payload.expiresAt = new Date(editForm.expiresAt);
+                        if (editForm.rateLimit) payload.rateLimit = Number(editForm.rateLimit);
+                        if (editForm.allowedIps) payload.allowedIps = editForm.allowedIps.split(',').map(s=>s.trim()).filter(Boolean);
+                        await updateApiKey(selectedKey.apiKey, payload);
+                        toast({ title: 'Updated', description: 'API key updated successfully' });
+                        setShowSettings(false);
+                        await fetchKeys();
+                      } catch(e){
+                        toast({ title: 'Error', description: 'Failed to update API key', variant: 'destructive' });
+                      }
+                    }}
+                  >
+                    <Save className="w-4 h-4 mr-2" /> Save
+                  </Button>
+                </div>
+                <div className="space-x-2">
+                  <Button
+                    variant="outline"
+                    onClick={async ()=>{
+                      try{
+                        const res = await rotateApiKey(selectedKey.apiKey);
+                        if(res?.success){
+                          setNewApiKey(res.data.apiKey);
+                          setNewSecretKey(res.data.secretKey || '');
+                          setShowKeyModal(true);
+                          toast({ title: 'Key rotated', description: 'New key generated. Save it now.' });
+                          setShowSettings(false);
+                          await fetchKeys();
+                        }
+                      }catch(e){
+                        toast({ title: 'Error', description: 'Failed to rotate key', variant: 'destructive' });
+                      }
+                    }}
+                  >
+                    <RefreshCw className="w-4 h-4 mr-2" /> Rotate Key
+                  </Button>
+                </div>
+              </div>
+            </div>
           </div>
         </div>
       )}
