@@ -1,5 +1,5 @@
 import { useEffect, useState } from 'react';
-import { useNavigate, useSearchParams } from 'react-router-dom';
+import { useNavigate, useSearchParams, useParams } from 'react-router-dom';
 import { CheckCircle, XCircle, Loader2, RefreshCw } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
@@ -14,6 +14,7 @@ declare global {
 
 const KycCallback = () => {
   const [searchParams] = useSearchParams();
+  const { sessionId: urlSessionId } = useParams();
   const navigate = useNavigate();
   const [status, setStatus] = useState<'loading' | 'success' | 'error' | 'retry'>('loading');
   const [message, setMessage] = useState('Processing KYC verification...');
@@ -39,22 +40,45 @@ const KycCallback = () => {
           searchParams: Object.fromEntries(searchParams.entries())
         });
 
-        // Get session ID from URL params or query string
-        const currentSessionId = searchParams.get('sessionId') || searchParams.get('id') || searchParams.get('session');
+        // Get session ID from URL params, query string, or URL path
+        const currentSessionId = searchParams.get('sessionId') || 
+                                searchParams.get('id') || 
+                                searchParams.get('session') ||
+                                searchParams.get('verificationId') ||
+                                searchParams.get('kycSessionId') ||
+                                urlSessionId;
         
-        if (!currentSessionId) {
+        const finalSessionId = currentSessionId;
+        
+        if (!finalSessionId) {
+          // If no session ID, check if user is already KYC verified
+          try {
+            const profile = await api.getProfile();
+            if (profile.data?.user?.isKycVerified) {
+              console.log('KYC Callback: User already verified, redirecting to dashboard');
+              setStatus('success');
+              setMessage('KYC verification already completed!');
+              setTimeout(() => {
+                navigate('/dashboard');
+              }, 2000);
+              return;
+            }
+          } catch (error) {
+            console.log('KYC Callback: Could not check user profile', error);
+          }
+          
           setStatus('error');
-          setMessage('No session ID found in callback URL');
+          setMessage('No session ID found in callback URL. Please try starting KYC verification again.');
           return;
         }
 
-        setSessionId(currentSessionId);
-        console.log('KYC Callback: Session ID found', currentSessionId);
+        setSessionId(finalSessionId);
+        console.log('KYC Callback: Session ID found', finalSessionId);
 
         // Verify the session status with our backend
         try {
           console.log('KYC Callback: Checking status with backend');
-          const response = await api.getKycStatus(currentSessionId);
+          const response = await api.getKycStatus(finalSessionId);
           console.log('KYC Callback: Backend response', response.data);
           
           if (response.data.success && response.data.data.completed) {

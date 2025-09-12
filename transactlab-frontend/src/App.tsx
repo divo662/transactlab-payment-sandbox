@@ -65,6 +65,7 @@ const App = () => (
               <Route path="/auth/initiate-security-question-reset" element={<InitiateSecurityQuestionReset />} />
               <Route path="/auth/verify-email" element={<EmailVerification />} />
               <Route path="/auth/kyc/callback" element={<KycCallback />} />
+              <Route path="/auth/kyc/callback/:sessionId" element={<KycCallback />} />
 
               {/* App routes with layout */}
               <Route element={<AppLayout />}>
