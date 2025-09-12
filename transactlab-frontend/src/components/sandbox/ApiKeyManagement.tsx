@@ -345,6 +345,7 @@ const ApiKeyManagement: React.FC = () => {
                           <Settings className="w-4 h-4" />
                         </Button>
                         <Button
+                          title="Deactivate API Key"
                           variant="outline"
                           size="sm"
                           onClick={() => onDeactivate(key.apiKey)}
@@ -552,10 +553,24 @@ const ApiKeyManagement: React.FC = () => {
                         if (editForm.expiresAt) payload.expiresAt = new Date(editForm.expiresAt);
                         if (editForm.rateLimit) payload.rateLimit = Number(editForm.rateLimit);
                         if (editForm.allowedIps) payload.allowedIps = editForm.allowedIps.split(',').map(s=>s.trim()).filter(Boolean);
-                        await updateApiKey(selectedKey.apiKey, payload);
-                        toast({ title: 'Updated', description: 'API key updated successfully' });
-                        setShowSettings(false);
-                        await fetchKeys();
+                        try {
+                          await updateApiKey(selectedKey.apiKey, payload);
+                          toast({ title: 'Updated', description: 'API key updated successfully' });
+                          setShowSettings(false);
+                          await fetchKeys();
+                          return;
+                        } catch (err:any) {
+                          const msg = String(err?.message || '');
+                          const is404 = err?.status === 404 || /not found/i.test(msg) || /Route .* not found/i.test(msg);
+                          if (!is404) throw err;
+                          // Update route not available: do not auto-create a new key; inform user instead
+                          toast({
+                            title: 'Update not available',
+                            description: 'Extending expiry or editing keys is not supported yet in Sandbox. Create a new key with the desired settings and deactivate this one.',
+                            variant: 'destructive'
+                          });
+                          return;
+                        }
                       } catch(e){
                         toast({ title: 'Error', description: 'Failed to update API key', variant: 'destructive' });
                       }
@@ -569,14 +584,40 @@ const ApiKeyManagement: React.FC = () => {
                     variant="outline"
                     onClick={async ()=>{
                       try{
-                        const res = await rotateApiKey(selectedKey.apiKey);
+                        try {
+                          const res = await rotateApiKey(selectedKey.apiKey);
+                          if(res?.success){
+                            setNewApiKey(res.data.apiKey);
+                            setNewSecretKey(res.data.secretKey || '');
+                            setShowKeyModal(true);
+                            toast({ title: 'Key rotated', description: 'New key generated. Save it now.' });
+                            setShowSettings(false);
+                            await fetchKeys();
+                            return;
+                          }
+                        } catch (err:any) {
+                          const msg = String(err?.message || '');
+                          const is404 = err?.status === 404 || /not found/i.test(msg) || /Route .* not found/i.test(msg);
+                          if (!is404) throw err;
+                        }
+
+                        // Fallback: emulate rotation by creating a new key and deactivating the old one
+                        const res = await createApiKey({
+                          name: selectedKey.name,
+                          permissions: selectedKey.permissions || ['payments:read','payments:write'],
+                          expiresAt: selectedKey.expiresAt,
+                          webhookUrl: selectedKey.webhookUrl
+                        });
                         if(res?.success){
                           setNewApiKey(res.data.apiKey);
                           setNewSecretKey(res.data.secretKey || '');
                           setShowKeyModal(true);
-                          toast({ title: 'Key rotated', description: 'New key generated. Save it now.' });
+                          await deactivateApiKey(selectedKey.apiKey);
+                          toast({ title: 'Key rotated', description: 'Generated a new key and deactivated the old one.' });
                           setShowSettings(false);
                           await fetchKeys();
+                        } else {
+                          throw new Error('Failed to create new key for rotation');
                         }
                       }catch(e){
                         toast({ title: 'Error', description: 'Failed to rotate key', variant: 'destructive' });

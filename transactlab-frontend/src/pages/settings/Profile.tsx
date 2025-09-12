@@ -499,12 +499,13 @@ const Profile = () => {
       <h1 className="text-2xl font-semibold">Settings</h1>
       
       <Tabs defaultValue="profile" className="w-full">
-        <TabsList className="grid grid-cols-5 max-w-3xl">
+        <TabsList className="grid grid-cols-6 max-w-4xl">
           <TabsTrigger value="profile">Profile</TabsTrigger>
           <TabsTrigger value="payouts">Payouts</TabsTrigger>
           <TabsTrigger value="team">Team</TabsTrigger>
           <TabsTrigger value="workspaces">Workspaces</TabsTrigger>
           <TabsTrigger value="fraud">Fraud</TabsTrigger>
+          <TabsTrigger value="magic">Magic SDK</TabsTrigger>
         </TabsList>
 
         <TabsContent value="profile" className="space-y-6">
@@ -558,7 +559,7 @@ const Profile = () => {
               <div className="w-12 h-12 rounded-full bg-[#0a164d]/10 flex items-center justify-center text-[#0a164d] font-bold overflow-hidden">
                 {avatarPreviewUrl || normalizedAvatar ? (
                   <img
-                    src={avatarPreviewUrl || `https://transactlab-backend.onrender.com/${normalizedAvatar}`}
+                    src={avatarPreviewUrl || (normalizedAvatar?.startsWith('http') ? normalizedAvatar : `https://transactlab-backend.onrender.com/${normalizedAvatar}`)}
                     alt="Avatar" 
                     className="w-full h-full object-cover"
                     onError={(e) => {
@@ -780,12 +781,118 @@ const Profile = () => {
           </Card>
         </TabsContent>
 
+        {/* Magic SDK Wizard */}
+        <TabsContent value="magic">
+          <Card>
+            <CardHeader><CardTitle>Instant Magic SDK (Sandbox)</CardTitle></CardHeader>
+            <CardContent className="grid gap-6 max-w-3xl">
+              <MagicSdkWizardSection />
+            </CardContent>
+          </Card>
+        </TabsContent>
+
       </Tabs>
     </div>
   );
 };
 
 export default Profile;
+
+// --- Fraud Settings Section ---
+const MagicSdkWizardSection: React.FC = () => {
+  const API_BASE = 'https://transactlab-backend.onrender.com/api/v1/magic-sdk';
+  const [loading, setLoading] = React.useState(false);
+  const [successUrl, setSuccessUrl] = React.useState('');
+  const [cancelUrl, setCancelUrl] = React.useState('');
+  const [callbackUrl, setCallbackUrl] = React.useState('');
+  const [frontendUrl, setFrontendUrl] = React.useState('');
+  const [sandboxSecret, setSandboxSecret] = React.useState('');
+  const [encrypt, setEncrypt] = React.useState(false);
+  const [result, setResult] = React.useState<any | null>(null);
+
+  const headers = () => ({ 'Authorization': `Bearer ${localStorage.getItem('accessToken')}`, 'Content-Type': 'application/json' });
+
+  const bake = async () => {
+    try {
+      setLoading(true);
+      setResult(null);
+      const res = await fetch(`${API_BASE}/bake`, {
+        method: 'POST',
+        headers: headers(),
+        body: JSON.stringify({ successUrl, cancelUrl, callbackUrl, frontendUrl, sandboxSecret, encrypt })
+      });
+      const json = await res.json();
+      if (!json?.success) throw new Error(json?.message || 'Bake failed');
+      setResult(json?.data || null);
+      toast({ title: 'SDK config generated', description: 'Copy the config below or use the CLI.' });
+    } catch (e: any) {
+      toast({ title: 'Error', description: e?.message || 'Bake failed', variant: 'destructive' });
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  const copy = async (text: string) => {
+    try { await navigator.clipboard.writeText(text); toast({ title: 'Copied to clipboard' }); } catch {}
+  };
+
+  return (
+    <div className="grid gap-6">
+      <div className="text-sm text-muted-foreground">Provide your sandbox URLs and secret. We will generate a config and a suggested CLI command.</div>
+      <div className="grid md:grid-cols-2 gap-4">
+        <div className="grid gap-2">
+          <Label>Success URL</Label>
+          <Input placeholder="https://yourapp.com/success" value={successUrl} onChange={(e)=>setSuccessUrl(e.target.value)} />
+        </div>
+        <div className="grid gap-2">
+          <Label>Cancel URL</Label>
+          <Input placeholder="https://yourapp.com/cancel" value={cancelUrl} onChange={(e)=>setCancelUrl(e.target.value)} />
+        </div>
+        <div className="grid gap-2">
+          <Label>Callback URL (webhooks)</Label>
+          <Input placeholder="https://yourapp.com/webhooks/transactlab" value={callbackUrl} onChange={(e)=>setCallbackUrl(e.target.value)} />
+        </div>
+        <div className="grid gap-2">
+          <Label>Frontend URL</Label>
+          <Input placeholder="https://yourapp.com" value={frontendUrl} onChange={(e)=>setFrontendUrl(e.target.value)} />
+        </div>
+        <div className="grid gap-2 md:col-span-2">
+          <Label>Sandbox Secret (x-sandbox-secret)</Label>
+          <Input placeholder="sk_test_..." value={sandboxSecret} onChange={(e)=>setSandboxSecret(e.target.value)} />
+        </div>
+        <div className="flex items-center gap-2 md:col-span-2">
+          <Switch checked={encrypt} onCheckedChange={setEncrypt} />
+          <span className="text-sm">Encrypt configuration vault</span>
+        </div>
+      </div>
+
+      <div className="flex items-center gap-3">
+        <Button onClick={bake} disabled={loading}>Generate SDK Config</Button>
+      </div>
+
+      {result && (
+        <div className="grid gap-4">
+          <div className="grid gap-2">
+            <Label>Suggested CLI</Label>
+            <div className="flex items-center gap-2">
+              <code className="px-2 py-1 bg-gray-50 border rounded text-sm overflow-x-auto">{result.suggestedCli}</code>
+              <Button size="sm" variant="outline" onClick={()=>copy(result.suggestedCli)}>Copy</Button>
+            </div>
+          </div>
+          {Array.isArray(result.files) && result.files.map((f: any) => (
+            <div className="grid gap-2" key={f.path}>
+              <Label>{f.path}</Label>
+              <textarea className="w-full min-h-[200px] border rounded-md p-2 text-xs font-mono" readOnly value={f.contents} />
+              <div className="flex items-center gap-2">
+                <Button size="sm" variant="outline" onClick={()=>copy(f.contents)}>Copy file</Button>
+              </div>
+            </div>
+          ))}
+        </div>
+      )}
+    </div>
+  );
+};
 
 // --- Fraud Settings Section ---
 const FraudSettingsSection: React.FC = () => {

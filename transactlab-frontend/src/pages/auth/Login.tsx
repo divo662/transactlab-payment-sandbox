@@ -87,9 +87,33 @@ const Login = () => {
       // Redirect to dashboard after successful login
       navigate("/dashboard");
     } catch (error: any) {
+      // Provide friendlier, case-specific error messages
+      const status = error?.status || error?.response?.status;
+      const payload = error?.response?.data || error;
+      const code = payload?.code || payload?.error;
+      const message = payload?.message || payload?.error || String(error?.message || "");
+
+      let friendly = "An unexpected error occurred. Please try again.";
+
+      if (status === 0 || /network/i.test(message)) {
+        friendly = "Unable to reach the server. Check your internet connection and try again.";
+      } else if (status === 401 && (/invalid credentials/i.test(message) || /incorrect/i.test(message))) {
+        friendly = "Email or password is incorrect. If you recently changed your password, please use the new one or reset it.";
+      } else if (status === 401 && (/verification/i.test(message) || code === 'EMAIL_NOT_VERIFIED')) {
+        friendly = "Your email is not verified yet. Please check your inbox for the verification link or resend it from the banner above.";
+      } else if ((status === 403 && code === 'ACCOUNT_LOCKED') || /locked/i.test(message)) {
+        friendly = "Your account is temporarily locked due to multiple failed attempts. Please try again later or reset your password.";
+      } else if (status === 429 || /too many/i.test(message)) {
+        friendly = "Too many login attempts. Please wait a few minutes and try again.";
+      } else if (/security answer/i.test(message) || code === 'INVALID_SECURITY_ANSWER') {
+        friendly = "The security question answer is incorrect. Please try again.";
+      } else if (message) {
+        friendly = message;
+      }
+
       toast({ 
         title: "Login failed", 
-        description: formatApiError(error),
+        description: friendly,
         variant: "destructive"
       });
     }

@@ -65,7 +65,7 @@ const Header = () => {
             <div className="w-8 h-8 rounded-full bg-[#0a164d]/10 flex items-center justify-center text-[#0a164d] font-bold overflow-hidden">
               {avatarPath && !avatarError ? (
                 <img
-                  src={`https://transactlab-backend.onrender.com/${avatarPath}`}
+                  src={avatarPath.startsWith('http') ? avatarPath : `https://transactlab-backend.onrender.com/${avatarPath}`}
                   alt="Avatar"
                   className="w-full h-full object-cover"
                   onError={() => setAvatarError(true)}

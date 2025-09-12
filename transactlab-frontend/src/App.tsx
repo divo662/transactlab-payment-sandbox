@@ -36,6 +36,7 @@ import ProductDetail from "./pages/ProductDetail";
 import SubscriptionDetail from "./pages/SubscriptionDetail";
 import Docs from "./pages/Docs";
 import TeamAccept from "./pages/TeamAccept";
+import CheckoutTemplates from "./pages/sandbox/CheckoutTemplates";
 
 const queryClient = new QueryClient();
 
@@ -80,6 +81,7 @@ const App = () => (
                 <Route path="/sandbox/subscriptions/:subscriptionId" element={<SubscriptionDetail />} />
                 <Route path="/sandbox/products" element={<Products />} />
                 <Route path="/sandbox/products/:productId" element={<ProductDetail />} />
+                <Route path="/sandbox/checkout-templates" element={<CheckoutTemplates />} />
               </Route>
 
               {/* Checkout (public) */}

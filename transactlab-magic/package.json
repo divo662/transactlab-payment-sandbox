@@ -1,0 +1,16 @@
+{
+  "name": "transactlab-magic",
+  "version": "0.1.0",
+  "description": "TransactLab Magic SDK (preview) - backend-first SDK and CLI",
+  "main": "src/transactlab.js",
+  "bin": {
+    "tl": "bin/tl.js"
+  },
+  "scripts": {
+    "start:example": "node examples/node/server.js"
+  },
+  "keywords": ["transactlab", "payments", "sdk", "cli"],
+  "author": "TransactLab",
+  "license": "MIT"
+}
+

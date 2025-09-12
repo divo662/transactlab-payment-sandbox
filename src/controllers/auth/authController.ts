@@ -440,8 +440,16 @@ export class AuthController {
         return;
       }
 
-      // Update user's avatar field with the file path
-      user.avatar = req.file.path; // This will be the path where multer saved the file
+      // Upload to Cloudinary
+      const cloudinary = (await import('../../config/cloudinary')).default;
+      const base64 = `data:${req.file.mimetype};base64,${req.file.buffer.toString('base64')}`;
+      const result = await cloudinary.uploader.upload(base64, {
+        folder: 'transactlab/avatars',
+        resource_type: 'image'
+      });
+
+      // Save absolute URL (secure_url)
+      user.avatar = result.secure_url;
       await user.save();
 
       logger.info(`Avatar uploaded for user: ${user.email}`);

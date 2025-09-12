@@ -24,6 +24,7 @@ import transactionRoutes from './routes/api/v1/transactionRoutes';
 import refundRoutes from './routes/api/v1/refundRoutes';
 import webhookRoutes from './routes/api/v1/webhookRoutes';
 import subscriptionRoutes from './routes/api/v1/subscriptionRoutes';
+import magicSdkRoutes from './routes/api/v1/magicSdkRoutes';
 import analyticsRoutes from './routes/api/v1/analyticsRoutes';
 import merchantRoutes from './routes/merchant/merchantRoutes';
 import apiKeyRoutes from './routes/merchant/apiKeyRoutes';
@@ -35,6 +36,7 @@ import analyticsDashboardRoutes from './routes/analytics/analyticsRoutes';
 import reportRoutes from './routes/analytics/reportRoutes';
 import adminRoutes from './routes/admin/adminRoutes';
 import systemRoutes from './routes/admin/systemRoutes';
+import checkoutTemplateRoutes from './routes/checkout/checkoutTemplateRoutes';
 
 /**
  * Express Application Setup
@@ -161,6 +163,7 @@ app.use('/api/v1/transactions', transactionRoutes);
 app.use('/api/v1/refunds', refundRoutes);
 app.use('/api/v1/webhooks', webhookRoutes);
 app.use('/api/v1/subscriptions', subscriptionRoutes);
+app.use('/api/v1/magic-sdk', magicSdkRoutes);
 app.use('/api/v1/analytics', analyticsRoutes);
 
 // Merchant dashboard routes
@@ -170,6 +173,8 @@ app.use('/api/v1/merchant/webhooks', webhookConfigRoutes);
 
 // Payment Hub routes
 app.use('/api/v1/payment-hub', paymentHubRoutes);
+// Checkout template routes
+app.use('/api/v1/checkout', checkoutTemplateRoutes);
 
 // Sandbox routes
 app.use('/api/v1/sandbox', sandboxRoutes);

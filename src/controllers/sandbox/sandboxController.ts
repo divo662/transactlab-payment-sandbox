@@ -943,6 +943,52 @@ export class SandboxController {
   }
 
   /**
+   * Create or reuse a dedicated template preview checkout session for the current workspace
+   * Returns a pending, non-expired sessionId and its checkoutUrl
+   */
+  static async getOrCreateTemplatePreviewSession(req: Request, res: Response) {
+    try {
+      const userId = req.user?._id;
+      if (!userId) {
+        return res.status(401).json({ success: false, error: 'Unauthorized', message: 'User not authenticated' });
+      }
+
+      const now = Date.now();
+      const existing = await SandboxSession.findOne({
+        userId: userId.toString(),
+        status: 'pending',
+        'metadata.templatePreview': true,
+        expiresAt: { $gt: new Date(now) }
+      }) as ISandboxSession | null;
+
+      if (existing) {
+        const checkoutUrl = SandboxController.buildAbsoluteCheckoutUrl(req, existing.getCheckoutUrl());
+        return res.json({ success: true, data: { sessionId: existing.sessionId, checkoutUrl } });
+      }
+
+      const session = (new SandboxSession({
+        userId: userId.toString(),
+        apiKeyId: 'default',
+        amount: 250000, // NGN 2,500.00 (example)
+        currency: 'NGN',
+        description: 'Template Preview Payment',
+        customerEmail: 'preview@example.com',
+        metadata: { templatePreview: true },
+        status: 'pending',
+        expiresAt: new Date(now + 60 * 60 * 1000)
+      }) as unknown) as ISandboxSession;
+
+      await session.save();
+
+      const checkoutUrl = SandboxController.buildAbsoluteCheckoutUrl(req, session.getCheckoutUrl());
+      return res.status(201).json({ success: true, data: { sessionId: session.sessionId, checkoutUrl } });
+    } catch (error) {
+      logger.error('Error creating template preview session:', error);
+      return res.status(500).json({ success: false, error: 'Internal server error', message: 'Failed to create preview session' });
+    }
+  }
+
+  /**
    * Process payment for a session
    */
   static async processPayment(req: Request, res: Response) {

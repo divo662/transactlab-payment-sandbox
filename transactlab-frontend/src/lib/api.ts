@@ -320,6 +320,39 @@ class ApiService {
     const queryString = params ? `?${new URLSearchParams(params).toString()}` : '';
     return this.request(`/merchant/transaction-stats${queryString}`);
   }
+
+  // Checkout templates & settings
+  async listCheckoutTemplates(): Promise<any> {
+    return this.request('/checkout/templates');
+  }
+
+  async getCheckoutSettings(): Promise<any> {
+    return this.request('/checkout/settings');
+  }
+
+  async updateCheckoutSettings(data: any): Promise<any> {
+    return this.request('/checkout/settings', {
+      method: 'PUT',
+      body: JSON.stringify(data)
+    });
+  }
+
+  async updateCheckoutProductOverride(productId: string, data: any): Promise<any> {
+    return this.request(`/checkout/settings/product/${productId}`, {
+      method: 'PUT',
+      body: JSON.stringify(data)
+    });
+  }
+
+  async previewCheckoutConfig(params?: Record<string,string>): Promise<any> {
+    const qs = params ? `?${new URLSearchParams(params).toString()}` : '';
+    return this.request(`/checkout/preview${qs}`);
+  }
+
+  // Sandbox template preview session
+  async createTemplatePreviewSession(): Promise<any> {
+    return this.request('/sandbox/sessions/preview-template', { method: 'POST' });
+  }
 }
 
 export const apiService = new ApiService();
