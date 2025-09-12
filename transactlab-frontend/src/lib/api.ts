@@ -207,6 +207,12 @@ class ApiService {
     return this.request(`/auth/kyc/status/${sessionId}`);
   }
 
+  async completeKyc(sessionId: string): Promise<any> {
+    return this.request(`/auth/kyc/complete/${sessionId}`, {
+      method: 'POST'
+    });
+  }
+
   async verifyResetToken(token: string): Promise<any> {
     return this.request(`/password/verify-reset-token/${token}`);
   }
