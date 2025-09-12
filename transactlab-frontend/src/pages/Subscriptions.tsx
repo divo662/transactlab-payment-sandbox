@@ -209,22 +209,25 @@ const Subscriptions: React.FC = () => {
                 return <div className="p-6 text-sm text-gray-500 text-center">No data available</div>;
               }
               return filtered.map((s:any)=> (
-                <div key={s._id} className="p-3 flex items-center justify-between cursor-pointer hover:bg-gray-50" onClick={()=> navigate(`/sandbox/subscriptions/${s._id}`)}>
+                <div key={s._id} className="p-3 flex items-center justify-between cursor-pointer hover:bg-gray-50" onClick={()=> navigate(`/sandbox/subscriptions/${s.subscriptionId}`)}>
                   <div>
                     <div className="font-medium">{s.customerEmail}</div>
                     <div className="text-xs text-gray-500">{s.status} · {new Date(s.currentPeriodStart).toLocaleDateString()} → {new Date(s.currentPeriodEnd).toLocaleDateString()}</div>
                   </div>
                   <div className="flex gap-2">
-                    <Button size="sm" variant="outline" disabled={s.status==='paused'} onClick={async()=>{
-                      try { await apiCall(`/subscriptions/${s._id}/pause`, {method:'POST'}); toast({ title: 'Paused' }); await loadData(); }
+                    <Button size="sm" variant="outline" disabled={s.status==='paused'} onClick={async(e)=>{
+                      e.stopPropagation();
+                      try { await apiCall(`/subscriptions/${s.subscriptionId}/pause`, {method:'POST'}); toast({ title: 'Paused' }); await loadData(); }
                       catch { toast({ title: 'Error', description: 'Failed to pause', variant: 'destructive' }); }
                     }}>Pause</Button>
-                    <Button size="sm" variant="outline" disabled={s.status!=='paused'} onClick={async()=>{
-                      try { await apiCall(`/subscriptions/${s._id}/resume`, {method:'POST'}); toast({ title: 'Resumed' }); await loadData(); }
+                    <Button size="sm" variant="outline" disabled={s.status!=='paused'} onClick={async(e)=>{
+                      e.stopPropagation();
+                      try { await apiCall(`/subscriptions/${s.subscriptionId}/resume`, {method:'POST'}); toast({ title: 'Resumed' }); await loadData(); }
                       catch { toast({ title: 'Error', description: 'Failed to resume', variant: 'destructive' }); }
                     }}>Resume</Button>
-                    <Button size="sm" variant="outline" onClick={async()=>{
-                      try { await apiCall(`/subscriptions/${s._id}/cancel`, {method:'POST', body: JSON.stringify({atPeriodEnd:true})}); toast({ title: 'Will cancel at period end' }); await loadData(); }
+                    <Button size="sm" variant="outline" onClick={async(e)=>{
+                      e.stopPropagation();
+                      try { await apiCall(`/subscriptions/${s.subscriptionId}/cancel`, {method:'POST', body: JSON.stringify({atPeriodEnd:true})}); toast({ title: 'Will cancel at period end' }); await loadData(); }
                       catch { toast({ title: 'Error', description: 'Failed to cancel', variant: 'destructive' }); }
                     }}>Cancel at period end</Button>
                   </div>

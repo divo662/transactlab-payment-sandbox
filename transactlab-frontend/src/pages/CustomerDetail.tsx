@@ -1268,27 +1268,6 @@ const CustomerDetail: React.FC = () => {
               </CardContent>
             </Card>
 
-            {/* Payment Methods */}
-            <Card>
-              <CardHeader className="pb-3 sm:pb-6">
-                <CardTitle className="text-base sm:text-lg">Payment Methods</CardTitle>
-              </CardHeader>
-              <CardContent>
-                <div className="text-center py-3 sm:py-4">
-                  <CreditCard className="w-6 h-6 sm:w-8 sm:h-8 text-gray-400 mx-auto mb-2" />
-                  <p className="text-xs sm:text-sm text-gray-600 mb-3">No payment methods saved</p>
-                  {/* <Button 
-                    variant="outline" 
-                    size="sm" 
-                    className="w-full sm:w-auto"
-                    onClick={() => setShowAddPaymentMethod(true)}
-                  >
-                    Add Payment Method
-                  </Button> */}
-                </div>
-              </CardContent>
-            </Card>
-
             {/* Recent Activity */}
             <Card>
               <CardHeader className="pb-3 sm:pb-6">

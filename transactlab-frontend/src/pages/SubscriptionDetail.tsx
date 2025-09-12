@@ -23,20 +23,21 @@ const SubscriptionDetail: React.FC = () => {
   const load = async () => {
     try {
       setLoading(true);
-      const subs = await fetchJSON(`${API_BASE}/subscriptions`);
-      const found = (subs.data || []).find((s:any)=> s._id === subscriptionId);
-      setSub(found);
-      if (found) {
-        const [productsRes, plans] = await Promise.all([
-          fetchJSON(`${API_BASE}/products`),
-          fetchJSON(`${API_BASE}/plans?productId=${found.productId}`)
-        ]);
-        const prod = (productsRes.data || []).find((p:any)=> p._id === found.productId);
-        setProduct(prod);
-        const p = (plans.data || []).find((pl:any)=> pl._id === found.planId);
-        setPlan(p);
+      // Use the new subscription detail endpoint
+      const subRes = await fetchJSON(`${API_BASE}/subscriptions/${subscriptionId}`);
+      setSub(subRes.data);
+      
+      if (subRes.data) {
+        // The backend now returns populated data, so we don't need to fetch separately
+        setProduct({ name: subRes.data.planName, description: subRes.data.planDescription });
+        setPlan({ 
+          amount: subRes.data.planAmount, 
+          currency: subRes.data.planCurrency, 
+          interval: subRes.data.planInterval 
+        });
       }
     } catch (e) {
+      console.error('Error loading subscription:', e);
       // ignore simple errors
     } finally { setLoading(false); }
   };
