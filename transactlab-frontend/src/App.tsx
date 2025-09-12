@@ -15,6 +15,7 @@ import ResetPassword from "./pages/auth/ResetPassword";
 import ResetSecurityQuestion from "./pages/auth/ResetSecurityQuestion";
 import InitiateSecurityQuestionReset from "./pages/auth/InitiateSecurityQuestionReset";
 import EmailVerification from "./pages/auth/EmailVerification";
+import KycCallback from "./pages/auth/KycCallback";
 import Dashboard from "./pages/Dashboard";
 import Profile from "./pages/settings/Profile";
 import Security from "./pages/settings/Security";
@@ -63,6 +64,7 @@ const App = () => (
               <Route path="/auth/reset-security-question" element={<ResetSecurityQuestion />} />
               <Route path="/auth/initiate-security-question-reset" element={<InitiateSecurityQuestionReset />} />
               <Route path="/auth/verify-email" element={<EmailVerification />} />
+              <Route path="/auth/kyc/callback" element={<KycCallback />} />
 
               {/* App routes with layout */}
               <Route element={<AppLayout />}>
