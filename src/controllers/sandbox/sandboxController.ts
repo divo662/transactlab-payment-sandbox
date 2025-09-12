@@ -943,6 +943,121 @@ export class SandboxController {
   }
 
   /**
+   * Quick Payment Link: create a sharable checkout URL backed by a sandbox session
+   * Body: { amount, currency, description, customerEmail?, successUrl?, cancelUrl? }
+   * Returns: { checkoutUrl, sessionId }
+   */
+  static async createQuickPaymentLink(req: Request, res: Response) {
+    try {
+      const userId = req.user?._id;
+      if (!userId) {
+        return res.status(401).json({ success: false, error: 'Unauthorized', message: 'User not authenticated' });
+      }
+
+      const { amount, currency, description, customerEmail, successUrl, cancelUrl, success_url, cancel_url, paymentType = 'one_time', interval, trialDays, chargeNow = true } = req.body || {};
+      if (amount === undefined || amount === null || typeof amount !== 'number' || amount <= 0) {
+        return res.status(400).json({ success: false, message: 'amount (number, major units) is required' });
+      }
+      if (!currency || typeof currency !== 'string') {
+        return res.status(400).json({ success: false, message: 'currency (string) is required' });
+      }
+      if (!description || typeof description !== 'string') {
+        return res.status(400).json({ success: false, message: 'description (string) is required' });
+      }
+
+      // One-time or recurring quick link
+      if (String(paymentType).toLowerCase() === 'recurring') {
+        // Validate interval
+        const allowedIntervals = ['day', 'week', 'month', 'quarter', 'year'];
+        if (!interval || !allowedIntervals.includes(String(interval).toLowerCase())) {
+          return res.status(400).json({ success: false, message: `interval is required and must be one of: ${allowedIntervals.join(', ')}` });
+        }
+
+        // Create a minimal product and plan for this workspace
+        const SandboxProduct = (await import('../../models/SandboxProduct')).default as any;
+        const SandboxPlan = (await import('../../models/SandboxPlan')).default as any;
+        const prod = await SandboxProduct.create({ userId: userId.toString(), name: 'Quick Subscription', description: 'Auto-generated for quick recurring link', active: true });
+        const plan = await SandboxPlan.create({ userId: userId.toString(), productId: prod._id, amount: Math.round(amount * 100), currency: currency.toUpperCase(), interval: String(interval).toLowerCase(), trialDays: trialDays || 0, active: true });
+
+        // Create a subscription record; optionally create a pending session for first charge
+        const SandboxSubscription = (await import('../../models/SandboxSubscription')).default as any;
+        const now = new Date();
+        const sub = await SandboxSubscription.create({
+          userId: userId.toString(),
+          customerEmail: customerEmail || undefined,
+          productId: prod._id,
+          planId: plan._id,
+          status: chargeNow ? 'active' : 'trialing',
+          startDate: now,
+          currentPeriodStart: now,
+          currentPeriodEnd: (() => {
+            const { year, month, date } = { year: now.getFullYear(), month: now.getMonth(), date: now.getDate() } as any;
+            const d = new Date(now);
+            switch (String(interval).toLowerCase()) {
+              case 'day': d.setDate(d.getDate() + 1); break;
+              case 'week': d.setDate(d.getDate() + 7); break;
+              case 'month': d.setMonth(d.getMonth() + 1); break;
+              case 'quarter': d.setMonth(d.getMonth() + 3); break;
+              case 'year': d.setFullYear(d.getFullYear() + 1); break;
+              default: d.setMonth(d.getMonth() + 1);
+            }
+            return d;
+          })(),
+          metadata: {}
+        });
+
+        if (chargeNow) {
+          // Create a pending session for first charge
+          const session = (new SandboxSession({
+            userId: userId.toString(),
+            apiKeyId: 'default',
+            amount: plan.amount,
+            currency: plan.currency,
+            description: description || `Subscription first payment (${plan.interval})`,
+            customerEmail: customerEmail || undefined,
+            metadata: { subscriptionId: sub.subscriptionId, productId: prod._id, planId: plan._id },
+            status: 'pending',
+            webhookDelivered: false,
+            webhookAttempts: 0,
+            sessionId: `sess_${Math.random().toString(36).slice(2, 10)}`,
+            expiresAt: new Date(Date.now() + 60 * 60 * 1000)
+          }) as unknown) as ISandboxSession;
+          await session.save();
+          const checkoutUrl = SandboxController.buildAbsoluteCheckoutUrl(req, session.getCheckoutUrl());
+          return res.status(201).json({ success: true, data: { sessionId: session.sessionId, checkoutUrl, mode: 'recurring' } });
+        }
+
+        // Trialing without immediate charge: return subscription info
+        return res.status(201).json({ success: true, data: { subscriptionId: sub.subscriptionId, mode: 'recurring' } });
+      }
+
+      // Default: one-time quick link
+      const amountMinor = Math.round(amount * 100);
+      const session = (new SandboxSession({
+        userId: userId.toString(),
+        apiKeyId: 'default',
+        amount: amountMinor,
+        currency,
+        description,
+        customerEmail: customerEmail || undefined,
+        successUrl: successUrl || success_url,
+        cancelUrl: cancelUrl || cancel_url,
+        metadata: { source: 'quick-payment-link' },
+        status: 'pending',
+        expiresAt: new Date(Date.now() + 24 * 60 * 60 * 1000)
+      }) as unknown) as ISandboxSession;
+
+      await session.save();
+
+      const checkoutUrl = SandboxController.buildAbsoluteCheckoutUrl(req, session.getCheckoutUrl());
+      return res.status(201).json({ success: true, data: { sessionId: session.sessionId, checkoutUrl, mode: 'one_time' } });
+    } catch (error) {
+      logger.error('Error creating quick payment link:', error);
+      return res.status(500).json({ success: false, error: 'Internal server error', message: 'Failed to create quick payment link' });
+    }
+  }
+
+  /**
    * Create or reuse a dedicated template preview checkout session for the current workspace
    * Returns a pending, non-expired sessionId and its checkoutUrl
    */

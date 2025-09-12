@@ -353,6 +353,13 @@ class ApiService {
     });
   }
 
+  async updateSdkDefaults(data: any): Promise<any> {
+    return this.request('/checkout/settings/sdk-defaults', {
+      method: 'PUT',
+      body: JSON.stringify(data)
+    });
+  }
+
   async updateCheckoutProductOverride(productId: string, data: any): Promise<any> {
     return this.request(`/checkout/settings/product/${productId}`, {
       method: 'PUT',
@@ -368,6 +375,56 @@ class ApiService {
   // Sandbox template preview session
   async createTemplatePreviewSession(): Promise<any> {
     return this.request('/sandbox/sessions/preview-template', { method: 'POST' });
+  }
+
+  // Sandbox quick payment link
+  async createQuickPaymentLink(data: any): Promise<any> {
+    return this.request('/sandbox/links/quick', {
+      method: 'POST',
+      body: JSON.stringify(data)
+    });
+  }
+
+  // Sandbox catalogs
+  async listSandboxProducts(): Promise<any> {
+    return this.request('/sandbox/products');
+  }
+
+  async listSandboxPlans(productId?: string): Promise<any> {
+    const qs = productId ? `?${new URLSearchParams({ productId }).toString()}` : '';
+    return this.request(`/sandbox/plans${qs}`);
+  }
+
+  async listSandboxCustomers(params?: { page?: number; limit?: number }): Promise<any> {
+    const qs = params ? `?${new URLSearchParams(Object.entries(params).reduce((acc, [k, v]) => ({...acc, [k]: String(v)}), {} as any)).toString()}` : '';
+    return this.request(`/sandbox/customers${qs}`);
+  }
+
+  // Magic SDK
+  async bakeMagicSdk(payload: any): Promise<any> {
+    return this.request('/magic-sdk/bake', {
+      method: 'POST',
+      body: JSON.stringify(payload)
+    });
+  }
+
+  async downloadMagicSdkZip(payload: any): Promise<Blob> {
+    const endpoint = '/magic-sdk/zip';
+    const url = `${API_BASE_URL}${endpoint}`;
+    const token = localStorage.getItem('accessToken');
+    const resp = await fetch(url, {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+        ...(token ? { Authorization: `Bearer ${token}` } : {})
+      },
+      body: JSON.stringify(payload)
+    });
+    if (!resp.ok) {
+      const msg = await resp.text();
+      throw new Error(msg || 'Failed to download SDK zip');
+    }
+    return await resp.blob();
   }
 }
 

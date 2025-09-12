@@ -499,13 +499,12 @@ const Profile = () => {
       <h1 className="text-2xl font-semibold">Settings</h1>
       
       <Tabs defaultValue="profile" className="w-full">
-        <TabsList className="grid grid-cols-6 max-w-4xl">
+        <TabsList className="grid grid-cols-5 max-w-4xl">
           <TabsTrigger value="profile">Profile</TabsTrigger>
           <TabsTrigger value="payouts">Payouts</TabsTrigger>
           <TabsTrigger value="team">Team</TabsTrigger>
           <TabsTrigger value="workspaces">Workspaces</TabsTrigger>
           <TabsTrigger value="fraud">Fraud</TabsTrigger>
-          <TabsTrigger value="magic">Magic SDK</TabsTrigger>
         </TabsList>
 
         <TabsContent value="profile" className="space-y-6">
@@ -781,15 +780,7 @@ const Profile = () => {
           </Card>
         </TabsContent>
 
-        {/* Magic SDK Wizard */}
-        <TabsContent value="magic">
-          <Card>
-            <CardHeader><CardTitle>Instant Magic SDK (Sandbox)</CardTitle></CardHeader>
-            <CardContent className="grid gap-6 max-w-3xl">
-              <MagicSdkWizardSection />
-            </CardContent>
-          </Card>
-        </TabsContent>
+        
 
       </Tabs>
     </div>

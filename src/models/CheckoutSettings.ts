@@ -43,6 +43,14 @@ export interface ICheckoutSettings extends Document {
   layout: CheckoutLayoutConfig;
   legal: CheckoutLegalConfig;
   productOverrides: ProductOverrideConfig[];
+  sdkDefaults?: {
+    paymentMode?: 'one_time' | 'subscription';
+    amount?: number; // major units
+    currency?: string;
+    planId?: string;
+    productName?: string;
+    interval?: string; // day|week|month|quarter|year
+  };
   createdAt: Date;
   updatedAt: Date;
 }
@@ -89,7 +97,15 @@ const CheckoutSettingsSchema = new Schema<ICheckoutSettings>({
   brand: { type: BrandSchema, default: () => ({}) },
   layout: { type: LayoutSchema, default: () => ({}) },
   legal: { type: LegalSchema, default: () => ({}) },
-  productOverrides: { type: [ProductOverrideSchema], default: [] }
+  productOverrides: { type: [ProductOverrideSchema], default: [] },
+  sdkDefaults: { type: new Schema({
+    paymentMode: { type: String, enum: ['one_time','subscription'], default: 'one_time' },
+    amount: { type: Number },
+    currency: { type: String, default: 'NGN' },
+    planId: { type: String },
+    productName: { type: String },
+    interval: { type: String, default: 'month' }
+  }, { _id: false }), default: undefined }
 }, { timestamps: true });
 
 export const CheckoutSettings: Model<ICheckoutSettings> = mongoose.model<ICheckoutSettings>('CheckoutSettings', CheckoutSettingsSchema);

@@ -1,6 +1,21 @@
 {
   "name": "transactlab-magic",
   "version": "0.1.0",
+  "type": "commonjs",
+  "main": "transactlab.js",
+  "scripts": {
+    "setup": "node transactlab-magic/magic-setup.js",
+    "sample": "node transactlab-magic/samples/express-server.js"
+  },
+  "dependencies": {
+    "dotenv": "^16.4.5",
+    "express": "^4.19.2"
+  }
+}
+
+{
+  "name": "transactlab-magic",
+  "version": "0.1.0",
   "description": "TransactLab Magic SDK (preview) - backend-first SDK and CLI",
   "main": "src/transactlab.js",
   "bin": {

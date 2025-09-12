@@ -37,6 +37,8 @@ import SubscriptionDetail from "./pages/SubscriptionDetail";
 import Docs from "./pages/Docs";
 import TeamAccept from "./pages/TeamAccept";
 import CheckoutTemplates from "./pages/sandbox/CheckoutTemplates";
+import PaymentLinkNew from "./pages/sandbox/PaymentLinkNew";
+import SDKSetup from "./pages/sandbox/SDKSetup";
 
 const queryClient = new QueryClient();
 
@@ -82,6 +84,8 @@ const App = () => (
                 <Route path="/sandbox/products" element={<Products />} />
                 <Route path="/sandbox/products/:productId" element={<ProductDetail />} />
                 <Route path="/sandbox/checkout-templates" element={<CheckoutTemplates />} />
+                <Route path="/sandbox/sdk-setup" element={<SDKSetup />} />
+                <Route path="/sandbox/payment-links/new" element={<PaymentLinkNew />} />
               </Route>
 
               {/* Checkout (public) */}

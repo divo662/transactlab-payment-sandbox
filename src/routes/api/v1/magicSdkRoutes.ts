@@ -11,6 +11,7 @@ const router = Router();
  * @access  Authenticated (dashboard)
  */
 router.post('/bake', authenticateToken, rateLimiters.general, MagicSdkController.bake);
+router.post('/zip', authenticateToken, rateLimiters.general, MagicSdkController.zip);
 
 export default router;
 

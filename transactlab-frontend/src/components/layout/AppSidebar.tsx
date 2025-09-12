@@ -1,5 +1,5 @@
 import { NavLink, useLocation } from "react-router-dom";
-import { LayoutDashboard, Settings, Play, Webhook, Database, KeyRound, CreditCard, DollarSign, Users, FileText, Palette } from "lucide-react";
+import { LayoutDashboard, Settings, Play, Webhook, Database, KeyRound, CreditCard, DollarSign, Users, FileText, Palette, Package, Link as LinkIcon } from "lucide-react";
 import {
   Sidebar,
   SidebarContent,
@@ -27,7 +27,9 @@ const sandboxItems = [
   { title: "Customers", url: "/sandbox/customers", icon: Users },
   { title: "Products", url: "/sandbox/products", icon: Database },
   { title: "Webhooks", url: "/sandbox/webhooks", icon: Webhook },
-  { title: "Checkout Templates", url: "/sandbox/checkout-templates", icon: Palette },
+  // { title: "Checkout Templates", url: "/sandbox/checkout-templates", icon: Palette },
+  { title: "SDK Setup", url: "/sandbox/sdk-setup", icon: Package },
+  { title: "Generate Payment Link", url: "/sandbox/payment-links/new", icon: LinkIcon },
 ];
 
 export function AppSidebar() {

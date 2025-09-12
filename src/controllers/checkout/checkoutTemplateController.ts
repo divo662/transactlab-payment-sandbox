@@ -49,6 +49,22 @@ export class CheckoutTemplateController {
     }
   }
 
+  static async upsertSdkDefaults(req: Request, res: Response) {
+    try {
+      const ownerId = req.user?._id;
+      const payload = req.body || {};
+      const doc = await CheckoutSettings.findOneAndUpdate(
+        { ownerId },
+        { $set: { sdkDefaults: payload } },
+        { upsert: true, new: true }
+      );
+      res.json({ success: true, data: doc?.sdkDefaults || {} });
+    } catch (e) {
+      logger.error('upsertSdkDefaults error', e);
+      res.status(500).json({ success: false, message: 'Failed to save SDK defaults' });
+    }
+  }
+
   static async upsertProductOverride(req: Request, res: Response) {
     try {
       const ownerId = req.user?._id;

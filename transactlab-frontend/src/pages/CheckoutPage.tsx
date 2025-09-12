@@ -12,13 +12,7 @@ import {
   EyeOff
 } from 'lucide-react';
 
-// Default checkout UI configuration (used if backend doesn't provide one)
-const DEFAULT_CHECKOUT_UI = {
-  theme: { brandColor: '#0a164d', accentColor: '#22c55e', backgroundStyle: 'solid', coverImageUrl: '' },
-  brand: { companyName: 'Your Store', logoUrl: '', supportEmail: '', supportUrl: '' },
-  layout: { showItemized: true, showTrustBadges: true, showSupportBox: true, showLegal: true },
-  legal: { termsUrl: '', privacyUrl: '' },
-};
+// Static checkout page without template customization
 
 interface CheckoutSession {
   sessionId: string;
@@ -37,9 +31,7 @@ interface CheckoutSession {
   paymentConfig?: {
     allowedPaymentMethods?: string[];
   };
-  // Optional UI config merged on the backend
-  checkoutConfig?: any;
-  ui?: any;
+  // Deprecated: template UI config (not used)
 }
 
 interface PaymentFormData {
@@ -78,7 +70,7 @@ const CheckoutPage: React.FC = () => {
   const [selectedMethod, setSelectedMethod] = useState<'card' | 'bank_transfer' | 'mobile_money'>('card');
   const [showBankModal, setShowBankModal] = useState(false);
   const [bankConfirmed, setBankConfirmed] = useState(false);
-  const [uiConfig, setUiConfig] = useState<any>(DEFAULT_CHECKOUT_UI);
+  // Template UI customization paused
   
   const [formData, setFormData] = useState<PaymentFormData>({
     cardNumber: '',
@@ -131,20 +123,9 @@ const CheckoutPage: React.FC = () => {
           success_url: s.success_url,
           cancelUrl: s.cancelUrl || s.cancel_url,
           cancel_url: s.cancel_url,
-          paymentConfig: s.paymentConfig,
-          checkoutConfig: (s as any).checkoutConfig,
-          ui: (s as any).ui
+          paymentConfig: s.paymentConfig
         };
         setSession(normalized);
-        // Resolve UI config from session payload or fall back to defaults
-        const ui = (s as any).checkoutConfig || (s as any).ui || {};
-        const resolved = {
-          theme: { ...DEFAULT_CHECKOUT_UI.theme, ...(ui.theme || {}) },
-          brand: { ...DEFAULT_CHECKOUT_UI.brand, ...(ui.brand || {}) },
-          layout: { ...DEFAULT_CHECKOUT_UI.layout, ...(ui.layout || {}) },
-          legal: { ...DEFAULT_CHECKOUT_UI.legal, ...(ui.legal || {}) },
-        };
-        setUiConfig(resolved);
         // derive initial method from URL param or default to card
         const searchParams = new URLSearchParams(location.search);
         const pmParam = searchParams.get('pm') as 'card' | 'bank_transfer' | 'mobile_money' | null;
@@ -357,16 +338,8 @@ const CheckoutPage: React.FC = () => {
 
   const majorAmount = (session.amount || 0) / 100;
 
-  const pageBackgroundStyle: React.CSSProperties = (() => {
-    if (uiConfig?.theme?.backgroundStyle === 'image' && uiConfig?.theme?.coverImageUrl) {
-      return {
-        backgroundImage: `url(${uiConfig.theme.coverImageUrl})`,
-        backgroundSize: 'cover',
-        backgroundPosition: 'center',
-      };
-    }
-    return {};
-  })();
+  // Static background
+  const pageBackgroundStyle: React.CSSProperties = {};
 
   return (
     <>
@@ -382,14 +355,7 @@ const CheckoutPage: React.FC = () => {
             Back
           </button>
          
-          <div className="flex flex-col items-center justify-center mb-1 sm:mb-2">
-            {uiConfig?.brand?.logoUrl ? (
-              <img src={uiConfig.brand.logoUrl} alt="Brand Logo" className="h-8 sm:h-10 w-auto mb-2" />
-            ) : null}
-            <h1 className="text-2xl sm:text-3xl md:text-4xl font-bold text-gray-900 text-center">
-              {uiConfig?.brand?.companyName || 'Checkout'}
-            </h1>
-          </div>
+          <h1 className="text-2xl sm:text-3xl md:text-4xl font-bold text-gray-900 mb-1 sm:mb-2 text-center">Checkout</h1>
           <div className="flex items-center justify-center gap-2 text-xs sm:text-sm text-gray-500">
             <span>Powered by</span>
             <div className="inline-flex items-center gap-1 px-2 py-1 rounded-md border border-gray-200 bg-white shadow-sm">
@@ -651,8 +617,7 @@ const CheckoutPage: React.FC = () => {
                 <button
                   type="submit"
                   disabled={processing || session.status !== 'pending' || decision?.action === 'review'}
-                  className="w-full text-white py-3 sm:py-4 px-4 sm:px-6 rounded-lg font-semibold disabled:opacity-50 disabled:cursor-not-allowed transition-all transform hover:scale-[1.02] active:scale-[0.98] text-sm sm:text-base md:text-lg"
-                  style={{ backgroundColor: uiConfig?.theme?.brandColor || '#0a164d' }}
+                  className="w-full bg-[#0a164d] text-white py-3 sm:py-4 px-4 sm:px-6 rounded-lg font-semibold hover:bg-[#0a164d]/90 disabled:opacity-50 disabled:cursor-not-allowed transition-all transform hover:scale-[1.02] active:scale-[0.98] text-sm sm:text-base md:text-lg"
                 >
                   {processing ? (
                     <div className="flex items-center justify-center">
@@ -725,22 +690,20 @@ const CheckoutPage: React.FC = () => {
               </div>
 
               {/* Security Features */}
-              {uiConfig?.layout?.showTrustBadges !== false && (
-                <div className="mt-4 sm:mt-6 space-y-2 sm:space-y-3">
-                  <div className="flex items-center text-xs sm:text-sm text-gray-600">
-                    <Shield className="w-3 h-3 sm:w-4 sm:h-4 mr-2 text-green-500 flex-shrink-0" />
-                    SSL Encrypted
-                  </div>
-                  <div className="flex items-center text-xs sm:text-sm text-gray-600">
-                    <Lock className="w-3 h-3 sm:w-4 sm:h-4 mr-2 flex-shrink-0" style={{ color: uiConfig?.theme?.brandColor || '#0a164d' }} />
-                    PCI Compliant
-                  </div>
-                  <div className="flex items-center text-xs sm:text-sm text-gray-600">
-                    <CheckCircle className="w-3 h-3 sm:w-4 sm:h-4 mr-2 flex-shrink-0" style={{ color: uiConfig?.theme?.brandColor || '#0a164d' }} />
-                    Sandbox Mode
-                  </div>
+              <div className="mt-4 sm:mt-6 space-y-2 sm:space-y-3">
+                <div className="flex items-center text-xs sm:text-sm text-gray-600">
+                  <Shield className="w-3 h-3 sm:w-4 sm:h-4 mr-2 text-green-500 flex-shrink-0" />
+                  SSL Encrypted
                 </div>
-              )}
+                <div className="flex items-center text-xs sm:text-sm text-gray-600">
+                  <Lock className="w-3 h-3 sm:w-4 sm:h-4 mr-2 text-[#0a164d] flex-shrink-0" />
+                  PCI Compliant
+                </div>
+                <div className="flex items-center text-xs sm:text-sm text-gray-600">
+                  <CheckCircle className="w-3 h-3 sm:w-4 sm:h-4 mr-2 text-[#0a164d] flex-shrink-0" />
+                  Sandbox Mode
+                </div>
+              </div>
 
               {/* Session Expiry Warning */}
               <div className="mt-3 sm:mt-4 p-2 sm:p-3 bg-yellow-50 border border-yellow-200 rounded-lg">
@@ -754,25 +717,7 @@ const CheckoutPage: React.FC = () => {
       </div>
     </div>
     
-    {/* Legal + Support footer */}
-    {uiConfig?.layout?.showLegal && (uiConfig?.legal?.termsUrl || uiConfig?.legal?.privacyUrl || uiConfig?.brand?.supportEmail || uiConfig?.brand?.supportUrl) && (
-      <div className="py-4 text-center text-xs text-gray-600">
-        <div className="flex items-center justify-center gap-4 flex-wrap">
-          {uiConfig?.legal?.termsUrl ? (
-            <a href={uiConfig.legal.termsUrl} target="_blank" rel="noopener noreferrer" className="hover:underline">Terms</a>
-          ) : null}
-          {uiConfig?.legal?.privacyUrl ? (
-            <a href={uiConfig.legal.privacyUrl} target="_blank" rel="noopener noreferrer" className="hover:underline">Privacy</a>
-          ) : null}
-          {uiConfig?.brand?.supportEmail ? (
-            <a href={`mailto:${uiConfig.brand.supportEmail}`} className="hover:underline">Support Email</a>
-          ) : null}
-          {uiConfig?.brand?.supportUrl ? (
-            <a href={uiConfig.brand.supportUrl} target="_blank" rel="noopener noreferrer" className="hover:underline">Support</a>
-          ) : null}
-        </div>
-      </div>
-    )}
+    {/* Legal footer removed while template customization is paused */}
     
     {/* Bank Transfer Modal */}
     {showBankModal && session && (

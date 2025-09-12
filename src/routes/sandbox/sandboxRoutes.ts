@@ -23,6 +23,8 @@ router.post('/sessions', SandboxController.createSession);
 router.get('/sessions/:sessionId', SandboxController.getSession);
 router.get('/sessions', SandboxController.getRecentSessions);
 router.post('/sessions/preview-template', SandboxController.getOrCreateTemplatePreviewSession);
+// Quick Payment Link (session-backed)
+router.post('/links/quick', SandboxController.createQuickPaymentLink);
 // Checkout URL resolution (workspace-safe)
 router.get('/checkout-url/:sessionId', SandboxController.getCheckoutUrl);
 // Quick create customer + session

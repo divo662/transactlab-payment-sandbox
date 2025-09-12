@@ -11,6 +11,7 @@ router.get('/templates', authenticateToken, CheckoutTemplateController.listTempl
 router.get('/settings', authenticateToken, CheckoutTemplateController.getSettings);
 router.put('/settings', authenticateToken, CheckoutTemplateController.upsertSettings);
 router.put('/settings/product/:productId', authenticateToken, CheckoutTemplateController.upsertProductOverride);
+router.put('/settings/sdk-defaults', authenticateToken, CheckoutTemplateController.upsertSdkDefaults);
 
 // Preview
 router.get('/preview', authenticateToken, CheckoutTemplateController.preview);
