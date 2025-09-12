@@ -4,7 +4,7 @@ import helmet from 'helmet';
 import compression from 'compression';
 import rateLimit from 'express-rate-limit';
 import { logger } from './utils/helpers/logger';
-import { SandboxSession, SandboxConfig, SandboxApiKey } from './models';
+import { SandboxSession, SandboxConfig, SandboxApiKey, SandboxPlan } from './models';
 import SandboxFraudDecision from './models/SandboxFraudDecision';
 import { FraudDetectionService } from './services/analytics/fraudDetectionService';
 import WebhookService from './services/sandbox/WebhookService';
