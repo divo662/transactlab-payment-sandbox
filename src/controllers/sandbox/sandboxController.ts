@@ -2177,7 +2177,7 @@ export class SandboxController {
       const { customerEmail, planId, chargeNow = true } = req.body as any;
       if (!customerEmail || !planId) return res.status(400).json({ success: false, message: 'Missing fields' });
 
-      const plan = await SandboxPlan.findOne({ _id: planId, userId: userId.toString(), active: true }).lean();
+      const plan = await SandboxPlan.findOne({ planId: planId, userId: userId.toString(), active: true }).lean();
       if (!plan) return res.status(404).json({ success: false, message: 'Plan not found' });
 
       const now = new Date();
@@ -2235,11 +2235,83 @@ export class SandboxController {
       const { customerEmail } = req.query as any;
       const query: any = { userId: userId.toString() };
       if (customerEmail) query.customerEmail = customerEmail;
+      
+      // Get subscriptions
       const subs = await SandboxSubscription.find(query).sort({ createdAt: -1 }).lean();
-      return res.json({ success: true, data: subs });
+      
+      // Get unique plan and product IDs
+      const planIds = [...new Set(subs.map(sub => sub.planId))];
+      const productIds = [...new Set(subs.map(sub => sub.productId))];
+      
+      // Fetch plan and product details
+      const [plans, products] = await Promise.all([
+        SandboxPlan.find({ planId: { $in: planIds }, userId: userId.toString() }).lean(),
+        SandboxProduct.find({ _id: { $in: productIds }, userId: userId.toString() }).lean()
+      ]);
+      
+      // Create lookup maps
+      const planMap = new Map(plans.map(plan => [plan.planId, plan]));
+      const productMap = new Map(products.map(product => [product._id.toString(), product]));
+      
+      // Transform the data to include plan details
+      const transformedSubs = subs.map((sub: any) => {
+        const plan = planMap.get(sub.planId);
+        const product = productMap.get(sub.productId);
+        
+        return {
+          ...sub,
+          planAmount: plan?.amount || 0,
+          planCurrency: plan?.currency || 'NGN',
+          planInterval: plan?.interval || 'month',
+          planName: product?.name || 'Subscription Plan',
+          planDescription: product?.description || '',
+          currency: plan?.currency || 'NGN'
+        };
+      });
+      
+      return res.json({ success: true, data: transformedSubs });
     } catch (error) {
       logger.error('Error listing subscriptions:', error);
       return res.status(500).json({ success: false, message: 'Failed to list subscriptions' });
+    }
+  }
+
+  static async getSubscription(req: Request, res: Response) {
+    try {
+      const userId = req.user?._id;
+      if (!userId) return res.status(401).json({ success: false, message: 'Unauthorized' });
+      
+      const { subscriptionId } = req.params;
+      const sub = await SandboxSubscription.findOne({ 
+        subscriptionId, 
+        userId: userId.toString() 
+      }).lean();
+      
+      if (!sub) {
+        return res.status(404).json({ success: false, message: 'Subscription not found' });
+      }
+      
+      // Get plan and product details
+      const [plan, product] = await Promise.all([
+        SandboxPlan.findOne({ planId: sub.planId, userId: userId.toString() }).lean(),
+        SandboxProduct.findOne({ _id: sub.productId, userId: userId.toString() }).lean()
+      ]);
+      
+      // Transform the data to include plan details
+      const transformedSub = {
+        ...sub,
+        planAmount: plan?.amount || 0,
+        planCurrency: plan?.currency || 'NGN',
+        planInterval: plan?.interval || 'month',
+        planName: product?.name || 'Subscription Plan',
+        planDescription: product?.description || '',
+        currency: plan?.currency || 'NGN'
+      };
+      
+      return res.json({ success: true, data: transformedSub });
+    } catch (error) {
+      logger.error('Error getting subscription:', error);
+      return res.status(500).json({ success: false, message: 'Failed to get subscription' });
     }
   }
 

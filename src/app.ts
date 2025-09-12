@@ -243,7 +243,7 @@ app.post('/api/v1/checkout/subscription', async (req, res) => {
     }
 
     // Find the plan to get the userId
-    const plan = await SandboxPlan.findOne({ _id: planId, active: true }).lean();
+    const plan = await SandboxPlan.findOne({ planId: planId, active: true }).lean();
     if (!plan) {
       return res.status(404).json({ success: false, message: 'Plan not found' });
     }

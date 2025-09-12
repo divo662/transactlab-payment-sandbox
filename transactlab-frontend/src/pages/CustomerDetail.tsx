@@ -181,8 +181,8 @@ const CustomerDetail: React.FC = () => {
         
         // Now fetch transactions and invoices using the found customer's email
         if (foundCustomer) {
-          // Fetch sessions (which are the transactions in sandbox)
-          const sessionsRes = await fetch(`${API_BASE}/sessions`, {
+          // Fetch sessions for this specific customer
+          const sessionsRes = await fetch(`${API_BASE}/debug/customer-sessions?email=${encodeURIComponent(foundCustomer.email)}`, {
             headers: { 
               'Authorization': `Bearer ${token}`,
               'Content-Type': 'application/json'
@@ -191,9 +191,7 @@ const CustomerDetail: React.FC = () => {
           
           if (sessionsRes.ok) {
             const sessionsData = await sessionsRes.json();
-            const customerSessions = sessionsData.data.filter((s: any) => 
-              s.customerEmail === foundCustomer.email
-            );
+            const customerSessions = sessionsData.data?.sessions || [];
             // Convert sessions to transaction format for display
             const sessionTransactions = customerSessions.map((s: any) => ({
               transactionId: s.sessionId,
@@ -232,14 +230,8 @@ const CustomerDetail: React.FC = () => {
           
           if (subscriptionsRes.ok) {
             const subscriptionsData = await subscriptionsRes.json();
-            // Normalize display fields for safety
-            const normalized = (subscriptionsData.data || []).map((s: any) => ({
-              ...s,
-              planAmount: typeof s.planAmount === 'number' ? s.planAmount : (s.amount || 0),
-              planInterval: s.planInterval || s.interval || 'month',
-              currency: s.currency || 'NGN',
-              subscriptionId: s.subscriptionId || s._id,
-            }));
+            // Use the data as returned from the backend (already normalized)
+            const normalized = subscriptionsData.data || [];
             setSubscriptions(normalized);
           }
 

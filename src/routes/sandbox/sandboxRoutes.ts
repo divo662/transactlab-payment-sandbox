@@ -74,6 +74,7 @@ router.delete('/plans/:planId', SandboxController.deletePlan);
 // Subscriptions
 router.post('/subscriptions', SandboxController.createSubscription);
 router.get('/subscriptions', SandboxController.listSubscriptions);
+router.get('/subscriptions/:subscriptionId', SandboxController.getSubscription);
 router.post('/subscriptions/:subscriptionId/cancel', SandboxController.cancelSubscription);
 router.post('/subscriptions/:subscriptionId/pause', SandboxController.pauseSubscription);
 router.post('/subscriptions/:subscriptionId/resume', SandboxController.resumeSubscription);
