@@ -70,9 +70,9 @@ export function AppSidebar() {
   const isActive = (path: string) => location.pathname === path;
 
   return (
-    <Sidebar collapsible="icon" className="border-r border-gray-200">
+    <Sidebar collapsible="icon" className="border-r border-gray-200 w-64 sm:w-64 md:w-64 lg:w-64">
       <SidebarHeader className="border-b border-gray-200">
-        <div className="px-4 py-4">
+        <div className="px-2 sm:px-4 py-3 sm:py-4">
           <div className="flex items-center space-x-2">
             <div className="w-8 h-8 bg-white rounded-lg flex items-center justify-center border border-gray-200 group-data-[collapsible=icon]:w-10 group-data-[collapsible=icon]:h-10">
               <img 
@@ -89,10 +89,10 @@ export function AppSidebar() {
         </div>
       </SidebarHeader>
 
-      <SidebarContent className="px-2 py-4">
+      <SidebarContent className="px-1 sm:px-2 py-2 sm:py-4">
         {/* Main Navigation */}
         <SidebarGroup>
-          <SidebarGroupLabel className="text-xs font-semibold text-gray-500 uppercase tracking-wider mb-2">
+          <SidebarGroupLabel className="text-xs font-semibold text-gray-500 uppercase tracking-wider mb-2 px-2">
             Main
           </SidebarGroupLabel>
           <SidebarGroupContent>
@@ -102,11 +102,11 @@ export function AppSidebar() {
                   <SidebarMenuButton 
                     asChild 
                     isActive={isActive(item.url)}
-                    className="h-9 px-3 rounded-lg hover:bg-gray-100 data-[active=true]:bg-[#0a164d] data-[active=true]:text-white"
+                    className="h-9 px-2 sm:px-3 rounded-lg hover:bg-gray-100 data-[active=true]:bg-[#0a164d] data-[active=true]:text-white"
                   >
                     <NavLink to={item.url} end>
-                      <item.icon className="mr-3 h-4 w-4" />
-                      <span className="group-data-[collapsible=icon]:hidden font-medium">{item.title}</span>
+                      <item.icon className="mr-2 sm:mr-3 h-4 w-4" />
+                      <span className="group-data-[collapsible=icon]:hidden font-medium text-sm sm:text-base">{item.title}</span>
                     </NavLink>
                   </SidebarMenuButton>
                 </SidebarMenuItem>
@@ -117,7 +117,7 @@ export function AppSidebar() {
 
         {/* Payment Processing */}
         <SidebarGroup>
-          <SidebarGroupLabel className="text-xs font-semibold text-gray-500 uppercase tracking-wider mb-2">
+          <SidebarGroupLabel className="text-xs font-semibold text-gray-500 uppercase tracking-wider mb-2 px-2">
             Payments
           </SidebarGroupLabel>
           <SidebarGroupContent>
@@ -127,11 +127,11 @@ export function AppSidebar() {
                   <SidebarMenuButton 
                     asChild 
                     isActive={isActive(item.url)}
-                    className="h-9 px-3 rounded-lg hover:bg-gray-100 data-[active=true]:bg-[#0a164d] data-[active=true]:text-white"
+                    className="h-9 px-2 sm:px-3 rounded-lg hover:bg-gray-100 data-[active=true]:bg-[#0a164d] data-[active=true]:text-white"
                   >
                     <NavLink to={item.url} end>
-                      <item.icon className="mr-3 h-4 w-4" />
-                      <span className="group-data-[collapsible=icon]:hidden font-medium">{item.title}</span>
+                      <item.icon className="mr-2 sm:mr-3 h-4 w-4" />
+                      <span className="group-data-[collapsible=icon]:hidden font-medium text-sm sm:text-base">{item.title}</span>
                     </NavLink>
                   </SidebarMenuButton>
                 </SidebarMenuItem>
@@ -142,7 +142,7 @@ export function AppSidebar() {
 
         {/* Recurring Payments */}
         <SidebarGroup>
-          <SidebarGroupLabel className="text-xs font-semibold text-gray-500 uppercase tracking-wider mb-2">
+          <SidebarGroupLabel className="text-xs font-semibold text-gray-500 uppercase tracking-wider mb-2 px-2">
             Recurring
           </SidebarGroupLabel>
           <SidebarGroupContent>
@@ -152,11 +152,11 @@ export function AppSidebar() {
                   <SidebarMenuButton 
                     asChild 
                     isActive={isActive(item.url)}
-                    className="h-9 px-3 rounded-lg hover:bg-gray-100 data-[active=true]:bg-[#0a164d] data-[active=true]:text-white"
+                    className="h-9 px-2 sm:px-3 rounded-lg hover:bg-gray-100 data-[active=true]:bg-[#0a164d] data-[active=true]:text-white"
                   >
                     <NavLink to={item.url} end>
-                      <item.icon className="mr-3 h-4 w-4" />
-                      <span className="group-data-[collapsible=icon]:hidden font-medium">{item.title}</span>
+                      <item.icon className="mr-2 sm:mr-3 h-4 w-4" />
+                      <span className="group-data-[collapsible=icon]:hidden font-medium text-sm sm:text-base">{item.title}</span>
                     </NavLink>
                   </SidebarMenuButton>
                 </SidebarMenuItem>
@@ -167,7 +167,7 @@ export function AppSidebar() {
 
         {/* Developer Tools */}
         <SidebarGroup>
-          <SidebarGroupLabel className="text-xs font-semibold text-gray-500 uppercase tracking-wider mb-2">
+          <SidebarGroupLabel className="text-xs font-semibold text-gray-500 uppercase tracking-wider mb-2 px-2">
             Developer
           </SidebarGroupLabel>
           <SidebarGroupContent>
@@ -177,11 +177,11 @@ export function AppSidebar() {
                   <SidebarMenuButton 
                     asChild 
                     isActive={isActive(item.url)}
-                    className="h-9 px-3 rounded-lg hover:bg-gray-100 data-[active=true]:bg-[#0a164d] data-[active=true]:text-white"
+                    className="h-9 px-2 sm:px-3 rounded-lg hover:bg-gray-100 data-[active=true]:bg-[#0a164d] data-[active=true]:text-white"
                   >
                     <NavLink to={item.url} end>
-                      <item.icon className="mr-3 h-4 w-4" />
-                      <span className="group-data-[collapsible=icon]:hidden font-medium">{item.title}</span>
+                      <item.icon className="mr-2 sm:mr-3 h-4 w-4" />
+                      <span className="group-data-[collapsible=icon]:hidden font-medium text-sm sm:text-base">{item.title}</span>
                     </NavLink>
                   </SidebarMenuButton>
                 </SidebarMenuItem>
@@ -192,7 +192,7 @@ export function AppSidebar() {
 
         {/* Tools */}
         <SidebarGroup>
-          <SidebarGroupLabel className="text-xs font-semibold text-gray-500 uppercase tracking-wider mb-2">
+          <SidebarGroupLabel className="text-xs font-semibold text-gray-500 uppercase tracking-wider mb-2 px-2">
             Tools
           </SidebarGroupLabel>
           <SidebarGroupContent>
@@ -202,11 +202,11 @@ export function AppSidebar() {
                   <SidebarMenuButton 
                     asChild 
                     isActive={isActive(item.url)}
-                    className="h-9 px-3 rounded-lg hover:bg-gray-100 data-[active=true]:bg-[#0a164d] data-[active=true]:text-white"
+                    className="h-9 px-2 sm:px-3 rounded-lg hover:bg-gray-100 data-[active=true]:bg-[#0a164d] data-[active=true]:text-white"
                   >
                     <NavLink to={item.url} end>
-                      <item.icon className="mr-3 h-4 w-4" />
-                      <span className="group-data-[collapsible=icon]:hidden font-medium">{item.title}</span>
+                      <item.icon className="mr-2 sm:mr-3 h-4 w-4" />
+                      <span className="group-data-[collapsible=icon]:hidden font-medium text-sm sm:text-base">{item.title}</span>
                     </NavLink>
                   </SidebarMenuButton>
                 </SidebarMenuItem>
@@ -216,7 +216,7 @@ export function AppSidebar() {
         </SidebarGroup>
       </SidebarContent>
 
-      <SidebarFooter className="border-t border-gray-200 p-4">
+      <SidebarFooter className="border-t border-gray-200 p-2 sm:p-4">
         <div className="group-data-[collapsible=icon]:hidden">
           <div className="text-xs text-gray-500 mb-1">Environment</div>
           <div className="text-sm font-medium text-[#0a164d]">Sandbox Mode</div>

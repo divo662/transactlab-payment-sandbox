@@ -208,10 +208,13 @@ const TransactionHistory: React.FC = () => {
     }
   };
 
-  const handleDownloadReceipt = () => {
+  const [downloadingReceipt, setDownloadingReceipt] = useState(false);
+
+  const handleDownloadReceipt = async () => {
     if (!selectedTransaction) return;
 
     try {
+      setDownloadingReceipt(true);
       generateReceiptPDF({
         transactionId: selectedTransaction.transactionId || selectedTransaction.sessionId,
         sessionId: selectedTransaction.sessionId || selectedTransaction.transactionId,
@@ -228,16 +231,81 @@ const TransactionHistory: React.FC = () => {
     } catch (err) {
       console.error('Error generating receipt PDF:', err);
       toast({ title: 'Error', description: 'Failed to generate receipt', variant: 'destructive' });
+    } finally {
+      setDownloadingReceipt(false);
     }
   };
 
+  if (loading && transactions.length === 0) {
+    return (
+      <div className="space-y-4 sm:space-y-6">
+        {/* Header Skeleton */}
+        <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3 sm:gap-4">
+          <div className="h-8 bg-gray-200 rounded w-32 animate-pulse"></div>
+          <div className="flex items-center gap-2 sm:gap-3">
+            <div className="h-9 bg-gray-200 rounded w-32 sm:w-40 animate-pulse"></div>
+            <div className="h-9 bg-gray-200 rounded w-20 animate-pulse"></div>
+          </div>
+        </div>
+
+        {/* Card Skeleton */}
+        <div className="border rounded-lg">
+          <div className="p-4 sm:p-6 border-b">
+            <div className="h-5 bg-gray-200 rounded w-32 animate-pulse"></div>
+          </div>
+          <div className="p-0">
+            <div className="space-y-4 p-4 sm:p-6">
+              {Array.from({ length: 5 }).map((_, i) => (
+                <div key={i} className="border rounded-lg p-4">
+                  <div className="flex items-center justify-between">
+                    <div className="flex items-center space-x-3 sm:space-x-4">
+                      <div className="w-4 h-4 bg-gray-200 rounded animate-pulse"></div>
+                      <div className="min-w-0 flex-1">
+                        <div className="flex flex-col sm:flex-row sm:items-center gap-2 mb-2">
+                          <div className="h-5 bg-gray-200 rounded w-20 animate-pulse"></div>
+                          <div className="flex gap-2">
+                            <div className="h-5 bg-gray-200 rounded w-16 animate-pulse"></div>
+                            <div className="h-5 bg-gray-200 rounded w-20 animate-pulse"></div>
+                          </div>
+                        </div>
+                        <div className="flex flex-col sm:flex-row sm:items-center gap-2">
+                          <div className="h-4 bg-gray-200 rounded w-32 animate-pulse"></div>
+                          <div className="h-3 bg-gray-200 rounded w-24 animate-pulse"></div>
+                        </div>
+                      </div>
+                    </div>
+                    <div className="flex flex-col sm:flex-row items-end sm:items-center gap-2">
+                      <div className="h-4 bg-gray-200 rounded w-20 animate-pulse"></div>
+                      <div className="flex gap-1">
+                        <div className="h-8 w-8 bg-gray-200 rounded animate-pulse"></div>
+                        <div className="h-8 w-8 bg-gray-200 rounded animate-pulse"></div>
+                        <div className="h-8 w-8 bg-gray-200 rounded animate-pulse"></div>
+                      </div>
+                    </div>
+                  </div>
+                </div>
+              ))}
+            </div>
+          </div>
+        </div>
+
+        {/* Loading Message */}
+        <div className="text-center py-8">
+          <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-[#0a164d] mx-auto mb-4"></div>
+          <p className="text-gray-600 font-medium">Loading transactions...</p>
+          <p className="text-sm text-gray-500 mt-1">This may take a few moments</p>
+        </div>
+      </div>
+    );
+  }
+
   return (
-    <div className="space-y-6">
-      <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
-        <h1 className="text-2xl font-semibold">Transactions</h1>
-        <div className="flex items-center space-x-3">
+    <div className="space-y-4 sm:space-y-6 p-3 sm:p-0">
+      <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3 sm:gap-4">
+        <h1 className="text-xl sm:text-2xl font-semibold">Transactions</h1>
+        <div className="flex flex-col sm:flex-row items-stretch sm:items-center gap-2 sm:gap-3">
           <Select value={paymentTypeFilter} onValueChange={(value: 'all' | 'subscription' | 'one-time') => setPaymentTypeFilter(value)}>
-            <SelectTrigger className="w-40">
+            <SelectTrigger className="w-full sm:w-40">
               <SelectValue placeholder="Filter by type" />
             </SelectTrigger>
             <SelectContent>
@@ -246,120 +314,225 @@ const TransactionHistory: React.FC = () => {
               <SelectItem value="one-time">One-time</SelectItem>
             </SelectContent>
           </Select>
-          <Button variant="outline" onClick={() => void fetchTx()}>
-            <RefreshCw className="w-4 h-4 mr-2"/>
-            Refresh
+          <Button variant="outline" onClick={() => void fetchTx()} disabled={loading} className="w-full sm:w-auto">
+            <RefreshCw className={`w-4 h-4 mr-2 ${loading ? 'animate-spin' : ''}`}/>
+            {loading ? 'Refreshing...' : 'Refresh'}
           </Button>
         </div>
       </div>
 
       <Card>
-        <CardHeader>
-          <CardTitle className="text-sm">Recent Transactions</CardTitle>
+        <CardHeader className="px-3 sm:px-6 pt-3 sm:pt-6">
+          <CardTitle className="text-sm sm:text-base">Recent Transactions</CardTitle>
         </CardHeader>
         <CardContent className="p-0">
           {(() => {
             const filteredTransactions = getFilteredTransactions();
             return filteredTransactions.length === 0 ? (
-              <div className="text-center text-muted-foreground py-12">
-                <DollarSign className="w-10 h-10 mx-auto mb-2 opacity-40" />
-                <p>{transactions.length === 0 ? 'No transactions yet.' : 'No transactions match the selected filter.'}</p>
+              <div className="text-center text-muted-foreground py-8 sm:py-12 px-4">
+                <DollarSign className="w-8 h-8 sm:w-10 sm:h-10 mx-auto mb-2 opacity-40" />
+                <p className="text-sm sm:text-base">{transactions.length === 0 ? 'No transactions yet.' : 'No transactions match the selected filter.'}</p>
               </div>
             ) : (
-              <div className="divide-y divide-gray-200">
-                {filteredTransactions.map((t: any) => (
-                <div 
-                  key={t.transactionId || t.sessionId} 
-                  className="p-4 hover:bg-gray-50 cursor-pointer transition-colors"
-                  onClick={() => openModal(t)}
-                >
-                  <div className="flex items-center justify-between">
-                    <div className="flex items-center space-x-4">
-                      <div className="flex-shrink-0">
-                        {getStatusIcon(t.status)}
-                      </div>
-                      <div className="min-w-0 flex-1">
-                        <div className="flex items-center space-x-3 mb-1">
-                          <p className="text-lg font-semibold text-gray-900">
-                            {fmtMoney(t.amount, t.currency)}
-                          </p>
-                          <span className={`inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium ${getStatusColor(t.status)}`}>
-                            {t.status}
-                          </span>
-                          <span className={`inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium ${getPaymentTypeInfo(t).color}`}>
-                            {getPaymentTypeInfo(t).icon}
-                            <span className="ml-1">{getPaymentTypeInfo(t).label}</span>
-                          </span>
+              <>
+                {/* Desktop View */}
+                <div className="hidden sm:block divide-y divide-gray-200">
+                  {filteredTransactions.map((t: any) => (
+                  <div 
+                    key={t.transactionId || t.sessionId} 
+                    className="p-4 hover:bg-gray-50 cursor-pointer transition-colors"
+                    onClick={() => openModal(t)}
+                  >
+                    <div className="flex items-center justify-between">
+                      <div className="flex items-center space-x-4">
+                        <div className="flex-shrink-0">
+                          {getStatusIcon(t.status)}
                         </div>
-                        <div className="flex items-center space-x-2">
-                          <p className="text-sm text-gray-600 truncate">
-                            {t.customerEmail || 'No email provided'}
-                          </p>
-                          <span className="text-xs text-gray-500">•</span>
-                          <p className="text-xs text-gray-500 truncate">
-                            {getPaymentTypeInfo(t).description}
-                          </p>
+                        <div className="min-w-0 flex-1">
+                          <div className="flex items-center space-x-3 mb-1">
+                            <p className="text-lg font-semibold text-gray-900">
+                              {fmtMoney(t.amount, t.currency)}
+                            </p>
+                            <span className={`inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium ${getStatusColor(t.status)}`}>
+                              {t.status}
+                            </span>
+                            <span className={`inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium ${getPaymentTypeInfo(t).color}`}>
+                              {getPaymentTypeInfo(t).icon}
+                              <span className="ml-1">{getPaymentTypeInfo(t).label}</span>
+                            </span>
+                          </div>
+                          <div className="flex items-center space-x-2">
+                            <p className="text-sm text-gray-600 truncate">
+                              {t.customerEmail || 'No email provided'}
+                            </p>
+                            <span className="text-xs text-gray-500">•</span>
+                            <p className="text-xs text-gray-500 truncate">
+                              {getPaymentTypeInfo(t).description}
+                            </p>
+                          </div>
                         </div>
                       </div>
-                    </div>
-                    <div className="flex items-center space-x-2">
-                      <span className="text-sm text-gray-500">
-                        {fmtDate(t.createdAt)}
-                      </span>
-                      <div className="flex items-center space-x-1">
-                        {(t.status === 'completed' || t.status === 'successful') && (
+                      <div className="flex items-center space-x-2">
+                        <span className="text-sm text-gray-500">
+                          {fmtDate(t.createdAt)}
+                        </span>
+                        <div className="flex items-center space-x-1">
+                          {(t.status === 'completed' || t.status === 'successful') && (
+                            <Button
+                              variant="ghost"
+                              size="sm"
+                              className="h-8 w-8 p-0 text-orange-600 hover:text-orange-700 hover:bg-orange-50"
+                              onClick={(e) => {
+                                e.stopPropagation();
+                                setSelectedTransaction(t);
+                                setShowRefundModal(true);
+                              }}
+                              title="Refund"
+                            >
+                              <RotateCcw className="w-4 h-4" />
+                            </Button>
+                          )}
+                            <Button
+                              variant="ghost"
+                              size="sm"
+                              className="h-8 w-8 p-0 text-blue-600 hover:text-blue-700 hover:bg-blue-50"
+                              onClick={(e) => {
+                                e.stopPropagation();
+                                setSelectedTransaction(t);
+                                handleDownloadReceipt();
+                              }}
+                              disabled={downloadingReceipt}
+                              title="Download Receipt"
+                            >
+                              {downloadingReceipt ? (
+                                <Loader2 className="w-4 h-4 animate-spin" />
+                              ) : (
+                                <Download className="w-4 h-4" />
+                              )}
+                            </Button>
                           <Button
                             variant="ghost"
                             size="sm"
-                            className="h-8 w-8 p-0 text-orange-600 hover:text-orange-700 hover:bg-orange-50"
+                            className="h-8 w-8 p-0 text-gray-600 hover:text-gray-700 hover:bg-gray-50"
                             onClick={(e) => {
                               e.stopPropagation();
-                              setSelectedTransaction(t);
-                              setShowRefundModal(true);
+                              openModal(t);
                             }}
-                            title="Refund"
+                            title="View Details"
                           >
-                            <RotateCcw className="w-4 h-4" />
+                            <Eye className="w-4 h-4" />
                           </Button>
-                        )}
-                        <Button
-                          variant="ghost"
-                          size="sm"
-                          className="h-8 w-8 p-0 text-blue-600 hover:text-blue-700 hover:bg-blue-50"
-                          onClick={(e) => {
-                            e.stopPropagation();
-                            setSelectedTransaction(t);
-                            handleDownloadReceipt();
-                          }}
-                          title="Download Receipt"
-                        >
-                          <Download className="w-4 h-4" />
-                        </Button>
-                        <Button
-                          variant="ghost"
-                          size="sm"
-                          className="h-8 w-8 p-0 text-gray-600 hover:text-gray-700 hover:bg-gray-50"
-                          onClick={(e) => {
-                            e.stopPropagation();
-                            openModal(t);
-                          }}
-                          title="View Details"
-                        >
-                          <Eye className="w-4 h-4" />
-                        </Button>
+                        </div>
                       </div>
                     </div>
                   </div>
+                ))}
                 </div>
-              ))}
-              </div>
+
+                {/* Mobile View */}
+                <div className="sm:hidden space-y-3 p-3">
+                  {filteredTransactions.map((t: any) => (
+                    <div 
+                      key={t.transactionId || t.sessionId} 
+                      className="bg-white border border-gray-200 rounded-lg p-4 shadow-sm hover:shadow-md transition-shadow cursor-pointer"
+                      onClick={() => openModal(t)}
+                    >
+                      <div className="space-y-3">
+                        {/* Header with amount and status */}
+                        <div className="flex items-center justify-between">
+                          <div className="flex items-center space-x-2">
+                            {getStatusIcon(t.status)}
+                            <p className="text-lg font-semibold text-gray-900">
+                              {fmtMoney(t.amount, t.currency)}
+                            </p>
+                          </div>
+                          <span className={`inline-flex items-center px-2 py-1 rounded-full text-xs font-medium ${getStatusColor(t.status)}`}>
+                            {t.status}
+                          </span>
+                        </div>
+
+                        {/* Payment type and description */}
+                        <div className="flex items-center justify-between">
+                          <span className={`inline-flex items-center px-2 py-1 rounded-full text-xs font-medium ${getPaymentTypeInfo(t).color}`}>
+                            {getPaymentTypeInfo(t).icon}
+                            <span className="ml-1">{getPaymentTypeInfo(t).label}</span>
+                          </span>
+                          <span className="text-xs text-gray-500">
+                            {fmtDate(t.createdAt)}
+                          </span>
+                        </div>
+
+                        {/* Customer email */}
+                        <div className="text-sm text-gray-600 truncate">
+                          {t.customerEmail || 'No email provided'}
+                        </div>
+
+                        {/* Action buttons */}
+                        <div className="flex items-center justify-between pt-2 border-t border-gray-100">
+                          <div className="text-xs text-gray-500">
+                            {getPaymentTypeInfo(t).description}
+                          </div>
+                          <div className="flex items-center space-x-1">
+                            {(t.status === 'completed' || t.status === 'successful') && (
+                              <Button
+                                variant="ghost"
+                                size="sm"
+                                className="h-8 w-8 p-0 text-orange-600 hover:text-orange-700 hover:bg-orange-50"
+                                onClick={(e) => {
+                                  e.stopPropagation();
+                                  setSelectedTransaction(t);
+                                  setShowRefundModal(true);
+                                }}
+                                title="Refund"
+                              >
+                                <RotateCcw className="w-4 h-4" />
+                              </Button>
+                            )}
+                            <Button
+                              variant="ghost"
+                              size="sm"
+                              className="h-8 w-8 p-0 text-blue-600 hover:text-blue-700 hover:bg-blue-50"
+                              onClick={(e) => {
+                                e.stopPropagation();
+                                setSelectedTransaction(t);
+                                handleDownloadReceipt();
+                              }}
+                              disabled={downloadingReceipt}
+                              title="Download Receipt"
+                            >
+                              {downloadingReceipt ? (
+                                <Loader2 className="w-4 h-4 animate-spin" />
+                              ) : (
+                                <Download className="w-4 h-4" />
+                              )}
+                            </Button>
+                            <Button
+                              variant="ghost"
+                              size="sm"
+                              className="h-8 w-8 p-0 text-gray-600 hover:text-gray-700 hover:bg-gray-50"
+                              onClick={(e) => {
+                                e.stopPropagation();
+                                openModal(t);
+                              }}
+                              title="View Details"
+                            >
+                              <Eye className="w-4 h-4" />
+                            </Button>
+                          </div>
+                        </div>
+                      </div>
+                    </div>
+                  ))}
+                </div>
+              </>
             );
           })()}
           
           {/* Loading state */}
-          {loading && (
+          {loading && transactions.length > 0 && (
             <div className="text-center py-8">
-              <p className="text-sm text-gray-500">Loading transactions...</p>
+              <div className="animate-spin rounded-full h-6 w-6 border-b-2 border-[#0a164d] mx-auto mb-2"></div>
+              <p className="text-sm text-gray-500">Loading more transactions...</p>
             </div>
           )}
         </CardContent>
@@ -380,78 +553,78 @@ const TransactionHistory: React.FC = () => {
 
       {/* Transaction Details Modal */}
       {isModalOpen && selectedTransaction && (
-        <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center p-4 z-50">
-          <div className="bg-white rounded-lg shadow-xl max-w-2xl w-full max-h-[90vh] overflow-y-auto">
-            <div className="flex items-center justify-between p-6 border-b border-gray-200">
-              <h2 className="text-xl font-semibold text-gray-900">Transaction Details</h2>
+        <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center p-2 sm:p-4 z-50">
+          <div className="bg-white rounded-lg shadow-xl max-w-2xl w-full max-h-[95vh] overflow-y-auto mx-2 sm:mx-0">
+            <div className="flex items-center justify-between p-4 sm:p-6 border-b border-gray-200">
+              <h2 className="text-lg sm:text-xl font-semibold text-gray-900">Transaction Details</h2>
               <button
                 onClick={closeModal}
-                className="text-gray-400 hover:text-gray-600 transition-colors"
+                className="text-gray-400 hover:text-gray-600 transition-colors p-1"
               >
-                <X className="w-6 h-6" />
+                <X className="w-5 h-5 sm:w-6 sm:h-6" />
               </button>
             </div>
             
-            <div className="p-6 space-y-6">
+            <div className="p-4 sm:p-6 space-y-4 sm:space-y-6">
               {/* Transaction Status */}
-              <div className="flex items-center space-x-3">
-                {getStatusIcon(selectedTransaction.status)}
-                <div>
-                  <h3 className="text-lg font-semibold text-gray-900">
+              <div className="flex flex-col sm:flex-row sm:items-center space-y-2 sm:space-y-0 sm:space-x-3">
+                <div className="flex items-center space-x-3">
+                  {getStatusIcon(selectedTransaction.status)}
+                  <h3 className="text-lg sm:text-xl font-semibold text-gray-900">
                     {fmtMoney(selectedTransaction.amount, selectedTransaction.currency)}
                   </h3>
-                  <div className="flex items-center space-x-2 mt-1">
-                    <span className={`inline-flex items-center px-3 py-1 rounded-full text-sm font-medium ${getStatusColor(selectedTransaction.status)}`}>
-                      {selectedTransaction.status}
-                    </span>
-                    <span className={`inline-flex items-center px-3 py-1 rounded-full text-sm font-medium ${getPaymentTypeInfo(selectedTransaction).color}`}>
-                      {getPaymentTypeInfo(selectedTransaction).icon}
-                      <span className="ml-1">{getPaymentTypeInfo(selectedTransaction).label}</span>
-                    </span>
-                  </div>
+                </div>
+                <div className="flex flex-wrap gap-2">
+                  <span className={`inline-flex items-center px-2 sm:px-3 py-1 rounded-full text-xs sm:text-sm font-medium ${getStatusColor(selectedTransaction.status)}`}>
+                    {selectedTransaction.status}
+                  </span>
+                  <span className={`inline-flex items-center px-2 sm:px-3 py-1 rounded-full text-xs sm:text-sm font-medium ${getPaymentTypeInfo(selectedTransaction).color}`}>
+                    {getPaymentTypeInfo(selectedTransaction).icon}
+                    <span className="ml-1">{getPaymentTypeInfo(selectedTransaction).label}</span>
+                  </span>
                 </div>
               </div>
 
               {/* Transaction Details Grid */}
-              <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-                <div className="space-y-4">
-                  <div className="flex items-center space-x-3">
-                    <Hash className="w-5 h-5 text-gray-400" />
-                    <div>
-                      <p className="text-sm font-medium text-gray-500">Transaction ID</p>
-                      <p className="text-sm text-gray-900 font-mono break-all">
+              <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 sm:gap-6">
+                <div className="space-y-3 sm:space-y-4">
+                  <div className="flex items-start space-x-3">
+                    <Hash className="w-4 h-4 sm:w-5 sm:h-5 text-gray-400 mt-0.5" />
+                    <div className="min-w-0 flex-1">
+                      <p className="text-xs sm:text-sm font-medium text-gray-500">Transaction ID</p>
+                      <p className="text-xs sm:text-sm text-gray-900 font-mono break-all">
                         {selectedTransaction.transactionId || selectedTransaction.sessionId}
                       </p>
                     </div>
                   </div>
 
-                  <div className="flex items-center space-x-3">
-                    <Mail className="w-5 h-5 text-gray-400" />
-                    <div>
-                      <p className="text-sm font-medium text-gray-500">Customer Email</p>
-                      <p className="text-sm text-gray-900">
+                  <div className="flex items-start space-x-3">
+                    <Mail className="w-4 h-4 sm:w-5 sm:h-5 text-gray-400 mt-0.5" />
+                    <div className="min-w-0 flex-1">
+                      <p className="text-xs sm:text-sm font-medium text-gray-500">Customer Email</p>
+                      <p className="text-xs sm:text-sm text-gray-900 break-all">
                         {selectedTransaction.customerEmail || 'No email provided'}
                       </p>
                     </div>
                   </div>
 
-                  <div className="flex items-center space-x-3">
-                    <Calendar className="w-5 h-5 text-gray-400" />
-                    <div>
-                      <p className="text-sm font-medium text-gray-500">Date & Time</p>
-                      <p className="text-sm text-gray-900">
+                  <div className="flex items-start space-x-3">
+                    <Calendar className="w-4 h-4 sm:w-5 sm:h-5 text-gray-400 mt-0.5" />
+                    <div className="min-w-0 flex-1">
+                      <p className="text-xs sm:text-sm font-medium text-gray-500">Date & Time</p>
+                      <p className="text-xs sm:text-sm text-gray-900">
                         {fmtDate(selectedTransaction.createdAt)}
                       </p>
                     </div>
                   </div>
                 </div>
 
-                <div className="space-y-4">
-                  <div className="flex items-center space-x-3">
-                    <CreditCard className="w-5 h-5 text-gray-400" />
-                    <div>
-                      <p className="text-sm font-medium text-gray-500">Payment Method</p>
-                      <p className="text-sm text-gray-900">
+                <div className="space-y-3 sm:space-y-4">
+                  <div className="flex items-start space-x-3">
+                    <CreditCard className="w-4 h-4 sm:w-5 sm:h-5 text-gray-400 mt-0.5" />
+                    <div className="min-w-0 flex-1">
+                      <p className="text-xs sm:text-sm font-medium text-gray-500">Payment Method</p>
+                      <p className="text-xs sm:text-sm text-gray-900">
                         {selectedTransaction.metadata?.customFields?.paymentMethodUsed === 'bank_transfer' && 'Bank Transfer'}
                         {selectedTransaction.metadata?.customFields?.paymentMethodUsed === 'mobile_money' && 'Mobile Money'}
                         {!selectedTransaction.metadata?.customFields?.paymentMethodUsed && 'Credit/Debit Card'}
@@ -460,11 +633,11 @@ const TransactionHistory: React.FC = () => {
                     </div>
                   </div>
 
-                  <div className="flex items-center space-x-3">
-                    <DollarSign className="w-5 h-5 text-gray-400" />
-                    <div>
-                      <p className="text-sm font-medium text-gray-500">Amount</p>
-                      <p className="text-lg font-semibold text-gray-900">
+                  <div className="flex items-start space-x-3">
+                    <DollarSign className="w-4 h-4 sm:w-5 sm:h-5 text-gray-400 mt-0.5" />
+                    <div className="min-w-0 flex-1">
+                      <p className="text-xs sm:text-sm font-medium text-gray-500">Amount</p>
+                      <p className="text-base sm:text-lg font-semibold text-gray-900">
                         {fmtMoney(selectedTransaction.amount, selectedTransaction.currency)}
                       </p>
                     </div>
@@ -472,14 +645,14 @@ const TransactionHistory: React.FC = () => {
 
                   {selectedTransaction.description && (
                     <div className="flex items-start space-x-3">
-                      <div className="w-5 h-5 text-gray-400 mt-0.5">
-                        <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                      <div className="w-4 h-4 sm:w-5 sm:h-5 text-gray-400 mt-0.5">
+                        <svg className="w-4 h-4 sm:w-5 sm:h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                           <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" />
                         </svg>
                       </div>
-                      <div>
-                        <p className="text-sm font-medium text-gray-500">Description</p>
-                        <p className="text-sm text-gray-900">
+                      <div className="min-w-0 flex-1">
+                        <p className="text-xs sm:text-sm font-medium text-gray-500">Description</p>
+                        <p className="text-xs sm:text-sm text-gray-900 break-words">
                           {selectedTransaction.description}
                         </p>
                       </div>
@@ -489,22 +662,22 @@ const TransactionHistory: React.FC = () => {
                   {/* Subscription Details */}
                   {isSubscriptionPayment(selectedTransaction) && (
                     <div className="flex items-start space-x-3">
-                      <Repeat className="w-5 h-5 text-purple-400 mt-0.5" />
-                      <div>
-                        <p className="text-sm font-medium text-gray-500">Subscription Details</p>
+                      <Repeat className="w-4 h-4 sm:w-5 sm:h-5 text-purple-400 mt-0.5" />
+                      <div className="min-w-0 flex-1">
+                        <p className="text-xs sm:text-sm font-medium text-gray-500">Subscription Details</p>
                         <div className="space-y-1">
                           {selectedTransaction.metadata?.subscriptionId && (
-                            <p className="text-sm text-gray-900">
+                            <p className="text-xs sm:text-sm text-gray-900 break-all">
                               <span className="font-medium">Subscription ID:</span> {selectedTransaction.metadata.subscriptionId}
                             </p>
                           )}
                           {selectedTransaction.metadata?.productId && (
-                            <p className="text-sm text-gray-900">
+                            <p className="text-xs sm:text-sm text-gray-900 break-all">
                               <span className="font-medium">Product ID:</span> {selectedTransaction.metadata.productId}
                             </p>
                           )}
                           {selectedTransaction.metadata?.planId && (
-                            <p className="text-sm text-gray-900">
+                            <p className="text-xs sm:text-sm text-gray-900 break-all">
                               <span className="font-medium">Plan ID:</span> {selectedTransaction.metadata.planId}
                             </p>
                           )}
@@ -517,16 +690,16 @@ const TransactionHistory: React.FC = () => {
 
               {/* Additional Details */}
               {selectedTransaction.customerName && (
-                <div className="border-t border-gray-200 pt-4">
-                  <div className="flex items-center space-x-3">
-                    <div className="w-5 h-5 text-gray-400">
-                      <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <div className="border-t border-gray-200 pt-3 sm:pt-4">
+                  <div className="flex items-start space-x-3">
+                    <div className="w-4 h-4 sm:w-5 sm:h-5 text-gray-400 mt-0.5">
+                      <svg className="w-4 h-4 sm:w-5 sm:h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                         <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z" />
                       </svg>
                     </div>
-                    <div>
-                      <p className="text-sm font-medium text-gray-500">Customer Name</p>
-                      <p className="text-sm text-gray-900">
+                    <div className="min-w-0 flex-1">
+                      <p className="text-xs sm:text-sm font-medium text-gray-500">Customer Name</p>
+                      <p className="text-xs sm:text-sm text-gray-900 break-words">
                         {selectedTransaction.customerName}
                       </p>
                     </div>
@@ -535,8 +708,8 @@ const TransactionHistory: React.FC = () => {
               )}
             </div>
 
-            <div className="flex justify-between p-6 border-t border-gray-200">
-              <div className="flex space-x-2">
+            <div className="flex flex-col sm:flex-row justify-between gap-3 p-4 sm:p-6 border-t border-gray-200">
+              <div className="flex flex-col sm:flex-row gap-2">
                 {(selectedTransaction.status === 'completed' || selectedTransaction.status === 'successful') && (
                   <Button 
                     onClick={() => {
@@ -544,7 +717,7 @@ const TransactionHistory: React.FC = () => {
                       setShowRefundModal(true);
                     }}
                     variant="outline"
-                    className="text-orange-600 hover:text-orange-700 hover:bg-orange-50"
+                    className="text-orange-600 hover:text-orange-700 hover:bg-orange-50 w-full sm:w-auto"
                   >
                     <RotateCcw className="w-4 h-4 mr-2" />
                     Refund
@@ -555,13 +728,18 @@ const TransactionHistory: React.FC = () => {
                     handleDownloadReceipt();
                   }}
                   variant="outline"
-                  className="text-blue-600 hover:text-blue-700 hover:bg-blue-50"
+                  disabled={downloadingReceipt}
+                  className="text-blue-600 hover:text-blue-700 hover:bg-blue-50 w-full sm:w-auto"
                 >
-                  <Download className="w-4 h-4 mr-2" />
-                  Download Receipt
+                  {downloadingReceipt ? (
+                    <Loader2 className="w-4 h-4 mr-2 animate-spin" />
+                  ) : (
+                    <Download className="w-4 h-4 mr-2" />
+                  )}
+                  {downloadingReceipt ? 'Downloading...' : 'Download Receipt'}
                 </Button>
               </div>
-              <Button onClick={closeModal} variant="outline">
+              <Button onClick={closeModal} variant="outline" className="w-full sm:w-auto">
                 Close
               </Button>
             </div>
@@ -571,34 +749,37 @@ const TransactionHistory: React.FC = () => {
 
       {/* Refund Modal */}
       {showRefundModal && selectedTransaction && (
-        <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center p-4 z-50">
-          <div className="bg-white rounded-lg max-w-md w-full">
-            <div className="flex items-center justify-between p-6 border-b">
-              <h2 className="text-lg font-semibold">Refund Transaction</h2>
+        <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center p-2 sm:p-4 z-50">
+          <div className="bg-white rounded-lg max-w-md w-full max-h-[95vh] overflow-y-auto mx-2 sm:mx-0">
+            <div className="flex items-center justify-between p-4 sm:p-6 border-b">
+              <h2 className="text-base sm:text-lg font-semibold">Refund Transaction</h2>
               <Button
                 variant="ghost"
                 size="sm"
                 onClick={() => setShowRefundModal(false)}
+                className="p-1"
               >
                 <X className="w-4 h-4" />
               </Button>
             </div>
-            <form onSubmit={handleRefundTransaction} className="p-6 space-y-4">
-              <div className="bg-gray-50 p-4 rounded-lg">
-                <h3 className="font-medium text-gray-900 mb-2">Transaction Details</h3>
-                <p className="text-sm text-gray-600">
-                  <strong>Amount:</strong> {fmtMoney(selectedTransaction.amount, selectedTransaction.currency)}
-                </p>
-                <p className="text-sm text-gray-600">
-                  <strong>Description:</strong> {selectedTransaction.description || 'Payment'}
-                </p>
-                <p className="text-sm text-gray-600">
-                  <strong>Transaction ID:</strong> {selectedTransaction.sessionId || selectedTransaction.transactionId}
-                </p>
+            <form onSubmit={handleRefundTransaction} className="p-4 sm:p-6 space-y-4">
+              <div className="bg-gray-50 p-3 sm:p-4 rounded-lg">
+                <h3 className="font-medium text-gray-900 mb-2 text-sm sm:text-base">Transaction Details</h3>
+                <div className="space-y-1">
+                  <p className="text-xs sm:text-sm text-gray-600 break-words">
+                    <strong>Amount:</strong> {fmtMoney(selectedTransaction.amount, selectedTransaction.currency)}
+                  </p>
+                  <p className="text-xs sm:text-sm text-gray-600 break-words">
+                    <strong>Description:</strong> {selectedTransaction.description || 'Payment'}
+                  </p>
+                  <p className="text-xs sm:text-sm text-gray-600 break-all">
+                    <strong>Transaction ID:</strong> {selectedTransaction.sessionId || selectedTransaction.transactionId}
+                  </p>
+                </div>
               </div>
               
               <div>
-                <Label htmlFor="refund-amount">Refund Amount (leave empty for full refund)</Label>
+                <Label htmlFor="refund-amount" className="text-sm sm:text-base">Refund Amount (leave empty for full refund)</Label>
                 <Input
                   id="refund-amount"
                   type="number"
@@ -607,6 +788,7 @@ const TransactionHistory: React.FC = () => {
                   placeholder={`${(selectedTransaction.amount / 100).toFixed(2)}`}
                   max={selectedTransaction.amount / 100}
                   step="0.01"
+                  className="text-sm sm:text-base"
                 />
                 <p className="text-xs text-gray-500 mt-1">
                   Maximum refund: {fmtMoney(selectedTransaction.amount, selectedTransaction.currency)}
@@ -614,9 +796,9 @@ const TransactionHistory: React.FC = () => {
               </div>
               
               <div>
-                <Label htmlFor="refund-reason">Refund Reason</Label>
+                <Label htmlFor="refund-reason" className="text-sm sm:text-base">Refund Reason</Label>
                 <Select value={refundForm.reason} onValueChange={(value) => setRefundForm({...refundForm, reason: value})}>
-                  <SelectTrigger>
+                  <SelectTrigger className="text-sm sm:text-base">
                     <SelectValue />
                   </SelectTrigger>
                   <SelectContent>
@@ -631,26 +813,27 @@ const TransactionHistory: React.FC = () => {
               </div>
               
               <div className="bg-yellow-50 border border-yellow-200 rounded-lg p-3">
-                <p className="text-sm text-yellow-800">
+                <p className="text-xs sm:text-sm text-yellow-800">
                   <strong>Note:</strong> Refunds are processed immediately in sandbox mode. 
                   In production, refunds may take 5-10 business days to appear on the customer's statement.
                 </p>
               </div>
               
-              <div className="flex gap-3 pt-4">
+              <div className="flex flex-col sm:flex-row gap-3 pt-4">
                 <Button 
                   type="submit" 
                   disabled={submitting} 
-                  className="flex-1 bg-orange-600 hover:bg-orange-700"
+                  className="flex-1 bg-orange-600 hover:bg-orange-700 text-sm sm:text-base"
                 >
                   {submitting ? <Loader2 className="w-4 h-4 mr-2 animate-spin" /> : <RotateCcw className="w-4 h-4 mr-2" />}
-                  Process Refund
+                  {submitting ? 'Processing...' : 'Process Refund'}
                 </Button>
                 <Button 
                   type="button" 
                   variant="outline" 
                   onClick={() => setShowRefundModal(false)}
                   disabled={submitting}
+                  className="flex-1 sm:flex-none text-sm sm:text-base"
                 >
                   Cancel
                 </Button>

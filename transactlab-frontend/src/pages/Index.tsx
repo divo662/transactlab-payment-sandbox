@@ -5,9 +5,19 @@ import { Play, Code, Webhook, Database, Zap, Shield, Globe, Rocket, ChevronDown,
 
 function NavItem({
   label,
+  href,
 }: {
   label: string;
+  href?: string;
 }) {
+  if (href) {
+    return (
+      <Link to={href} className="flex items-center text-sm text-gray-300 hover:text-white">
+        <span>{label}</span>
+      </Link>
+    );
+  }
+  
   return (
     <div className="flex items-center text-sm text-gray-300 hover:text-white cursor-pointer">
       <span>{label}</span>
@@ -60,7 +70,7 @@ const Index = () => {
                 <NavItem label="Features" />
                 <NavItem label="Sandbox" />
                 <NavItem label="Developers" />
-                <NavItem label="Docs" />
+                <NavItem label="Docs" href="/transactlab-docs" />
                 <NavItem label="Pricing" />
               </div>
               <div className="flex items-center space-x-3">

@@ -1,476 +1,376 @@
-import React from "react";
+import React, { useState } from "react";
 import { Separator } from "@/components/ui/separator";
+import { Button } from "@/components/ui/button";
+import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
+import { Badge } from "@/components/ui/badge";
+import { 
+  Home, 
+  Rocket, 
+  User, 
+  Code, 
+  Wrench, 
+  Globe, 
+  FileText,
+  ChevronDown,
+  ArrowRight,
+  Play,
+  CreditCard,
+  Users,
+  Settings,
+  Shield,
+  Zap,
+  Database,
+  Webhook,
+  BarChart3,
+  CheckCircle,
+  XCircle,
+  AlertTriangle
+} from "lucide-react";
 
 const Docs: React.FC = () => {
+  const [activeSection, setActiveSection] = useState<string>("overview");
+
+  const navigationItems = [
+    { id: "overview", label: "Home", icon: Home },
+    { id: "get-started", label: "Get Started", icon: Rocket },
+    { id: "customers", label: "Customers", icon: User },
+    { id: "api-reference", label: "API Reference", icon: Code },
+    { id: "developer-tools", label: "Developer Tools", icon: Wrench },
+    { id: "coverage", label: "Coverage", icon: Globe },
+    { id: "changelog", label: "Changelog", icon: FileText },
+  ];
+
+  const productCategories = [
+    {
+      title: "Payment Processing",
+      description: "Create checkout sessions, process payments, and handle transactions",
+      icon: CreditCard,
+      features: ["Checkout Sessions", "Payment Processing", "Transaction Management", "Refunds"]
+    },
+    {
+      title: "Customer Management", 
+      description: "Manage customer data, preferences, and payment methods",
+      icon: Users,
+      features: ["Customer CRUD", "Payment Methods", "Customer Analytics", "Data Export"]
+    },
+    {
+      title: "Subscription Management",
+      description: "Handle recurring payments, plans, and subscription lifecycle",
+      icon: Settings,
+      features: ["Plans & Pricing", "Subscriptions", "Invoices", "Renewals"]
+    },
+    {
+      title: "Security & Fraud",
+      description: "Advanced fraud detection and security features",
+      icon: Shield,
+      features: ["Fraud Detection", "Risk Assessment", "Security Settings", "Analytics"]
+    },
+    {
+      title: "Webhooks & Events",
+      description: "Real-time notifications and event-driven workflows",
+      icon: Webhook,
+      features: ["Webhook Configuration", "Event Testing", "Delivery Tracking", "Event Types"]
+    },
+    {
+      title: "Analytics & Reporting",
+      description: "Comprehensive analytics and reporting capabilities",
+      icon: BarChart3,
+      features: ["Transaction Analytics", "Fraud Reports", "Performance Metrics", "Custom Reports"]
+    }
+  ];
+
+  const testCards = [
+    {
+      type: "Success",
+      number: "4242 4242 4242 4242",
+      description: "Successful payment",
+      icon: CheckCircle,
+      color: "text-green-600"
+    },
+    {
+      type: "Insufficient Funds",
+      number: "4000 0000 0000 9995", 
+      description: "Payment declined",
+      icon: XCircle,
+      color: "text-red-600"
+    },
+    {
+      type: "3D Secure Required",
+      number: "4000 0027 6000 3184",
+      description: "Additional authentication needed",
+      icon: AlertTriangle,
+      color: "text-yellow-600"
+    }
+  ];
+
   return (
-    <div className="space-y-10 animate-enter">
-      <header className="space-y-2">
-        <h1 className="text-3xl font-bold text-[#0a164d]">TransactLab Documentation</h1>
-        <p className="text-muted-foreground">A sandbox for building and testing payments—no real money moves.</p>
+    <div className="min-h-screen bg-white">
+      {/* Header */}
+      <header className="sticky top-0 z-50 bg-white/95 backdrop-blur-sm border-b border-gray-200">
+        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+          <div className="flex items-center justify-between h-16">
+            <div className="flex items-center space-x-4">
+              <div className="flex items-center space-x-2">
+                <div className="w-8 h-8 bg-blue-600 rounded-lg flex items-center justify-center">
+                  <span className="text-white font-bold text-sm">TL</span>
+                </div>
+                <span className="text-xl font-bold text-gray-900">TransactLab</span>
+              </div>
+              <span className="text-gray-400">|</span>
+              <span className="text-gray-600">docs</span>
+            </div>
+            
+            <div className="flex items-center space-x-4">
+              <div className="relative">
+                <input 
+                  type="text" 
+                  placeholder="Search here..."
+                  className="w-64 px-4 py-2 text-sm border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
+                />
+              </div>
+              <Button className="bg-blue-600 hover:bg-blue-700 text-white">
+                Get API Keys
+                <ArrowRight className="w-4 h-4 ml-2" />
+              </Button>
+            </div>
+          </div>
+        </div>
       </header>
 
-      {/* Overview */}
-      <section className="space-y-4">
-        <h2 className="text-xl font-semibold">Overview</h2>
-        <p className="text-gray-700 leading-relaxed">
-          TransactLab mirrors a modern payments platform: create checkout sessions, charge test cards, manage subscriptions, process refunds,
-          and receive webhooks. Everything is fully functional in the sandbox, but all transactions are simulated.
-        </p>
-        <ul className="list-disc list-inside text-gray-700 space-y-1">
-          <li>One‑time and recurring payments</li>
-          <li>Customers, products, plans, and subscriptions</li>
-          <li>Events and webhooks for real-time workflows</li>
-          <li>Dashboard to inspect sessions, transactions, and logs</li>
-        </ul>
-      </section>
+      <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
+        <div className="flex gap-8">
+          {/* Sidebar Navigation */}
+          <aside className="w-64 flex-shrink-0">
+            <nav className="space-y-2">
+              <div className="space-y-1">
+                <p className="text-xs font-semibold text-gray-500 uppercase tracking-wider mb-3">Navigation</p>
+                {navigationItems.map((item) => (
+                  <button
+                    key={item.id}
+                    onClick={() => setActiveSection(item.id)}
+                    className={`w-full flex items-center space-x-3 px-3 py-2 text-sm rounded-lg transition-colors ${
+                      activeSection === item.id
+                        ? "bg-blue-50 text-blue-700 border-r-2 border-blue-700"
+                        : "text-gray-700 hover:bg-gray-50"
+                    }`}
+                  >
+                    <item.icon className="w-4 h-4" />
+                    <span>{item.label}</span>
+                  </button>
+                ))}
+              </div>
 
-      <Separator />
+              <Separator className="my-6" />
 
-      {/* Developer Guide for External Apps (Dover) */}
-      <section className="space-y-4">
-        <h2 className="text-xl font-semibold">Developer Guide (External App Quickstart)</h2>
-        <p className="text-gray-700 text-sm">
-          This guide shows how to integrate TransactLab Sandbox from another project with the least friction. You can authenticate using either a user JWT or a sandbox secret key (Stripe‑style).
-        </p>
+              <div className="space-y-1">
+                <p className="text-xs font-semibold text-gray-500 uppercase tracking-wider mb-3">All Products</p>
+                {productCategories.map((category, index) => (
+                  <button
+                    key={index}
+                    className="w-full flex items-center space-x-3 px-3 py-2 text-sm rounded-lg transition-colors text-gray-700 hover:bg-gray-50"
+                  >
+                    <category.icon className="w-4 h-4" />
+                    <span>{category.title}</span>
+                  </button>
+                ))}
+              </div>
+            </nav>
 
-        <div className="grid md:grid-cols-2 gap-4">
-          <div className="border rounded-lg p-4 bg-white">
-            <p className="font-medium text-[#0a164d] mb-2">.env for your server</p>
-            <pre className="whitespace-pre-wrap text-xs bg-gray-50 p-3 rounded border">
-{`# Option A: Use sandbox secret (preferred Stripe-like)
-TL_BASE=https://transactlab-backend.onrender.com/api/v1/sandbox
-TL_SECRET=sk_test_secret_...
+            <div className="mt-8 pt-6 border-t border-gray-200">
+              <div className="text-xs text-gray-500 space-y-2">
+                <p>© TransactLab</p>
+                <div className="flex space-x-4">
+                  <a href="#" className="hover:text-gray-700">Support</a>
+                  <a href="#" className="hover:text-gray-700">Status</a>
+                </div>
+              </div>
+            </div>
+          </aside>
 
-# Option B: Use user JWT (Bearer)
-# TL_TOKEN=Bearer eyJhbGciOi...
-`}
-            </pre>
-            <p className="text-xs text-gray-600">If you provide TL_SECRET, send it as <code>x-sandbox-secret</code> header. If you provide TL_TOKEN, send it as <code>Authorization: Bearer ...</code>.</p>
-          </div>
+          {/* Main Content */}
+          <main className="flex-1">
+            {activeSection === "overview" && (
+              <>
+                {/* Hero Section */}
+                <section className="mb-12">
+                  <div className="relative overflow-hidden rounded-2xl bg-gradient-to-br from-blue-900 via-blue-800 to-indigo-900 text-white p-8 md:p-12">
+                    <div className="relative z-10">
+                      <h1 className="text-4xl md:text-5xl font-bold mb-6">
+                        Start building payment experiences into your apps
+                      </h1>
+                      <p className="text-xl text-blue-100 mb-8 max-w-2xl">
+                        Find all the guides and resources to get your business set up and integrated with TransactLab APIs.
+                      </p>
+                      <div className="flex flex-col sm:flex-row gap-4">
+                        <Button size="lg" className="bg-white text-blue-900 hover:bg-gray-100">
+                          Sign up
+                          <ArrowRight className="w-4 h-4 ml-2" />
+                        </Button>
+                        <Button size="lg" variant="outline" className="border-white/30 text-white hover:bg-white/10">
+                          Get started here
+                          <ArrowRight className="w-4 h-4 ml-2" />
+                        </Button>
+                      </div>
+                    </div>
+                    
+                    {/* Background Pattern */}
+                    <div className="absolute top-0 right-0 w-96 h-96 opacity-10">
+                      <div className="w-full h-full bg-gradient-to-br from-green-400 to-blue-500 rounded-full blur-3xl"></div>
+                    </div>
+                  </div>
+                </section>
 
-          <div className="border rounded-lg p-4 bg-white">
-            <p className="font-medium text-[#0a164d] mb-2">Server route (create session)</p>
-            <pre className="whitespace-pre-wrap text-xs bg-gray-50 p-3 rounded border">
-{`import express from 'express';
-import fetch from 'node-fetch';
-const app = express();
-app.use(express.json());
+                {/* Quick Start Section */}
+                <section className="mb-12">
+                  <h2 className="text-2xl font-bold text-gray-900 mb-6">Quick Start</h2>
+                  
+                  {/* Products Grid */}
+                  <div className="grid md:grid-cols-3 gap-6 mb-8">
+                    {productCategories.slice(0, 3).map((product, index) => (
+                      <Card key={index} className="hover:shadow-lg transition-shadow">
+                        <CardHeader>
+                          <div className="flex items-center space-x-3 mb-2">
+                            <div className="w-10 h-10 bg-blue-100 rounded-full flex items-center justify-center">
+                              <product.icon className="w-5 h-5 text-blue-600" />
+                            </div>
+                            <CardTitle className="text-lg">{product.title}</CardTitle>
+                          </div>
+                          <CardDescription>{product.description}</CardDescription>
+                        </CardHeader>
+                        <CardContent>
+                          <div className="space-y-2">
+                            {product.features.map((feature, idx) => (
+                              <div key={idx} className="flex items-center space-x-2 text-sm text-gray-600">
+                                <div className="w-1.5 h-1.5 bg-blue-600 rounded-full"></div>
+                                <span>{feature}</span>
+                              </div>
+                            ))}
+                          </div>
+                        </CardContent>
+                      </Card>
+                    ))}
+                  </div>
+                </section>
 
-const TL_BASE = process.env.TL_BASE || 'https://transactlab-backend.onrender.com/api/v1/sandbox';
+                {/* Test Data Section */}
+                <section className="mb-12">
+                  <h2 className="text-2xl font-bold text-gray-900 mb-6">Test Credit Cards</h2>
+                  <div className="grid md:grid-cols-3 gap-6">
+                    {testCards.map((card, index) => (
+                      <Card key={index} className="hover:shadow-lg transition-shadow">
+                        <CardHeader>
+                          <div className="flex items-center space-x-3">
+                            <card.icon className={`w-6 h-6 ${card.color}`} />
+                            <CardTitle className="text-lg">{card.type}</CardTitle>
+                          </div>
+                        </CardHeader>
+                        <CardContent>
+                          <div className="space-y-3">
+                            <div className="font-mono text-sm bg-gray-100 p-2 rounded">
+                              {card.number}
+                            </div>
+                            <p className="text-sm text-gray-600">{card.description}</p>
+                          </div>
+                        </CardContent>
+                      </Card>
+                    ))}
+                  </div>
+                </section>
+              </>
+            )}
 
-app.post('/api/create-session', async (req, res) => {
-  const headers: any = { 'Content-Type': 'application/json' };
-  if (process.env.TL_SECRET) headers['x-sandbox-secret'] = process.env.TL_SECRET;
-  if (process.env.TL_TOKEN) headers['Authorization'] = process.env.TL_TOKEN;
+            {activeSection === "get-started" && (
+              <div className="space-y-8">
+                <header>
+                  <h1 className="text-3xl font-bold text-gray-900 mb-4">Get Started</h1>
+                  <p className="text-gray-600">Get up and running with TransactLab in minutes</p>
+                </header>
 
-  const r = await fetch(TL_BASE + '/sessions', {
+                <div className="grid md:grid-cols-2 gap-8">
+                  <Card>
+                    <CardHeader>
+                      <CardTitle className="flex items-center space-x-2">
+                        <Zap className="w-5 h-5 text-blue-600" />
+                        <span>Quick Setup</span>
+                      </CardTitle>
+                    </CardHeader>
+                    <CardContent className="space-y-4">
+                      <div className="space-y-3">
+                        <div className="flex items-start space-x-3">
+                          <div className="w-6 h-6 bg-blue-100 rounded-full flex items-center justify-center flex-shrink-0 mt-0.5">
+                            <span className="text-xs font-bold text-blue-600">1</span>
+                          </div>
+                          <div>
+                            <p className="font-medium">Create Account</p>
+                            <p className="text-sm text-gray-600">Sign up and get your sandbox workspace</p>
+                          </div>
+                        </div>
+                        <div className="flex items-start space-x-3">
+                          <div className="w-6 h-6 bg-blue-100 rounded-full flex items-center justify-center flex-shrink-0 mt-0.5">
+                            <span className="text-xs font-bold text-blue-600">2</span>
+                          </div>
+                          <div>
+                            <p className="font-medium">Generate API Keys</p>
+                            <p className="text-sm text-gray-600">Get your publishable and secret keys</p>
+                          </div>
+                        </div>
+                        <div className="flex items-start space-x-3">
+                          <div className="w-6 h-6 bg-blue-100 rounded-full flex items-center justify-center flex-shrink-0 mt-0.5">
+                            <span className="text-xs font-bold text-blue-600">3</span>
+                          </div>
+                          <div>
+                            <p className="font-medium">Create Your First Session</p>
+                            <p className="text-sm text-gray-600">Start processing payments</p>
+                          </div>
+                        </div>
+                      </div>
+                    </CardContent>
+                  </Card>
+
+                  <Card>
+                    <CardHeader>
+                      <CardTitle className="flex items-center space-x-2">
+                        <Code className="w-5 h-5 text-green-600" />
+                        <span>Code Example</span>
+                      </CardTitle>
+                    </CardHeader>
+                    <CardContent>
+                      <pre className="bg-gray-900 text-gray-100 p-4 rounded-lg text-sm overflow-x-auto">
+{`// Create a checkout session
+const response = await fetch(
+  'https://transactlab-backend.onrender.com/api/v1/sandbox/sessions',
+  {
     method: 'POST',
-    headers,
+    headers: {
+      'Authorization': 'Bearer YOUR_JWT_TOKEN',
+      'Content-Type': 'application/json'
+    },
     body: JSON.stringify({
-      amount: req.body.amount,
-      currency: req.body.currency || 'NGN',
-      description: req.body.description || 'Test Order',
-      customerEmail: req.body.customerEmail,
-      metadata: req.body.metadata
+      amount: 500,
+      currency: 'NGN',
+      description: 'Test Payment',
+      customerEmail: 'customer@example.com'
     })
-  });
-  const json = await r.json();
-  return res.status(r.status).json(json);
-});
-
-app.listen(3001);
-`}
-            </pre>
-          </div>
-        </div>
-
-        <div className="grid md:grid-cols-2 gap-4">
-          <div className="border rounded-lg p-4 bg-white">
-            <p className="font-medium text-[#0a164d] mb-2">Client redirect (workspace-bound checkout)</p>
-            <pre className="whitespace-pre-wrap text-xs bg-gray-50 p-3 rounded border">
-{`const res = await fetch('https://transactlab-payment-sandbox.vercel.app/api/create-session', {
-  method: 'POST',
-  headers: { 'Content-Type': 'application/json' },
-  body: JSON.stringify({ 
-    amount: 500, 
-    currency: 'NGN', 
-    description: 'Pro', 
-    customerEmail: 'dev@example.com',
-    success_url: 'https://transactlab-payment-sandbox.vercel.app/?payment=success',
-    cancel_url: 'https://transactlab-payment-sandbox.vercel.app/?payment=cancelled'
-  })
-});
-const json = await res.json();
-if (!res.ok || !json?.success) throw new Error(json?.message || 'Failed');
-// Uses workspace-bound hosted checkout (no auth required)
-window.location.href = 'https://transactlab-payment-sandbox.vercel.app/checkout/' + json.data.sessionId;
-`}
-            </pre>
-          </div>
-          <div className="border rounded-lg p-4 bg-white">
-            <p className="font-medium text-[#0a164d] mb-2">Webhook endpoint</p>
-            <pre className="whitespace-pre-wrap text-xs bg-gray-50 p-3 rounded border">
-{`app.post('/webhooks/transactlab', express.raw({ type: 'application/json' }), (req, res) => {
-  const evt = JSON.parse(req.body);
-  // Verify TL-Signature if configured
-  if (evt.type === 'payment.completed') { /* mark order paid */ }
-  res.json({ received: true });
-});
-`}
-            </pre>
-          </div>
-        </div>
-
-        <div className="border rounded-lg p-4 bg-white">
-          <p className="font-medium text-[#0a164d] mb-2">Supported events</p>
-          <p className="text-xs text-gray-700">payment.completed, payment.failed, payment.cancelled, payment.refunded, customer.created, customer.updated, subscription.created, subscription.updated, subscription.cancelled, invoice.created, invoice.paid, webhook.test</p>
-        </div>
-
-        <div className="border rounded-lg p-4 bg-white">
-          <p className="font-medium text-[#0a164d] mb-2">Troubleshooting</p>
-          <ul className="list-disc list-inside text-xs text-gray-700 space-y-1">
-            <li>404 on /api/create-session: your app doesn't expose that route — add the proxy server code above or call TL directly from your backend.</li>
-            <li>401 Unauthorized: use workspace-bound hosted checkout instead of direct API calls from browser.</li>
-            <li>Workspace mismatch: redirect to <code>/checkout/:sessionId</code> which uses internal proxy routes.</li>
-            <li>Enum validation on webhooks: use only the supported events listed above.</li>
-          </ul>
-        </div>
-      </section>
-
-      <Separator />
-
-      {/* Workspace-Bound Hosted Checkout */}
-      <section className="space-y-4">
-        <h2 className="text-xl font-semibold">Workspace-Bound Hosted Checkout</h2>
-        <p className="text-gray-700 text-sm">
-          TransactLab provides a workspace-bound hosted checkout that eliminates authentication issues. 
-          Your customers can complete payments without needing to be logged into TransactLab.
-        </p>
-
-        <div className="grid md:grid-cols-2 gap-4">
-          <div className="border rounded-lg p-4 bg-white">
-            <p className="font-medium text-[#0a164d] mb-2">How it works</p>
-            <ol className="text-xs text-gray-700 space-y-1 list-decimal list-inside">
-              <li>Your server creates a session using your sandbox secret</li>
-              <li>Redirect customer to <code>/checkout/:sessionId</code></li>
-              <li>Checkout page uses internal proxy routes (no auth needed)</li>
-              <li>Internal routes use your server-side sandbox secret</li>
-              <li>Customer completes payment seamlessly</li>
-            </ol>
-          </div>
-
-          <div className="border rounded-lg p-4 bg-white">
-            <p className="font-medium text-[#0a164d] mb-2">Benefits</p>
-            <ul className="text-xs text-gray-700 space-y-1 list-disc list-inside">
-              <li>No 401 authentication errors</li>
-              <li>No workspace mismatch issues</li>
-              <li>Customers don't need TransactLab accounts</li>
-              <li>Consistent with your workspace</li>
-              <li>Works with any external application</li>
-            </ul>
-          </div>
-        </div>
-
-        <div className="border rounded-lg p-4 bg-green-50 border-green-200">
-          <p className="font-medium text-green-800 mb-2">✅ Recommended Approach</p>
-          <p className="text-xs text-green-700">
-            Use the workspace-bound hosted checkout for all external integrations. 
-            It's more reliable than trying to manage authentication across different domains.
-          </p>
-        </div>
-      </section>
-
-      <Separator />
-
-      {/* Setup in Your Product */}
-      <section className="space-y-4">
-        <h2 className="text-xl font-semibold">Set Up in Your Product</h2>
-        <ol className="list-decimal list-inside space-y-2 text-gray-700">
-          <li>Go to Sandbox → API Keys and create a secret key (server) and publishable key (client).</li>
-          <li>Create a Checkout Session using your server with the secret key.</li>
-          <li>Redirect your user to the session URL or open it in an iframe.</li>
-          <li>Handle webhook events in your backend to update order status.</li>
-        </ol>
-        <div className="text-sm text-gray-700 bg-blue-50 border border-blue-100 rounded p-3">
-          <strong>Base URL</strong>: <code>https://transactlab-backend.onrender.com/api/v1/sandbox</code>
-          <span className="ml-2">·</span>
-          <strong className="ml-2">Auth</strong>: <code>Authorization: Bearer &lt;JWT&gt;</code>
-        </div>
-        <div className="grid md:grid-cols-2 gap-4 text-sm">
-          <div className="border rounded-lg p-4 bg-white">
-            <p className="font-medium text-[#0a164d] mb-2">Create session (server)</p>
-            <pre className="whitespace-pre-wrap text-xs bg-gray-50 p-3 rounded border">
-{`POST https://transactlab-backend.onrender.com/api/v1/sandbox/sessions
-Authorization: Bearer <JWT>
-Content-Type: application/json
-
-{
-  "amount": 500,              // major units by default (e.g., NGN 500)
-  // or provide explicit minor units:
-  // "amount_minor": 50000,   // e.g., 500 * 100
-  "currency": "NGN",
-  "description": "Starter Plan",
-  "customerEmail": "claire@example.com",
-  "success_url": "https://yourapp.example.com/checkout/success",
-  "cancel_url": "https://yourapp.example.com/checkout/cancel",
-  "metadata": { "source": "external-demo" }
-}`}
-            </pre>
-          </div>
-          <div className="border rounded-lg p-4 bg-white">
-            <p className="font-medium text-[#0a164d] mb-2">Redirect user (client)</p>
-            <pre className="whitespace-pre-wrap text-xs bg-gray-50 p-3 rounded border">
-{`// After creating the session on your server
-const sessionId = json.data.sessionId;
-window.location.href = 
-  
-  
-  
-  
-  
-  
-  
-  
-  
-  
-  
-  
-  
-  
-  
-  
-  
-  
-  
-  
-  
-  
-  
-  
-  `}
-            </pre>
-          </div>
-        </div>
-      </section>
-
-      <Separator />
-
-      {/* End-to-End Integration (Copy/Paste) */}
-      <section className="space-y-4">
-        <h2 className="text-xl font-semibold">End‑to‑End Integration (Copy/Paste)</h2>
-        <p className="text-gray-700 text-sm">Use this small proxy on your app's backend to call TransactLab securely, then redirect your users to the workspace-bound hosted checkout.</p>
-
-        <div className="grid md:grid-cols-2 gap-4">
-          <div className="border rounded-lg p-4 bg-white">
-            <p className="font-medium text-[#0a164d] mb-2">Node/Express proxy (server)</p>
-            <pre className="whitespace-pre-wrap text-xs bg-gray-50 p-3 rounded border">
-{`import express from 'express';
-import fetch from 'node-fetch';
-
-const app = express();
-app.use(express.json());
-
-const TL_BASE = 'https://transactlab-backend.onrender.com/api/v1/sandbox';
-const TL_TOKEN = process.env.TL_TOKEN; // 'Bearer <JWT>'
-
-app.post('/api/create-session', async (req, res) => {
-  try {
-    const r = await fetch(
-      TL_BASE + '/sessions',
-      {
-        method: 'POST',
-        headers: { 'Authorization': TL_TOKEN, 'Content-Type': 'application/json' },
-        body: JSON.stringify({
-          amount: req.body.amount,
-          currency: req.body.currency || 'NGN',
-          description: req.body.description || 'Test Order',
-          customerEmail: req.body.customerEmail
-        })
-      }
-    );
-    const json = await r.json();
-    return res.status(r.status).json(json);
-  } catch (e) {
-    return res.status(500).json({ success: false, message: 'Upstream error', error: String(e) });
   }
-});
+);
 
-app.listen(3001, () => console.log('Proxy listening on :3001'));
-`}
-            </pre>
-          </div>
-          <div className="border rounded-lg p-4 bg-white">
-            <p className="font-medium text-[#0a164d] mb-2">Client usage (workspace-bound checkout)</p>
-            <pre className="whitespace-pre-wrap text-xs bg-gray-50 p-3 rounded border">
-{`const res = await fetch('https://transactlab-payment-sandbox.vercel.app/api/create-session', {
-  method: 'POST',
-  headers: { 'Content-Type': 'application/json' },
-  body: JSON.stringify({
-    amount: 500,           // major units
-    // amount_minor: 50000, // optional minor units
-    currency: 'NGN',
-    description: 'Starter Plan',
-    customerEmail: 'claire@example.com',
-    success_url: 'https://transactlab-payment-sandbox.vercel.app/?payment=success',
-    cancel_url: 'https://transactlab-payment-sandbox.vercel.app/?payment=cancelled'
-  })
-});
-const json = await res.json();
-if (!res.ok || !json?.success) throw new Error(json?.message || 'Failed');
-// Redirects to workspace-bound hosted checkout (no auth required)
-window.location.href = 'https://transactlab-payment-sandbox.vercel.app/checkout/' + json.data.sessionId;
-`}
-            </pre>
-          </div>
+const session = await response.json();
+// Redirect to checkout URL
+window.location.href = session.data.checkoutUrl;`}
+                      </pre>
+                    </CardContent>
+                  </Card>
+                </div>
+              </div>
+            )}
+          </main>
         </div>
-
-        <div className="border rounded-lg p-4 bg-white">
-          <p className="font-medium text-[#0a164d] mb-2">Webhook handler (server)</p>
-          <pre className="whitespace-pre-wrap text-xs bg-gray-50 p-3 rounded border">
-{`app.post('/webhooks/transactlab', express.raw({ type: 'application/json' }), (req, res) => {
-  // Verify TL-Signature header if needed, then parse and process
-  const evt = JSON.parse(req.body);
-  if (evt.type === 'payment.completed') {
-    // mark order paid
-  }
-  res.json({ received: true });
-});`}
-          </pre>
-        </div>
-      </section>
-
-      <Separator />
-
-      {/* API Routes Overview */}
-      <section className="space-y-3">
-        <h2 className="text-xl font-semibold">API Routes Overview</h2>
-        <ul className="text-sm text-gray-700 list-disc list-inside space-y-1">
-          <li>POST /sessions · GET /sessions/:sessionId · GET /sessions</li>
-          <li>POST /sessions/:sessionId/process-payment</li>
-          <li>POST /customers · GET /customers · PUT /customers/:customerId · DELETE /customers/:customerId</li>
-          <li>POST /webhooks · GET /webhooks · POST /webhooks/:webhookId/test</li>
-          <li>POST /products · GET /products · POST /plans · GET /plans</li>
-          <li>POST /subscriptions · GET /subscriptions</li>
-        </ul>
-        <div className="mt-3 p-3 bg-blue-50 border border-blue-200 rounded-lg">
-          <p className="text-sm font-medium text-blue-800 mb-1">Internal Proxy Routes (for workspace-bound checkout)</p>
-          <ul className="text-xs text-blue-700 list-disc list-inside space-y-1">
-            <li>GET &lt;backend-origin&gt;/checkout/:id - Public session JSON (no auth required)</li>
-            <li>POST &lt;your-course-server&gt;/internal/checkout/sessions/:id/process - Process payment via your server proxy</li>
-          </ul>
-        </div>
-      </section>
-
-      <Separator />
-
-      {/* Billing & Customer Fields */}
-      <section className="space-y-3">
-        <h2 className="text-xl font-semibold">Billing & Customer Fields</h2>
-        <p className="text-gray-700 text-sm">Checkout accepts and forwards these fields to the backend:</p>
-        <pre className="whitespace-pre-wrap text-xs bg-gray-50 p-3 rounded border">
-{`{
-  customer: { email, name, phone },
-  billingAddress: { line1, line2, city, state, postalCode, country, phone }
-}`}
-        </pre>
-      </section>
-
-      <Separator />
-
-      {/* Feature Guides */}
-      <section className="space-y-6">
-        <h2 className="text-xl font-semibold">Feature Guides</h2>
-
-        <div className="space-y-3">
-          <h3 className="text-lg font-medium text-[#0a164d]">API Keys</h3>
-          <p className="text-gray-700 text-sm">Generate keys in Sandbox → API Keys. Use publishable keys on the client and secret keys on the server only.</p>
-        </div>
-
-        <div className="space-y-3">
-          <h3 className="text-lg font-medium text-[#0a164d]">Checkout Sessions</h3>
-          <p className="text-gray-700 text-sm">Start a payment flow with amount, currency, items, success/cancel URLs, and an optional customer.</p>
-          <ul className="list-disc list-inside text-gray-700 text-sm space-y-1">
-            <li>Status: created → pending → completed/failed/canceled</li>
-            <li>Events: session.created, session.completed, session.canceled</li>
-          </ul>
-        </div>
-
-        <div className="space-y-3">
-          <h3 className="text-lg font-medium text-[#0a164d]">Subscriptions</h3>
-          <p className="text-gray-700 text-sm">Create plans (e.g., monthly) and subscribe customers. Supports trials, renewals, and cancellations.</p>
-          <ul className="list-disc list-inside text-gray-700 text-sm space-y-1">
-            <li>Events: invoice.created, invoice.paid, customer.subscription.updated</li>
-          </ul>
-        </div>
-
-        <div className="space-y-3">
-          <h3 className="text-lg font-medium text-[#0a164d]">Products</h3>
-          <p className="text-gray-700 text-sm">Define items to sell (one‑time or recurring). Attach prices and metadata for your catalog.</p>
-        </div>
-
-        <div className="space-y-3">
-          <h3 className="text-lg font-medium text-[#0a164d]">Customers</h3>
-          <p className="text-gray-700 text-sm">Store emails, default payment method, and preferences to streamline repeat checkouts.</p>
-        </div>
-
-        <div className="space-y-3">
-          <h3 className="text-lg font-medium text-[#0a164d]">Transactions & Refunds</h3>
-          <p className="text-gray-700 text-sm">All payments create transactions. You can issue full or partial refunds and simulate failures.</p>
-        </div>
-
-        <div className="space-y-3">
-          <h3 className="text-lg font-medium text-[#0a164d]">Webhooks</h3>
-          <p className="text-gray-700 text-sm">Configure an endpoint in Sandbox → Webhooks. Verify signatures and process events idempotently.</p>
-          <pre className="whitespace-pre-wrap text-xs bg-gray-50 p-3 rounded border">
-{`POST https://yourapp.example.com/webhooks/transactlab
-Headers: TL-Signature: t=..., s=...
-Body: {
-  "type": "session.completed",
-  "data": { /* event payload */ }
-}`}
-          </pre>
-        </div>
-      </section>
-
-      <Separator />
-
-      {/* Testing Data */}
-      <section className="space-y-4">
-        <h2 className="text-xl font-semibold">Testing Data</h2>
-        <p className="text-gray-700 text-sm">Use these cards to simulate outcomes in the sandbox:</p>
-        <ul className="text-sm text-gray-700 list-disc list-inside space-y-1">
-          <li>Success: 4242 4242 4242 4242 • Any future expiry • Any CVC</li>
-          <li>Insufficient funds: 4000 0000 0000 9995</li>
-          <li>3‑D Secure required: 4000 0027 6000 3184</li>
-        </ul>
-      </section>
-
-      <Separator />
-
-      {/* Error Handling & Rate Limits */}
-      <section className="space-y-4">
-        <h2 className="text-xl font-semibold">Error Handling & Rate Limits</h2>
-        <p className="text-gray-700 text-sm">All API errors include a clear message. Respect documented rate limits in responses (Retry-After). Implement exponential backoff for retries.</p>
-      </section>
-
-      <Separator />
-
-      {/* FAQ */}
-      <section className="space-y-3">
-        <h2 className="text-xl font-semibold">FAQ</h2>
-        <div className="space-y-2 text-sm text-gray-700">
-          <p className="font-medium">Does the sandbox ever charge real cards?</p>
-          <p>No. All charges are simulated and do not move funds.</p>
-          <p className="font-medium">Can I migrate from sandbox to production?</p>
-          <p>Yes. Replace sandbox keys with production keys and endpoints when available.</p>
-          <p className="font-medium">How do I verify webhook signatures?</p>
-          <p>Use the signing secret shown in Sandbox → Webhooks. Compute an HMAC over the payload and compare.</p>
-        </div>
-      </section>
+      </div>
     </div>
   );
 };
 
 export default Docs;
+
 
 

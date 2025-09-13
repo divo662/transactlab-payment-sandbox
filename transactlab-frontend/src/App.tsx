@@ -36,6 +36,7 @@ import Products from "./pages/Products";
 import ProductDetail from "./pages/ProductDetail";
 import SubscriptionDetail from "./pages/SubscriptionDetail";
 import Docs from "./pages/Docs";
+import TransactLabDocs from "./pages/TransactLabDocs";
 import TeamAccept from "./pages/TeamAccept";
 import CheckoutTemplates from "./pages/sandbox/CheckoutTemplates";
 import PaymentLinkNew from "./pages/sandbox/PaymentLinkNew";
@@ -71,6 +72,7 @@ const App = () => (
               <Route element={<AppLayout />}>
                 <Route path="/dashboard" element={<Dashboard />} />
                 <Route path="/docs" element={<Docs />} />
+                <Route path="/transactlab-docs" element={<TransactLabDocs />} />
                 <Route path="/settings/profile" element={<Profile />} />
                 <Route path="/settings/security" element={<Security />} />
 
