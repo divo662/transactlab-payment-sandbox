@@ -428,20 +428,95 @@ const SessionManagement: React.FC = () => {
 
   const fmtMoney = (a:number,c:string)=> new Intl.NumberFormat('en-US',{style:'currency',currency:c}).format((a||0)/100);
 
-  return (
-    <div className="space-y-6">
-      {/* Header */}
-      <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
-        <div>
-          <h1 className="text-3xl font-bold text-gray-900">Session Management</h1>
-          <p className="text-gray-600 mt-1">Create, manage, and monitor checkout sessions</p>
+  if (loading && sessions.length === 0) {
+    return (
+      <div className="space-y-4 sm:space-y-6 p-3 sm:p-0">
+        {/* Header Skeleton */}
+        <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3 sm:gap-4">
+          <div className="space-y-2">
+            <div className="h-8 bg-gray-200 rounded w-48 animate-pulse"></div>
+            <div className="h-4 bg-gray-200 rounded w-64 animate-pulse"></div>
+          </div>
+          <div className="flex items-center gap-2 sm:gap-3">
+            <div className="h-9 bg-gray-200 rounded w-20 animate-pulse"></div>
+            <div className="h-9 bg-gray-200 rounded w-24 animate-pulse"></div>
+          </div>
         </div>
-        <div className="flex items-center space-x-3">
-          <Button variant="outline" onClick={() => void fetchSessions()} disabled={loading}>
+
+        {/* Stats Skeleton */}
+        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4 sm:gap-6">
+          {Array.from({ length: 4 }).map((_, i) => (
+            <div key={i} className="border rounded-lg p-4 sm:p-6">
+              <div className="flex items-center">
+                <div className="w-10 h-10 bg-gray-200 rounded-lg animate-pulse"></div>
+                <div className="ml-4 space-y-2">
+                  <div className="h-4 bg-gray-200 rounded w-20 animate-pulse"></div>
+                  <div className="h-6 bg-gray-200 rounded w-12 animate-pulse"></div>
+                </div>
+              </div>
+            </div>
+          ))}
+        </div>
+
+        {/* Tabs Skeleton */}
+        <div className="space-y-4 sm:space-y-6">
+          <div className="grid w-full grid-cols-2">
+            <div className="h-9 bg-gray-200 rounded animate-pulse"></div>
+            <div className="h-9 bg-gray-200 rounded animate-pulse"></div>
+          </div>
+          
+          {/* Content Skeleton */}
+          <div className="grid grid-cols-1 lg:grid-cols-2 gap-4 sm:gap-6">
+            <div className="border rounded-lg p-4 sm:p-6">
+              <div className="space-y-4">
+                <div className="h-5 bg-gray-200 rounded w-32 animate-pulse"></div>
+                <div className="h-4 bg-gray-200 rounded w-48 animate-pulse"></div>
+                <div className="space-y-3">
+                  {Array.from({ length: 4 }).map((_, i) => (
+                    <div key={i} className="h-9 bg-gray-200 rounded animate-pulse"></div>
+                  ))}
+                </div>
+                <div className="h-9 bg-gray-200 rounded w-full animate-pulse"></div>
+              </div>
+            </div>
+            <div className="border rounded-lg p-4 sm:p-6">
+              <div className="space-y-4">
+                <div className="h-5 bg-gray-200 rounded w-32 animate-pulse"></div>
+                <div className="h-4 bg-gray-200 rounded w-48 animate-pulse"></div>
+                <div className="space-y-3">
+                  {Array.from({ length: 3 }).map((_, i) => (
+                    <div key={i} className="h-16 bg-gray-200 rounded animate-pulse"></div>
+                  ))}
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        {/* Loading Message */}
+        <div className="text-center py-8">
+          <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-[#0a164d] mx-auto mb-4"></div>
+          <p className="text-gray-600 font-medium">Loading session data...</p>
+          <p className="text-sm text-gray-500 mt-1">This may take a few moments</p>
+        </div>
+      </div>
+    );
+  }
+
+  return (
+    <div className="space-y-4 sm:space-y-6 p-3 sm:p-0">
+      {/* Header */}
+      <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3 sm:gap-4">
+        <div>
+          <h1 className="text-2xl sm:text-3xl font-bold text-gray-900">Session Management</h1>
+          <p className="text-sm sm:text-base text-gray-600 mt-1">Create, manage, and monitor checkout sessions</p>
+        </div>
+        <div className="flex flex-col sm:flex-row items-stretch sm:items-center gap-2 sm:gap-3">
+          <Button variant="outline" onClick={() => void fetchSessions()} disabled={loading} className="w-full sm:w-auto">
             <RefreshCw className={`w-4 h-4 mr-2 ${loading ? 'animate-spin' : ''}`}/>
-            Refresh
+            {loading ? 'Refreshing...' : 'Refresh'}
           </Button>
-          <Button onClick={() => setActiveTab('create')} className="bg-[#0a164d] hover:bg-[#0a164d]/90">
+          <Button onClick={() => setActiveTab('create')} className="bg-[#0a164d] hover:bg-[#0a164d]/90 w-full sm:w-auto">
             <Plus className="w-4 h-4 mr-2"/>
             New Session
           </Button>
@@ -450,15 +525,17 @@ const SessionManagement: React.FC = () => {
 
       {/* Error Alert */}
       {error && (
-        <div className="bg-red-50 border border-red-200 rounded-lg p-4">
-          <div className="flex items-center text-red-700">
-            <AlertTriangle className="w-5 h-5 mr-2" />
-            <span className="font-medium">Error:</span>
-            <span className="ml-2">{error}</span>
+        <div className="bg-red-50 border border-red-200 rounded-lg p-3 sm:p-4">
+          <div className="flex items-start text-red-700">
+            <AlertTriangle className="w-4 h-4 sm:w-5 sm:h-5 mr-2 mt-0.5 flex-shrink-0" />
+            <div className="min-w-0 flex-1">
+              <span className="font-medium">Error:</span>
+              <span className="ml-2 break-words">{error}</span>
+            </div>
           </div>
           <button 
             onClick={() => setError(null)} 
-            className="mt-2 text-sm text-red-600 hover:text-red-800 underline"
+            className="mt-2 text-xs sm:text-sm text-red-600 hover:text-red-800 underline"
           >
             Dismiss
           </button>
@@ -466,58 +543,58 @@ const SessionManagement: React.FC = () => {
       )}
 
       {/* Stats Overview */}
-      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
+      <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-3 sm:gap-6">
         <Card>
-          <CardContent className="p-6">
+          <CardContent className="p-4 sm:p-6">
             <div className="flex items-center">
               <div className="p-2 bg-blue-100 rounded-lg">
-                <Activity className="w-6 h-6 text-blue-600" />
+                <Activity className="w-5 h-5 sm:w-6 sm:h-6 text-blue-600" />
               </div>
-              <div className="ml-4">
-                <p className="text-sm font-medium text-gray-600">Total Sessions</p>
-                <p className="text-2xl font-bold text-gray-900">{stats.totalSessions}</p>
+              <div className="ml-3 sm:ml-4">
+                <p className="text-xs sm:text-sm font-medium text-gray-600">Total Sessions</p>
+                <p className="text-lg sm:text-2xl font-bold text-gray-900">{stats.totalSessions}</p>
               </div>
             </div>
           </CardContent>
         </Card>
 
         <Card>
-          <CardContent className="p-6">
+          <CardContent className="p-4 sm:p-6">
             <div className="flex items-center">
               <div className="p-2 bg-green-100 rounded-lg">
-                <CheckCircle className="w-6 h-6 text-green-600" />
+                <CheckCircle className="w-5 h-5 sm:w-6 sm:h-6 text-green-600" />
               </div>
-              <div className="ml-4">
-                <p className="text-sm font-medium text-gray-600">Completed</p>
-                <p className="text-2xl font-bold text-gray-900">{stats.completedSessions}</p>
+              <div className="ml-3 sm:ml-4">
+                <p className="text-xs sm:text-sm font-medium text-gray-600">Completed</p>
+                <p className="text-lg sm:text-2xl font-bold text-gray-900">{stats.completedSessions}</p>
               </div>
             </div>
           </CardContent>
         </Card>
 
         <Card>
-          <CardContent className="p-6">
+          <CardContent className="p-4 sm:p-6">
             <div className="flex items-center">
               <div className="p-2 bg-yellow-100 rounded-lg">
-                <Clock className="w-6 h-6 text-yellow-600" />
+                <Clock className="w-5 h-5 sm:w-6 sm:h-6 text-yellow-600" />
               </div>
-              <div className="ml-4">
-                <p className="text-sm font-medium text-gray-600">Pending</p>
-                <p className="text-2xl font-bold text-gray-900">{stats.pendingSessions}</p>
+              <div className="ml-3 sm:ml-4">
+                <p className="text-xs sm:text-sm font-medium text-gray-600">Pending</p>
+                <p className="text-lg sm:text-2xl font-bold text-gray-900">{stats.pendingSessions}</p>
               </div>
             </div>
           </CardContent>
         </Card>
 
         <Card>
-          <CardContent className="p-6">
+          <CardContent className="p-4 sm:p-6">
             <div className="flex items-center">
               <div className="p-2 bg-purple-100 rounded-lg">
-                <TrendingUp className="w-6 h-6 text-purple-600" />
+                <TrendingUp className="w-5 h-5 sm:w-6 sm:h-6 text-purple-600" />
               </div>
-              <div className="ml-4">
-                <p className="text-sm font-medium text-gray-600">Success Rate</p>
-                <p className="text-2xl font-bold text-gray-900">{stats.successRate}%</p>
+              <div className="ml-3 sm:ml-4">
+                <p className="text-xs sm:text-sm font-medium text-gray-600">Success Rate</p>
+                <p className="text-lg sm:text-2xl font-bold text-gray-900">{stats.successRate}%</p>
               </div>
             </div>
           </CardContent>
@@ -525,29 +602,31 @@ const SessionManagement: React.FC = () => {
       </div>
 
       {/* Main Content Tabs */}
-      <Tabs value={activeTab} onValueChange={setActiveTab} className="space-y-6">
-        <TabsList className="grid w-full grid-cols-2">
-          <TabsTrigger value="overview">Overview</TabsTrigger>
-          <TabsTrigger value="sessions">All Sessions</TabsTrigger>
-        </TabsList>
+      <Tabs value={activeTab} onValueChange={setActiveTab} className="space-y-4 sm:space-y-6">
+        <div className="overflow-x-auto">
+          <TabsList className="grid w-full grid-cols-2 min-w-[200px]">
+            <TabsTrigger value="overview" className="text-xs sm:text-sm">Overview</TabsTrigger>
+            <TabsTrigger value="sessions" className="text-xs sm:text-sm">All Sessions</TabsTrigger>
+          </TabsList>
+        </div>
 
         {/* Overview Tab */}
-        <TabsContent value="overview" className="space-y-6">
+        <TabsContent value="overview" className="space-y-4 sm:space-y-6">
           {/* Quick Actions */}
-          <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+          <div className="grid grid-cols-1 lg:grid-cols-2 gap-4 sm:gap-6">
             <Card>
-              <CardHeader>
-                <CardTitle className="flex items-center">
-                  <Zap className="w-5 h-5 mr-2 text-yellow-500" />
+              <CardHeader className="px-3 sm:px-6 pt-3 sm:pt-6">
+                <CardTitle className="flex items-center text-sm sm:text-base">
+                  <Zap className="w-4 h-4 sm:w-5 sm:h-5 mr-2 text-yellow-500" />
                   Quick Charge
                 </CardTitle>
-                <p className="text-sm text-gray-600">Create a session and redirect to checkout instantly</p>
+                <p className="text-xs sm:text-sm text-gray-600">Create a session and redirect to checkout instantly</p>
               </CardHeader>
-              <CardContent>
-                <form onSubmit={onQuick} className="space-y-4">
+              <CardContent className="px-3 sm:px-6 pb-3 sm:pb-6">
+                <form onSubmit={onQuick} className="space-y-3 sm:space-y-4">
                   <div>
-                    <Label>Select Customer *</Label>
-                    <div className="flex space-x-2">
+                    <Label className="text-xs sm:text-sm">Select Customer *</Label>
+                    <div className="mt-1">
                       <Select 
                         value={selectedCustomer} 
                         onValueChange={(value) => {
@@ -566,7 +645,7 @@ const SessionManagement: React.FC = () => {
                           }
                         }}
                       >
-                        <SelectTrigger>
+                        <SelectTrigger className="text-xs sm:text-sm">
                           <SelectValue placeholder="Choose existing customer or create new" />
                         </SelectTrigger>
                         <SelectContent>
@@ -579,7 +658,7 @@ const SessionManagement: React.FC = () => {
                           {customers.map((customer) => (
                             <SelectItem key={customer._id} value={customer._id}>
                               <div className="flex flex-col">
-                                <span className="font-medium">{customer.name}</span>
+                                <span className="font-medium text-xs sm:text-sm">{customer.name}</span>
                                 <span className="text-xs text-gray-500">{customer.email}</span>
                               </div>
                             </SelectItem>
@@ -588,42 +667,45 @@ const SessionManagement: React.FC = () => {
                       </Select>
                     </div>
                   </div>
-                  <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                  <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 sm:gap-4">
                     <div>
-                      <Label>Customer Name</Label>
+                      <Label className="text-xs sm:text-sm">Customer Name</Label>
                       <Input 
                         value={quick.name} 
                         onChange={e=>setQuick(v=>({...v,name:e.target.value}))} 
                         placeholder="John Doe" 
                         disabled={selectedCustomer && selectedCustomer !== 'create_new'}
+                        className="text-xs sm:text-sm"
                       />
                     </div>
                     <div>
-                      <Label>Email Address *</Label>
+                      <Label className="text-xs sm:text-sm">Email Address *</Label>
                       <Input 
                         type="email" 
                         value={quick.email} 
                         onChange={e=>setQuick(v=>({...v,email:e.target.value}))} 
                         required 
                         disabled={selectedCustomer && selectedCustomer !== 'create_new'}
+                        className="text-xs sm:text-sm"
                       />
                     </div>
                   </div>
-                  <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                  <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 sm:gap-4">
                     <div>
-                      <Label>Amount *</Label>
+                      <Label className="text-xs sm:text-sm">Amount *</Label>
                       <Input 
                         type="text" 
                         value={quick.amount} 
                         onChange={e=>setQuick(v=>({...v,amount:formatAmount(e.target.value)}))} 
                         placeholder="1,000.00"
                         required 
+                        className="text-xs sm:text-sm"
                       />
                     </div>
                     <div>
-                      <Label>Currency</Label>
+                      <Label className="text-xs sm:text-sm">Currency</Label>
                       <Select value={quick.currency} onValueChange={v=>setQuick(f=>({...f,currency:v}))}>
-                        <SelectTrigger><SelectValue /></SelectTrigger>
+                        <SelectTrigger className="text-xs sm:text-sm"><SelectValue /></SelectTrigger>
                         <SelectContent>
                           <SelectItem value="NGN">NGN</SelectItem>
                           <SelectItem value="USD">USD</SelectItem>
@@ -634,9 +716,9 @@ const SessionManagement: React.FC = () => {
                     </div>
                   </div>
                   <div>
-                    <Label>Allowed Payment Method</Label>
+                    <Label className="text-xs sm:text-sm">Allowed Payment Method</Label>
                     <Select value={quick.method} onValueChange={v=>setQuick(f=>({...f, method:v}))}>
-                      <SelectTrigger>
+                      <SelectTrigger className="text-xs sm:text-sm">
                         <SelectValue placeholder="All methods" />
                       </SelectTrigger>
                       <SelectContent>
@@ -648,56 +730,66 @@ const SessionManagement: React.FC = () => {
                     </Select>
                   </div>
                   <div>
-                    <Label>Description *</Label>
+                    <Label className="text-xs sm:text-sm">Description *</Label>
                     <Input 
                       value={quick.description} 
                       onChange={e=>setQuick(v=>({...v,description:e.target.value}))} 
                       placeholder="Payment for services"
                       required 
+                      className="text-xs sm:text-sm"
                     />
                   </div>
-                  <Button type="submit" disabled={loading} className="w-full bg-[#0a164d] hover:bg-[#0a164d]/90">
-                    <CreditCard className="w-4 h-4 mr-2"/>
-                    Create & Go to Checkout
-                    <ArrowRight className="w-4 h-4 ml-2"/>
+                  <Button type="submit" disabled={loading} className="w-full bg-[#0a164d] hover:bg-[#0a164d]/90 text-xs sm:text-sm">
+                    {loading ? (
+                      <>
+                        <Loader2 className="w-4 h-4 mr-2 animate-spin"/>
+                        Creating Session...
+                      </>
+                    ) : (
+                      <>
+                        <CreditCard className="w-4 h-4 mr-2"/>
+                        Create & Go to Checkout
+                        <ArrowRight className="w-4 h-4 ml-2"/>
+                      </>
+                    )}
                   </Button>
                 </form>
               </CardContent>
             </Card>
 
             <Card>
-              <CardHeader>
-                <CardTitle className="flex items-center">
-                  <Settings className="w-5 h-5 mr-2 text-blue-500" />
+              <CardHeader className="px-3 sm:px-6 pt-3 sm:pt-6">
+                <CardTitle className="flex items-center text-sm sm:text-base">
+                  <Settings className="w-4 h-4 sm:w-5 sm:h-5 mr-2 text-blue-500" />
                   Recent Activity
                 </CardTitle>
-                <p className="text-sm text-gray-600">Latest session activity and status updates</p>
+                <p className="text-xs sm:text-sm text-gray-600">Latest session activity and status updates</p>
               </CardHeader>
-              <CardContent>
-                <div className="space-y-3">
+              <CardContent className="px-3 sm:px-6 pb-3 sm:pb-6">
+                <div className="space-y-2 sm:space-y-3">
                   {sessions.slice(0, 5).map((s: any) => (
                     <div 
                       key={s.sessionId} 
-                      className="flex items-center justify-between p-3 bg-gray-50 rounded-lg cursor-pointer hover:bg-gray-100 transition-colors"
+                      className="flex items-center justify-between p-2 sm:p-3 bg-gray-50 rounded-lg cursor-pointer hover:bg-gray-100 transition-colors"
                       onClick={() => handleSessionClick(s)}
                     >
-                      <div className="flex items-center space-x-3">
+                      <div className="flex items-center space-x-2 sm:space-x-3 min-w-0 flex-1">
                         {getStatusIcon(s.status)}
-                        <div>
-                          <p className="font-medium text-gray-900">{fmtMoney(s.amount, s.currency)}</p>
-                          <p className="text-sm text-gray-600">{s.customerName || s.customerEmail}</p>
+                        <div className="min-w-0 flex-1">
+                          <p className="font-medium text-gray-900 text-sm sm:text-base truncate">{fmtMoney(s.amount, s.currency)}</p>
+                          <p className="text-xs sm:text-sm text-gray-600 truncate">{s.customerName || s.customerEmail}</p>
                         </div>
                       </div>
-                      <div className="flex items-center space-x-2">
-                        <span className={getStatusBadge(s.status)}>{s.status}</span>
-                        <Eye className="w-4 h-4 text-gray-400" />
+                      <div className="flex items-center space-x-1 sm:space-x-2 flex-shrink-0">
+                        <span className={`${getStatusBadge(s.status)} text-xs`}>{s.status}</span>
+                        <Eye className="w-3 h-3 sm:w-4 sm:h-4 text-gray-400" />
                       </div>
                     </div>
                   ))}
                   {sessions.length === 0 && (
-                    <div className="text-center py-8 text-gray-500">
-                      <Activity className="w-12 h-12 mx-auto mb-2 opacity-40" />
-                      <p>No sessions yet</p>
+                    <div className="text-center py-6 sm:py-8 text-gray-500">
+                      <Activity className="w-8 h-8 sm:w-12 sm:h-12 mx-auto mb-2 opacity-40" />
+                      <p className="text-sm sm:text-base">No sessions yet</p>
                     </div>
                   )}
                 </div>
@@ -913,57 +1005,105 @@ const SessionManagement: React.FC = () => {
         )}
 
         {/* All Sessions Tab */}
-        <TabsContent value="sessions" className="space-y-6">
+        <TabsContent value="sessions" className="space-y-4 sm:space-y-6">
           <Card>
-            <CardHeader>
-              <CardTitle className="flex items-center">
-                <Users className="w-5 h-5 mr-2 text-purple-500" />
+            <CardHeader className="px-3 sm:px-6 pt-3 sm:pt-6">
+              <CardTitle className="flex items-center text-sm sm:text-base">
+                <Users className="w-4 h-4 sm:w-5 sm:h-5 mr-2 text-purple-500" />
                 All Sessions
               </CardTitle>
-              <p className="text-sm text-gray-600">View and manage all checkout sessions</p>
+              <p className="text-xs sm:text-sm text-gray-600">View and manage all checkout sessions</p>
             </CardHeader>
-            <CardContent>
-              <div className="space-y-4">
+            <CardContent className="px-3 sm:px-6 pb-3 sm:pb-6">
+              <div className="space-y-3 sm:space-y-4">
                 {sessions.map((s: any) => (
                   <div 
                     key={s.sessionId} 
-                    className="flex items-center justify-between p-4 border rounded-lg hover:bg-gray-50 cursor-pointer transition-colors"
+                    className="border rounded-lg hover:bg-gray-50 cursor-pointer transition-colors"
                     onClick={() => handleSessionClick(s)}
                   >
-                    <div className="flex items-center space-x-4">
-                      {getStatusIcon(s.status)}
-                      <div>
-                        <p className="font-semibold text-gray-900">{fmtMoney(s.amount, s.currency)}</p>
-                        <p className="text-sm text-gray-600">{s.customerName || s.customerEmail}</p>
-                        <p className="text-xs text-gray-500">{s.description}</p>
+                    {/* Desktop View */}
+                    <div className="hidden sm:flex items-center justify-between p-4">
+                      <div className="flex items-center space-x-4">
+                        {getStatusIcon(s.status)}
+                        <div>
+                          <p className="font-semibold text-gray-900">{fmtMoney(s.amount, s.currency)}</p>
+                          <p className="text-sm text-gray-600">{s.customerName || s.customerEmail}</p>
+                          <p className="text-xs text-gray-500">{s.description}</p>
+                        </div>
+                      </div>
+                      <div className="flex items-center space-x-3">
+                        <span className={getStatusBadge(s.status)}>{s.status}</span>
+                        <div className="flex items-center space-x-2">
+                          <span className="font-mono text-xs bg-gray-100 px-2 py-1 rounded">
+                            {s.sessionId.slice(0, 12)}...
+                          </span>
+                          <Button 
+                            variant="ghost" 
+                            size="sm" 
+                            onClick={(e) => {
+                              e.stopPropagation();
+                              copyToClipboard(s.sessionId);
+                            }}
+                          >
+                            <Copy className="w-4 h-4"/>
+                          </Button>
+                          <Eye className="w-4 h-4 text-gray-400" />
+                        </div>
                       </div>
                     </div>
-                    <div className="flex items-center space-x-3">
-                      <span className={getStatusBadge(s.status)}>{s.status}</span>
-                      <div className="flex items-center space-x-2">
-                        <span className="font-mono text-xs bg-gray-100 px-2 py-1 rounded">
-                          {s.sessionId.slice(0, 12)}...
-                        </span>
-                        <Button 
-                          variant="ghost" 
-                          size="sm" 
-                          onClick={(e) => {
-                            e.stopPropagation();
-                            copyToClipboard(s.sessionId);
-                          }}
-                        >
-                          <Copy className="w-4 h-4"/>
-                        </Button>
-                        <Eye className="w-4 h-4 text-gray-400" />
+
+                    {/* Mobile View */}
+                    <div className="sm:hidden p-3">
+                      <div className="space-y-3">
+                        {/* Header with amount and status */}
+                        <div className="flex items-center justify-between">
+                          <div className="flex items-center space-x-2">
+                            {getStatusIcon(s.status)}
+                            <p className="font-semibold text-gray-900 text-sm">{fmtMoney(s.amount, s.currency)}</p>
+                          </div>
+                          <span className={`${getStatusBadge(s.status)} text-xs`}>{s.status}</span>
+                        </div>
+
+                        {/* Customer info */}
+                        <div className="text-xs text-gray-600 truncate">
+                          {s.customerName || s.customerEmail}
+                        </div>
+
+                        {/* Description */}
+                        <div className="text-xs text-gray-500 truncate">
+                          {s.description}
+                        </div>
+
+                        {/* Session ID and actions */}
+                        <div className="flex items-center justify-between pt-2 border-t border-gray-100">
+                          <span className="font-mono text-xs bg-gray-100 px-2 py-1 rounded">
+                            {s.sessionId.slice(0, 12)}...
+                          </span>
+                          <div className="flex items-center space-x-1">
+                            <Button 
+                              variant="ghost" 
+                              size="sm" 
+                              className="h-7 w-7 p-0"
+                              onClick={(e) => {
+                                e.stopPropagation();
+                                copyToClipboard(s.sessionId);
+                              }}
+                            >
+                              <Copy className="w-3 h-3"/>
+                            </Button>
+                            <Eye className="w-3 h-3 text-gray-400" />
+                          </div>
+                        </div>
                       </div>
                     </div>
                   </div>
                 ))}
                 {sessions.length === 0 && (
-                  <div className="text-center py-12 text-gray-500">
-                    <Activity className="w-16 h-16 mx-auto mb-4 opacity-40" />
-                    <p className="text-lg font-medium">No sessions found</p>
-                    <p className="text-sm">Create your first session to get started</p>
+                  <div className="text-center py-8 sm:py-12 text-gray-500">
+                    <Activity className="w-12 h-12 sm:w-16 sm:h-16 mx-auto mb-3 sm:mb-4 opacity-40" />
+                    <p className="text-base sm:text-lg font-medium">No sessions found</p>
+                    <p className="text-xs sm:text-sm">Create your first session to get started</p>
                   </div>
                 )}
               </div>
@@ -974,85 +1114,87 @@ const SessionManagement: React.FC = () => {
 
       {/* Session Details Modal */}
       {showSessionModal && selectedSession && (
-        <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center p-4 z-50">
-          <div className="bg-white rounded-lg max-w-2xl w-full max-h-[90vh] overflow-y-auto">
-            <div className="flex items-center justify-between p-6 border-b">
-              <h2 className="text-xl font-semibold">Session Details</h2>
+        <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center p-2 sm:p-4 z-50">
+          <div className="bg-white rounded-lg max-w-2xl w-full max-h-[95vh] overflow-y-auto mx-2 sm:mx-0">
+            <div className="flex items-center justify-between p-4 sm:p-6 border-b">
+              <h2 className="text-lg sm:text-xl font-semibold">Session Details</h2>
               <Button
                 variant="ghost"
                 size="sm"
                 onClick={() => setShowSessionModal(false)}
+                className="p-1"
               >
-                <X className="w-4 h-4" />
+                <X className="w-4 h-4 sm:w-5 sm:h-5" />
               </Button>
             </div>
             
-            <div className="p-6 space-y-6">
+            <div className="p-4 sm:p-6 space-y-4 sm:space-y-6">
               {/* Session Status */}
-              <div className="flex items-center space-x-3">
-                {getStatusIcon(selectedSession.status)}
-                <div>
-                  <h3 className="text-lg font-semibold text-gray-900">
+              <div className="flex flex-col sm:flex-row sm:items-center space-y-2 sm:space-y-0 sm:space-x-3">
+                <div className="flex items-center space-x-3">
+                  {getStatusIcon(selectedSession.status)}
+                  <h3 className="text-base sm:text-lg font-semibold text-gray-900">
                     {fmtMoney(selectedSession.amount, selectedSession.currency)}
                   </h3>
-                  <span className={getStatusBadge(selectedSession.status)}>
-                    {selectedSession.status}
-                  </span>
                 </div>
+                <span className={`${getStatusBadge(selectedSession.status)} text-xs w-fit`}>
+                  {selectedSession.status}
+                </span>
               </div>
 
               {/* Session Details Grid */}
-              <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-                <div className="space-y-4">
+              <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 sm:gap-6">
+                <div className="space-y-3 sm:space-y-4">
                   <div>
-                    <p className="text-sm font-medium text-gray-500">Session ID</p>
-                    <div className="flex items-center space-x-2">
-                      <p className="text-sm text-gray-900 font-mono break-all">
+                    <p className="text-xs sm:text-sm font-medium text-gray-500">Session ID</p>
+                    <div className="flex items-center space-x-2 mt-1">
+                      <p className="text-xs sm:text-sm text-gray-900 font-mono break-all flex-1">
                         {selectedSession.sessionId}
                       </p>
                       <Button 
                         variant="ghost" 
                         size="sm" 
                         onClick={() => copyToClipboard(selectedSession.sessionId)}
+                        className="flex-shrink-0"
                       >
-                        <Copy className="w-4 h-4"/>
+                        <Copy className="w-3 h-3 sm:w-4 sm:h-4"/>
                       </Button>
                     </div>
                   </div>
 
                   <div>
-                    <p className="text-sm font-medium text-gray-500">Customer Email</p>
-                    <p className="text-sm text-gray-900">
+                    <p className="text-xs sm:text-sm font-medium text-gray-500">Customer Email</p>
+                    <p className="text-xs sm:text-sm text-gray-900 break-words">
                       {selectedSession.customerEmail || 'No email provided'}
                     </p>
                   </div>
 
                   <div>
-                    <p className="text-sm font-medium text-gray-500">Customer Name</p>
-                    <p className="text-sm text-gray-900">
+                    <p className="text-xs sm:text-sm font-medium text-gray-500">Customer Name</p>
+                    <p className="text-xs sm:text-sm text-gray-900 break-words">
                       {selectedSession.customerName || 'Not provided'}
                     </p>
                   </div>
                 </div>
 
-                <div className="space-y-4">
+                <div className="space-y-3 sm:space-y-4">
                   <div>
-                    <p className="text-sm font-medium text-gray-500">Amount</p>
-                    <p className="text-lg font-semibold text-gray-900">
+                    <p className="text-xs sm:text-sm font-medium text-gray-500">Amount</p>
+                    <p className="text-base sm:text-lg font-semibold text-gray-900">
                       {fmtMoney(selectedSession.amount, selectedSession.currency)}
                     </p>
                   </div>
 
                   <div>
-                    <p className="text-sm font-medium text-gray-500">Description</p>
-                    <p className="text-sm text-gray-900">
+                    <p className="text-xs sm:text-sm font-medium text-gray-500">Description</p>
+                    <p className="text-xs sm:text-sm text-gray-900 break-words">
                       {selectedSession.description || 'No description'}
                     </p>
                   </div>
 
                   <div>
-                    <p className="text-sm font-medium text-gray-500">Created At</p>
-                    <p className="text-sm text-gray-900">
+                    <p className="text-xs sm:text-sm font-medium text-gray-500">Created At</p>
+                    <p className="text-xs sm:text-sm text-gray-900">
                       {selectedSession.createdAt ? new Date(selectedSession.createdAt).toLocaleString() : 'Unknown'}
                     </p>
                   </div>
@@ -1060,14 +1202,15 @@ const SessionManagement: React.FC = () => {
               </div>
 
               {/* Actions */}
-              <div className="flex justify-end space-x-3 pt-4 border-t">
+              <div className="flex flex-col sm:flex-row justify-end gap-2 sm:gap-3 pt-3 sm:pt-4 border-t">
                 <Button 
                   variant="outline" 
                   onClick={() => {
                     copyToClipboard(selectedSession.sessionId);
                   }}
+                  className="w-full sm:w-auto text-xs sm:text-sm"
                 >
-                  <Copy className="w-4 h-4 mr-2"/>
+                  <Copy className="w-3 h-3 sm:w-4 sm:h-4 mr-2"/>
                   Copy Session ID
                 </Button>
                 {String(selectedSession.status).toLowerCase() === 'pending' && (
@@ -1075,8 +1218,9 @@ const SessionManagement: React.FC = () => {
                     onClick={() => {
                       window.open(`/checkout/${selectedSession.sessionId}`, '_blank');
                     }}
+                    className="w-full sm:w-auto text-xs sm:text-sm"
                   >
-                    <ExternalLink className="w-4 h-4 mr-2"/>
+                    <ExternalLink className="w-3 h-3 sm:w-4 sm:h-4 mr-2"/>
                     Open Checkout
                   </Button>
                 )}
@@ -1088,56 +1232,60 @@ const SessionManagement: React.FC = () => {
 
       {/* Create Customer Modal */}
       {showCreateCustomerModal && (
-        <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center p-4 z-50">
-          <div className="bg-white rounded-lg max-w-2xl w-full max-h-[90vh] overflow-y-auto">
-            <div className="flex items-center justify-between p-6 border-b">
-              <h2 className="text-xl font-semibold">Create New Customer</h2>
+        <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center p-2 sm:p-4 z-50">
+          <div className="bg-white rounded-lg max-w-2xl w-full max-h-[95vh] overflow-y-auto mx-2 sm:mx-0">
+            <div className="flex items-center justify-between p-4 sm:p-6 border-b">
+              <h2 className="text-lg sm:text-xl font-semibold">Create New Customer</h2>
               <Button
                 variant="ghost"
                 size="sm"
                 onClick={() => setShowCreateCustomerModal(false)}
+                className="p-1"
               >
-                <X className="w-4 h-4" />
+                <X className="w-4 h-4 sm:w-5 sm:h-5" />
               </Button>
             </div>
             
-            <form onSubmit={handleCreateCustomer} className="p-6 space-y-6">
-              <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+            <form onSubmit={handleCreateCustomer} className="p-4 sm:p-6 space-y-4 sm:space-y-6">
+              <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 sm:gap-6">
                 <div>
-                  <Label>Full Name *</Label>
+                  <Label className="text-xs sm:text-sm">Full Name *</Label>
                   <Input 
                     value={newCustomerForm.name} 
                     onChange={e => setNewCustomerForm(v => ({...v, name: e.target.value}))} 
                     placeholder="John Doe" 
                     required 
+                    className="text-xs sm:text-sm"
                   />
                 </div>
                 <div>
-                  <Label>Email Address *</Label>
+                  <Label className="text-xs sm:text-sm">Email Address *</Label>
                   <Input 
                     type="email" 
                     value={newCustomerForm.email} 
                     onChange={e => setNewCustomerForm(v => ({...v, email: e.target.value}))} 
                     placeholder="john@example.com" 
                     required 
+                    className="text-xs sm:text-sm"
                   />
                 </div>
               </div>
               
               <div>
-                <Label>Phone Number</Label>
+                <Label className="text-xs sm:text-sm">Phone Number</Label>
                 <Input 
                   value={newCustomerForm.phone} 
                   onChange={e => setNewCustomerForm(v => ({...v, phone: e.target.value}))} 
                   placeholder="+234 811 841 0480" 
+                  className="text-xs sm:text-sm"
                 />
               </div>
 
               <div>
-                <Label>Address Information</Label>
-                <div className="space-y-4">
+                <Label className="text-xs sm:text-sm">Address Information</Label>
+                <div className="space-y-3 sm:space-y-4 mt-2">
                   <div>
-                    <Label>Address Line 1</Label>
+                    <Label className="text-xs sm:text-sm">Address Line 1</Label>
                     <Input 
                       value={newCustomerForm.address.line1} 
                       onChange={e => setNewCustomerForm(v => ({
@@ -1145,10 +1293,11 @@ const SessionManagement: React.FC = () => {
                         address: {...v.address, line1: e.target.value}
                       }))} 
                       placeholder="123 Main Street" 
+                      className="text-xs sm:text-sm"
                     />
                   </div>
                   <div>
-                    <Label>Address Line 2</Label>
+                    <Label className="text-xs sm:text-sm">Address Line 2</Label>
                     <Input 
                       value={newCustomerForm.address.line2} 
                       onChange={e => setNewCustomerForm(v => ({
@@ -1156,11 +1305,12 @@ const SessionManagement: React.FC = () => {
                         address: {...v.address, line2: e.target.value}
                       }))} 
                       placeholder="Apartment, suite, etc." 
+                      className="text-xs sm:text-sm"
                     />
                   </div>
-                  <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+                  <div className="grid grid-cols-1 sm:grid-cols-3 gap-3 sm:gap-4">
                     <div>
-                      <Label>City</Label>
+                      <Label className="text-xs sm:text-sm">City</Label>
                       <Input 
                         value={newCustomerForm.address.city} 
                         onChange={e => setNewCustomerForm(v => ({
@@ -1168,10 +1318,11 @@ const SessionManagement: React.FC = () => {
                           address: {...v.address, city: e.target.value}
                         }))} 
                         placeholder="Lagos" 
+                        className="text-xs sm:text-sm"
                       />
                     </div>
                     <div>
-                      <Label>State/Province</Label>
+                      <Label className="text-xs sm:text-sm">State/Province</Label>
                       <Input 
                         value={newCustomerForm.address.state} 
                         onChange={e => setNewCustomerForm(v => ({
@@ -1179,10 +1330,11 @@ const SessionManagement: React.FC = () => {
                           address: {...v.address, state: e.target.value}
                         }))} 
                         placeholder="Lagos" 
+                        className="text-xs sm:text-sm"
                       />
                     </div>
                     <div>
-                      <Label>Postal Code</Label>
+                      <Label className="text-xs sm:text-sm">Postal Code</Label>
                       <Input 
                         value={newCustomerForm.address.postalCode} 
                         onChange={e => setNewCustomerForm(v => ({
@@ -1190,11 +1342,12 @@ const SessionManagement: React.FC = () => {
                           address: {...v.address, postalCode: e.target.value}
                         }))} 
                         placeholder="100001" 
+                        className="text-xs sm:text-sm"
                       />
                     </div>
                   </div>
                   <div>
-                    <Label>Country</Label>
+                    <Label className="text-xs sm:text-sm">Country</Label>
                     <Select 
                       value={newCustomerForm.address.country} 
                       onValueChange={value => setNewCustomerForm(v => ({
@@ -1202,7 +1355,7 @@ const SessionManagement: React.FC = () => {
                         address: {...v.address, country: value}
                       }))}
                     >
-                      <SelectTrigger>
+                      <SelectTrigger className="text-xs sm:text-sm">
                         <SelectValue />
                       </SelectTrigger>
                       <SelectContent>
@@ -1217,31 +1370,33 @@ const SessionManagement: React.FC = () => {
               </div>
 
               <div>
-                <Label>Description</Label>
+                <Label className="text-xs sm:text-sm">Description</Label>
                 <Textarea 
                   value={newCustomerForm.description} 
                   onChange={e => setNewCustomerForm(v => ({...v, description: e.target.value}))} 
                   placeholder="Additional notes about this customer..." 
                   rows={3}
+                  className="text-xs sm:text-sm"
                 />
               </div>
               
-              <div className="flex justify-end space-x-3 pt-4 border-t">
+              <div className="flex flex-col sm:flex-row justify-end gap-2 sm:gap-3 pt-3 sm:pt-4 border-t">
                 <Button 
                   type="button" 
                   variant="outline" 
                   onClick={() => setShowCreateCustomerModal(false)}
                   disabled={loading}
+                  className="w-full sm:w-auto text-xs sm:text-sm"
                 >
                   Cancel
                 </Button>
                 <Button 
                   type="submit" 
                   disabled={loading}
-                  className="bg-[#0a164d] hover:bg-[#0a164d]/90"
+                  className="bg-[#0a164d] hover:bg-[#0a164d]/90 w-full sm:w-auto text-xs sm:text-sm"
                 >
                   {loading ? <Loader2 className="w-4 h-4 mr-2 animate-spin" /> : <Plus className="w-4 h-4 mr-2" />}
-                  Create Customer
+                  {loading ? 'Creating...' : 'Create Customer'}
                 </Button>
               </div>
             </form>
