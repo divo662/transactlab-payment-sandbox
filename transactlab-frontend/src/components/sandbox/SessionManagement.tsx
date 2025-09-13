@@ -429,7 +429,7 @@ const SessionManagement: React.FC = () => {
   const fmtMoney = (a:number,c:string)=> new Intl.NumberFormat('en-US',{style:'currency',currency:c}).format((a||0)/100);
 
   if (loading && sessions.length === 0) {
-    return (
+  return (
       <div className="space-y-4 sm:space-y-6 p-3 sm:p-0">
         {/* Header Skeleton */}
         <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3 sm:gap-4">
@@ -529,7 +529,7 @@ const SessionManagement: React.FC = () => {
           <div className="flex items-start text-red-700">
             <AlertTriangle className="w-4 h-4 sm:w-5 sm:h-5 mr-2 mt-0.5 flex-shrink-0" />
             <div className="min-w-0 flex-1">
-              <span className="font-medium">Error:</span>
+            <span className="font-medium">Error:</span>
               <span className="ml-2 break-words">{error}</span>
             </div>
           </div>
@@ -607,7 +607,7 @@ const SessionManagement: React.FC = () => {
           <TabsList className="grid w-full grid-cols-2 min-w-[200px]">
             <TabsTrigger value="overview" className="text-xs sm:text-sm">Overview</TabsTrigger>
             <TabsTrigger value="sessions" className="text-xs sm:text-sm">All Sessions</TabsTrigger>
-          </TabsList>
+        </TabsList>
         </div>
 
         {/* Overview Tab */}
@@ -747,9 +747,9 @@ const SessionManagement: React.FC = () => {
                       </>
                     ) : (
                       <>
-                        <CreditCard className="w-4 h-4 mr-2"/>
-                        Create & Go to Checkout
-                        <ArrowRight className="w-4 h-4 ml-2"/>
+                    <CreditCard className="w-4 h-4 mr-2"/>
+                    Create & Go to Checkout
+                    <ArrowRight className="w-4 h-4 ml-2"/>
                       </>
                     )}
                   </Button>
@@ -1024,31 +1024,31 @@ const SessionManagement: React.FC = () => {
                   >
                     {/* Desktop View */}
                     <div className="hidden sm:flex items-center justify-between p-4">
-                      <div className="flex items-center space-x-4">
-                        {getStatusIcon(s.status)}
-                        <div>
-                          <p className="font-semibold text-gray-900">{fmtMoney(s.amount, s.currency)}</p>
-                          <p className="text-sm text-gray-600">{s.customerName || s.customerEmail}</p>
-                          <p className="text-xs text-gray-500">{s.description}</p>
-                        </div>
+                    <div className="flex items-center space-x-4">
+                      {getStatusIcon(s.status)}
+                      <div>
+                        <p className="font-semibold text-gray-900">{fmtMoney(s.amount, s.currency)}</p>
+                        <p className="text-sm text-gray-600">{s.customerName || s.customerEmail}</p>
+                        <p className="text-xs text-gray-500">{s.description}</p>
                       </div>
-                      <div className="flex items-center space-x-3">
-                        <span className={getStatusBadge(s.status)}>{s.status}</span>
-                        <div className="flex items-center space-x-2">
-                          <span className="font-mono text-xs bg-gray-100 px-2 py-1 rounded">
-                            {s.sessionId.slice(0, 12)}...
-                          </span>
-                          <Button 
-                            variant="ghost" 
-                            size="sm" 
-                            onClick={(e) => {
-                              e.stopPropagation();
-                              copyToClipboard(s.sessionId);
-                            }}
-                          >
-                            <Copy className="w-4 h-4"/>
-                          </Button>
-                          <Eye className="w-4 h-4 text-gray-400" />
+                    </div>
+                    <div className="flex items-center space-x-3">
+                      <span className={getStatusBadge(s.status)}>{s.status}</span>
+                      <div className="flex items-center space-x-2">
+                        <span className="font-mono text-xs bg-gray-100 px-2 py-1 rounded">
+                          {s.sessionId.slice(0, 12)}...
+                        </span>
+                        <Button 
+                          variant="ghost" 
+                          size="sm" 
+                          onClick={(e) => {
+                            e.stopPropagation();
+                            copyToClipboard(s.sessionId);
+                          }}
+                        >
+                          <Copy className="w-4 h-4"/>
+                        </Button>
+                        <Eye className="w-4 h-4 text-gray-400" />
                         </div>
                       </div>
                     </div>
@@ -1131,15 +1131,15 @@ const SessionManagement: React.FC = () => {
             <div className="p-4 sm:p-6 space-y-4 sm:space-y-6">
               {/* Session Status */}
               <div className="flex flex-col sm:flex-row sm:items-center space-y-2 sm:space-y-0 sm:space-x-3">
-                <div className="flex items-center space-x-3">
-                  {getStatusIcon(selectedSession.status)}
+              <div className="flex items-center space-x-3">
+                {getStatusIcon(selectedSession.status)}
                   <h3 className="text-base sm:text-lg font-semibold text-gray-900">
                     {fmtMoney(selectedSession.amount, selectedSession.currency)}
                   </h3>
                 </div>
                 <span className={`${getStatusBadge(selectedSession.status)} text-xs w-fit`}>
-                  {selectedSession.status}
-                </span>
+                    {selectedSession.status}
+                  </span>
               </div>
 
               {/* Session Details Grid */}

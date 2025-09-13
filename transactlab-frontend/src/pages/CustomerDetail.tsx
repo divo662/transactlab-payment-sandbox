@@ -31,6 +31,7 @@ import { Textarea } from '@/components/ui/textarea';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { useToast } from '@/hooks/use-toast';
 import { generateInvoicePDF, InvoiceData, generateReceiptPDF } from '@/utils/pdfGenerator';
+import Pagination from '@/components/ui/pagination';
 // import EnhancedPaymentMethodModal from '@/components/EnhancedPaymentMethodModal'; // DISABLED
 
 interface CustomerData {
@@ -82,6 +83,15 @@ const CustomerDetail: React.FC = () => {
   const [subscriptions, setSubscriptions] = useState<any[]>([]);
   const [refunds, setRefunds] = useState<any[]>([]);
   const [loading, setLoading] = useState(true);
+  const [transactionsPagination, setTransactionsPagination] = useState({
+    currentPage: 1,
+    totalPages: 1,
+    totalItems: 0,
+    itemsPerPage: 10,
+    hasNextPage: false,
+    hasPrevPage: false
+  });
+  const [loadingTransactions, setLoadingTransactions] = useState(false);
   
   // Modal states
   const [showCreatePayment, setShowCreatePayment] = useState(false);
@@ -162,6 +172,87 @@ const CustomerDetail: React.FC = () => {
     }
   }, [customerId]);
 
+  const fetchTransactions = async (page: number = 1, customerEmail?: string) => {
+    const email = customerEmail || customer?.email;
+    if (!email) return;
+    
+    try {
+      setLoadingTransactions(true);
+      const token = localStorage.getItem('accessToken');
+      
+      const sessionsRes = await fetch(`${API_BASE}/debug/customer-sessions?email=${encodeURIComponent(email)}&page=${page}&limit=10`, {
+        headers: { 
+          'Authorization': `Bearer ${token}`,
+          'Content-Type': 'application/json'
+        }
+      });
+      
+      if (sessionsRes.ok) {
+        const sessionsData = await sessionsRes.json();
+        console.log('Sessions API response:', sessionsData);
+        const customerSessions = sessionsData.data?.sessions || [];
+        // Convert sessions to transaction format for display
+        const sessionTransactions = customerSessions.map((s: any) => ({
+          transactionId: s.sessionId,
+          sessionId: s.sessionId,
+          amount: s.amount,
+          currency: s.currency,
+          description: s.description,
+          customerEmail: s.customerEmail,
+          status: s.status,
+          createdAt: s.completedAt || s.createdAt,
+          paymentMethod: 'card' // Default for sandbox
+        }));
+        setTransactions(sessionTransactions);
+        
+        // Update pagination info
+        if (sessionsData.pagination) {
+          setTransactionsPagination(sessionsData.pagination);
+        } else {
+          // Fallback pagination info if API doesn't return pagination
+          setTransactionsPagination({
+            currentPage: page,
+            totalPages: 1,
+            totalItems: sessionTransactions.length,
+            itemsPerPage: 10,
+            hasNextPage: false,
+            hasPrevPage: page > 1
+          });
+        }
+      } else {
+        // If API call fails, set empty transactions and reset pagination
+        setTransactions([]);
+        setTransactionsPagination({
+          currentPage: 1,
+          totalPages: 1,
+          totalItems: 0,
+          itemsPerPage: 10,
+          hasNextPage: false,
+          hasPrevPage: false
+        });
+      }
+    } catch (error) {
+      console.error('Error fetching transactions:', error);
+      // Set empty state on error
+      setTransactions([]);
+      setTransactionsPagination({
+        currentPage: 1,
+        totalPages: 1,
+        totalItems: 0,
+        itemsPerPage: 10,
+        hasNextPage: false,
+        hasPrevPage: false
+      });
+      toast({
+        title: 'Error',
+        description: 'Failed to fetch transactions',
+        variant: 'destructive'
+      });
+    } finally {
+      setLoadingTransactions(false);
+    }
+  };
+
   const fetchCustomerData = async () => {
     try {
       const token = localStorage.getItem('accessToken');
@@ -179,33 +270,10 @@ const CustomerDetail: React.FC = () => {
         const foundCustomer = customerData.data.find((c: CustomerData) => c._id === customerId);
         setCustomer(foundCustomer || null);
         
-        // Now fetch transactions and invoices using the found customer's email
+        // Now fetch other data using the found customer's email
         if (foundCustomer) {
-          // Fetch sessions for this specific customer
-          const sessionsRes = await fetch(`${API_BASE}/debug/customer-sessions?email=${encodeURIComponent(foundCustomer.email)}`, {
-            headers: { 
-              'Authorization': `Bearer ${token}`,
-              'Content-Type': 'application/json'
-            }
-          });
-          
-          if (sessionsRes.ok) {
-            const sessionsData = await sessionsRes.json();
-            const customerSessions = sessionsData.data?.sessions || [];
-            // Convert sessions to transaction format for display
-            const sessionTransactions = customerSessions.map((s: any) => ({
-              transactionId: s.sessionId,
-              sessionId: s.sessionId,
-              amount: s.amount,
-              currency: s.currency,
-              description: s.description,
-              customerEmail: s.customerEmail,
-              status: s.status,
-              createdAt: s.completedAt || s.createdAt,
-              paymentMethod: 'card' // Default for sandbox
-            }));
-            setTransactions(sessionTransactions);
-          }
+          // Fetch initial transactions
+          await fetchTransactions(1, foundCustomer.email);
 
           // Fetch invoices for this customer
           const invoicesRes = await fetch(`${API_BASE}/invoices?customerEmail=${encodeURIComponent(foundCustomer.email)}`, {
@@ -259,6 +327,10 @@ const CustomerDetail: React.FC = () => {
     } finally {
       setLoading(false);
     }
+  };
+
+  const handleTransactionPageChange = (page: number) => {
+    fetchTransactions(page);
   };
 
   const handleExportCustomer = async () => {
@@ -473,6 +545,10 @@ const CustomerDetail: React.FC = () => {
         setInvoiceForm({ amount: '', currency: 'NGN', description: '', dueDate: '' });
         // Refresh customer data to show new invoice
         fetchCustomerData();
+        // Also refresh transactions if we're on a specific page
+        if (transactionsPagination.currentPage > 1) {
+          fetchTransactions(transactionsPagination.currentPage);
+        }
       } else {
         const errorData = await response.json();
         throw new Error(errorData.message || 'Failed to create invoice');
@@ -829,6 +905,10 @@ const CustomerDetail: React.FC = () => {
         setRefundForm({ amount: '', reason: 'requested_by_customer' });
         // Refresh customer data to show updated transaction
         fetchCustomerData();
+        // Also refresh transactions if we're on a specific page
+        if (transactionsPagination.currentPage > 1) {
+          fetchTransactions(transactionsPagination.currentPage);
+        }
       } else {
         const errorData = await response.json();
         throw new Error(errorData.message || 'Failed to process refund');
@@ -846,10 +926,91 @@ const CustomerDetail: React.FC = () => {
 
   if (loading) {
     return (
-      <div className="min-h-screen bg-gray-50 flex items-center justify-center">
-        <div className="text-center">
-          <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-[#0a164d] mx-auto mb-4"></div>
-          <p className="text-gray-600">Loading customer details...</p>
+      <div className="min-h-screen bg-gray-50 p-3 sm:p-6">
+        <div className="max-w-7xl mx-auto space-y-4 sm:space-y-6">
+          {/* Header Skeleton */}
+          <div className="mb-4 sm:mb-6">
+            <div className="h-8 bg-gray-200 rounded w-32 animate-pulse mb-3 sm:mb-4"></div>
+            <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
+              <div className="space-y-2">
+                <div className="h-6 sm:h-8 bg-gray-200 rounded w-48 animate-pulse"></div>
+                <div className="h-4 bg-gray-200 rounded w-64 animate-pulse"></div>
+                <div className="h-4 bg-gray-200 rounded w-40 animate-pulse"></div>
+              </div>
+              <div className="flex flex-col sm:flex-row gap-2 sm:gap-3">
+                <div className="h-9 bg-gray-200 rounded w-32 animate-pulse"></div>
+                <div className="h-9 bg-gray-200 rounded w-32 animate-pulse"></div>
+                <div className="h-9 bg-gray-200 rounded w-9 animate-pulse"></div>
+              </div>
+            </div>
+          </div>
+
+          {/* Analytics Cards Skeleton */}
+          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-3 sm:gap-4">
+            {Array.from({ length: 3 }).map((_, i) => (
+              <div key={i} className="border rounded-lg p-4 sm:p-6">
+                <div className="flex items-center">
+                  <div className="p-2 bg-gray-200 rounded-lg w-10 h-10 animate-pulse"></div>
+                  <div className="ml-3 sm:ml-4 space-y-2 flex-1">
+                    <div className="h-4 bg-gray-200 rounded w-20 animate-pulse"></div>
+                    <div className="h-6 sm:h-8 bg-gray-200 rounded w-24 animate-pulse"></div>
+                  </div>
+                </div>
+              </div>
+            ))}
+          </div>
+
+          {/* Content Sections Skeleton */}
+          <div className="grid grid-cols-1 lg:grid-cols-3 gap-4 sm:gap-6">
+            <div className="lg:col-span-2 space-y-4 sm:space-y-6">
+              {Array.from({ length: 4 }).map((_, i) => (
+                <div key={i} className="border rounded-lg p-4 sm:p-6">
+                  <div className="h-5 bg-gray-200 rounded w-32 animate-pulse mb-4"></div>
+                  <div className="space-y-3">
+                    {Array.from({ length: 3 }).map((_, j) => (
+                      <div key={j} className="flex items-center justify-between p-3 border rounded">
+                        <div className="flex items-center space-x-3">
+                          <div className="w-4 h-4 bg-gray-200 rounded animate-pulse"></div>
+                          <div className="space-y-1">
+                            <div className="h-4 bg-gray-200 rounded w-24 animate-pulse"></div>
+                            <div className="h-3 bg-gray-200 rounded w-32 animate-pulse"></div>
+                          </div>
+                        </div>
+                        <div className="space-y-1">
+                          <div className="h-4 bg-gray-200 rounded w-16 animate-pulse"></div>
+                          <div className="h-3 bg-gray-200 rounded w-20 animate-pulse"></div>
+                        </div>
+                      </div>
+                    ))}
+                  </div>
+                </div>
+              ))}
+            </div>
+
+            {/* Sidebar Skeleton */}
+            <div className="space-y-4 sm:space-y-6">
+              {Array.from({ length: 2 }).map((_, i) => (
+                <div key={i} className="border rounded-lg p-4 sm:p-6">
+                  <div className="h-5 bg-gray-200 rounded w-32 animate-pulse mb-4"></div>
+                  <div className="space-y-3">
+                    {Array.from({ length: 4 }).map((_, j) => (
+                      <div key={j} className="space-y-1">
+                        <div className="h-3 bg-gray-200 rounded w-16 animate-pulse"></div>
+                        <div className="h-4 bg-gray-200 rounded w-24 animate-pulse"></div>
+                      </div>
+                    ))}
+                  </div>
+                </div>
+              ))}
+            </div>
+          </div>
+
+          {/* Loading Message */}
+          <div className="text-center py-8">
+            <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-[#0a164d] mx-auto mb-4"></div>
+            <p className="text-gray-600 font-medium">Loading customer details...</p>
+            <p className="text-sm text-gray-500 mt-1">This may take a few moments</p>
+          </div>
         </div>
       </div>
     );
@@ -857,12 +1018,12 @@ const CustomerDetail: React.FC = () => {
 
   if (!customer) {
     return (
-      <div className="min-h-screen bg-gray-50 flex items-center justify-center">
+      <div className="min-h-screen bg-gray-50 flex items-center justify-center p-3 sm:p-6">
         <div className="text-center">
-          <User className="w-16 h-16 text-gray-400 mx-auto mb-4" />
-          <h2 className="text-2xl font-bold text-gray-800 mb-2">Customer Not Found</h2>
-          <p className="text-gray-600 mb-4">The customer you're looking for doesn't exist.</p>
-          <Button onClick={() => navigate('/sandbox/customers')}>
+          <User className="w-12 h-12 sm:w-16 sm:h-16 text-gray-400 mx-auto mb-4" />
+          <h2 className="text-lg sm:text-2xl font-bold text-gray-800 mb-2">Customer Not Found</h2>
+          <p className="text-sm sm:text-base text-gray-600 mb-4">The customer you're looking for doesn't exist.</p>
+          <Button onClick={() => navigate('/sandbox/customers')} className="w-full sm:w-auto">
             Back to Customers
           </Button>
         </div>
@@ -872,13 +1033,13 @@ const CustomerDetail: React.FC = () => {
 
   return (
     <div className="min-h-screen bg-gray-50">
-      <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-4 sm:py-6">
+      <div className="max-w-7xl mx-auto p-3 sm:p-6">
         {/* Header */}
         <div className="mb-4 sm:mb-6">
           <Button
             variant="ghost"
             onClick={() => navigate('/sandbox/customers')}
-            className="mb-3 sm:mb-4"
+            className="mb-3 sm:mb-4 text-xs sm:text-sm"
           >
             <ArrowLeft className="w-4 h-4 mr-2" />
             <span className="hidden sm:inline">Back to Customers</span>
@@ -887,21 +1048,21 @@ const CustomerDetail: React.FC = () => {
           
           <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
             <div className="min-w-0 flex-1">
-              <h1 className="text-2xl sm:text-3xl font-bold text-gray-900 truncate">{customer.name}</h1>
+              <h1 className="text-xl sm:text-2xl lg:text-3xl font-bold text-gray-900 truncate">{customer.name}</h1>
               <div className="flex items-center mt-1 sm:mt-2 text-gray-600">
-                <Mail className="w-4 h-4 mr-2 flex-shrink-0" />
-                <span className="truncate">{customer.email}</span>
+                <Mail className="w-3 h-3 sm:w-4 sm:h-4 mr-2 flex-shrink-0" />
+                <span className="truncate text-sm sm:text-base">{customer.email}</span>
               </div>
               {customer.phone && (
                 <div className="flex items-center mt-1 text-gray-600">
-                  <Phone className="w-4 h-4 mr-2 flex-shrink-0" />
-                  <span className="truncate">{customer.phone}</span>
+                  <Phone className="w-3 h-3 sm:w-4 sm:h-4 mr-2 flex-shrink-0" />
+                  <span className="truncate text-sm sm:text-base">{customer.phone}</span>
                 </div>
               )}
               {customer.address?.city && customer.address?.state && (
                 <div className="flex items-center mt-1 text-gray-600">
-                  <MapPin className="w-4 h-4 mr-2 flex-shrink-0" />
-                  <span className="truncate">{customer.address.city}, {customer.address.state}</span>
+                  <MapPin className="w-3 h-3 sm:w-4 sm:h-4 mr-2 flex-shrink-0" />
+                  <span className="truncate text-sm sm:text-base">{customer.address.city}, {customer.address.state}</span>
                 </div>
               )}
             </div>
@@ -909,30 +1070,30 @@ const CustomerDetail: React.FC = () => {
               <Button 
                 variant="outline" 
                 size="sm" 
-                className="w-full sm:w-auto"
+                className="w-full sm:w-auto text-xs sm:text-sm"
                 onClick={() => setShowCreatePayment(true)}
               >
-                <Plus className="w-4 h-4 mr-2" />
+                <Plus className="w-3 h-3 sm:w-4 sm:h-4 mr-2" />
                 <span className="hidden sm:inline">Create Payment</span>
                 <span className="sm:hidden">Payment</span>
               </Button>
               <Button 
                 variant="outline" 
                 size="sm" 
-                className="w-full sm:w-auto"
+                className="w-full sm:w-auto text-xs sm:text-sm"
                 onClick={() => setShowCreateInvoice(true)}
               >
-                <FileText className="w-4 h-4 mr-2" />
+                <FileText className="w-3 h-3 sm:w-4 sm:h-4 mr-2" />
                 <span className="hidden sm:inline">Create Invoice</span>
                 <span className="sm:hidden">Invoice</span>
               </Button>
               <Button 
                 variant="outline" 
                 size="sm" 
-                className="w-full sm:w-auto"
+                className="w-full sm:w-auto text-xs sm:text-sm"
                 onClick={() => setShowMoreActions(!showMoreActions)}
               >
-                <MoreHorizontal className="w-4 h-4" />
+                <MoreHorizontal className="w-3 h-3 sm:w-4 sm:h-4" />
               </Button>
             </div>
           </div>
@@ -944,16 +1105,16 @@ const CustomerDetail: React.FC = () => {
             {/* Analytics Cards */}
             <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-3 sm:gap-4">
               <Card>
-                <CardContent className="p-4 sm:p-6">
+                <CardContent className="p-3 sm:p-4 lg:p-6">
                   <div className="flex items-center">
                     <div className="p-2 bg-blue-100 rounded-lg flex-shrink-0">
-                      <DollarSign className="w-5 h-5 sm:w-6 sm:h-6 text-blue-600" />
+                      <DollarSign className="w-4 h-4 sm:w-5 sm:h-5 lg:w-6 lg:h-6 text-blue-600" />
                     </div>
                     <div className="ml-3 sm:ml-4 min-w-0 flex-1">
                       <p className="text-xs sm:text-sm font-medium text-gray-600">Total Spent</p>
                       <div className="space-y-1">
                         {customer.transactionsByCurrency.map((tx, idx) => (
-                          <p key={idx} className="text-lg sm:text-2xl font-bold text-gray-900 truncate">
+                          <p key={idx} className="text-sm sm:text-lg lg:text-2xl font-bold text-gray-900 truncate">
                             {formatAmount(tx.total, tx.currency)}
                           </p>
                         ))}
@@ -964,28 +1125,28 @@ const CustomerDetail: React.FC = () => {
               </Card>
 
               <Card>
-                <CardContent className="p-4 sm:p-6">
+                <CardContent className="p-3 sm:p-4 lg:p-6">
                   <div className="flex items-center">
                     <div className="p-2 bg-green-100 rounded-lg flex-shrink-0">
-                      <Activity className="w-5 h-5 sm:w-6 sm:h-6 text-green-600" />
+                      <Activity className="w-4 h-4 sm:w-5 sm:h-5 lg:w-6 lg:h-6 text-green-600" />
                     </div>
                     <div className="ml-3 sm:ml-4 min-w-0 flex-1">
                       <p className="text-xs sm:text-sm font-medium text-gray-600">Total Transactions</p>
-                      <p className="text-lg sm:text-2xl font-bold text-gray-900">{customer.totalTransactions}</p>
+                      <p className="text-sm sm:text-lg lg:text-2xl font-bold text-gray-900">{customer.totalTransactions}</p>
                     </div>
                   </div>
                 </CardContent>
               </Card>
 
               <Card className="sm:col-span-2 lg:col-span-1">
-                <CardContent className="p-4 sm:p-6">
+                <CardContent className="p-3 sm:p-4 lg:p-6">
                   <div className="flex items-center">
                     <div className="p-2 bg-purple-100 rounded-lg flex-shrink-0">
-                      <TrendingUp className="w-5 h-5 sm:w-6 sm:h-6 text-purple-600" />
+                      <TrendingUp className="w-4 h-4 sm:w-5 sm:h-5 lg:w-6 lg:h-6 text-purple-600" />
                     </div>
                     <div className="ml-3 sm:ml-4 min-w-0 flex-1">
                       <p className="text-xs sm:text-sm font-medium text-gray-600">Customer Since</p>
-                      <p className="text-lg sm:text-2xl font-bold text-gray-900">
+                      <p className="text-sm sm:text-lg lg:text-2xl font-bold text-gray-900">
                         {new Date(customer.createdAt).toLocaleDateString('en-US', { 
                           month: 'short', 
                           day: 'numeric' 
@@ -999,43 +1160,83 @@ const CustomerDetail: React.FC = () => {
 
             {/* Transactions */}
             <Card>
-              <CardHeader className="pb-3 sm:pb-6">
-                <CardTitle className="flex items-center text-lg sm:text-xl">
+              <CardHeader className="px-3 sm:px-6 pt-3 sm:pt-6 pb-3 sm:pb-6">
+                <CardTitle className="flex items-center text-sm sm:text-lg lg:text-xl">
                   <CreditCard className="w-4 h-4 sm:w-5 sm:h-5 mr-2" />
                   Payments
+                  {transactionsPagination.totalItems > 0 && (
+                    <span className="ml-2 text-xs sm:text-sm text-gray-500 font-normal">
+                      ({transactionsPagination.totalItems} total)
+                    </span>
+                  )}
                 </CardTitle>
               </CardHeader>
-              <CardContent className="pt-0">
-                {transactions.length > 0 ? (
+              <CardContent className="px-3 sm:px-6 pt-0 pb-3 sm:pb-6">
+                {loadingTransactions ? (
                   <div className="space-y-3 sm:space-y-4">
-                    {transactions.map((transaction) => (
-                      <div 
-                        key={transaction.transactionId} 
-                        className="flex flex-col sm:flex-row sm:items-center sm:justify-between p-3 sm:p-4 border rounded-lg gap-3 sm:gap-4 cursor-pointer hover:bg-gray-50 transition-colors"
-                        onClick={() => handleTransactionClick(transaction)}
-                      >
+                    {Array.from({ length: 3 }).map((_, i) => (
+                      <div key={i} className="flex flex-col sm:flex-row sm:items-center sm:justify-between p-3 sm:p-4 border rounded-lg gap-3 sm:gap-4">
                         <div className="flex items-center space-x-3 sm:space-x-4 min-w-0 flex-1">
-                          {getStatusIcon(transaction.status)}
-                          <div className="min-w-0 flex-1">
-                            <p className="font-medium text-gray-900 text-sm sm:text-base truncate">
-                              {formatAmount(transaction.amount, transaction.currency)}
-                            </p>
-                            <p className="text-xs sm:text-sm text-gray-600 truncate">{transaction.description}</p>
+                          <div className="w-4 h-4 bg-gray-200 rounded animate-pulse"></div>
+                          <div className="min-w-0 flex-1 space-y-2">
+                            <div className="h-4 bg-gray-200 rounded w-24 animate-pulse"></div>
+                            <div className="h-3 bg-gray-200 rounded w-32 animate-pulse"></div>
                           </div>
                         </div>
                         <div className="flex flex-col sm:items-end gap-1 sm:gap-2">
-                          {getStatusBadge(transaction.status)}
-                          <p className="text-xs sm:text-sm text-gray-600">
-                            {formatDate(transaction.createdAt)}
-                          </p>
+                          <div className="h-5 bg-gray-200 rounded w-16 animate-pulse"></div>
+                          <div className="h-3 bg-gray-200 rounded w-20 animate-pulse"></div>
                         </div>
                       </div>
                     ))}
                   </div>
+                ) : transactions.length > 0 ? (
+                  <>
+                    <div className="space-y-3 sm:space-y-4">
+                      {transactions.map((transaction) => (
+                        <div 
+                          key={transaction.transactionId} 
+                          className="flex flex-col sm:flex-row sm:items-center sm:justify-between p-3 sm:p-4 border rounded-lg gap-3 sm:gap-4 cursor-pointer hover:bg-gray-50 transition-colors"
+                          onClick={() => handleTransactionClick(transaction)}
+                        >
+                          <div className="flex items-center space-x-3 sm:space-x-4 min-w-0 flex-1">
+                            {getStatusIcon(transaction.status)}
+                            <div className="min-w-0 flex-1">
+                              <p className="font-medium text-gray-900 text-sm sm:text-base truncate">
+                                {formatAmount(transaction.amount, transaction.currency)}
+                              </p>
+                              <p className="text-xs sm:text-sm text-gray-600 truncate">{transaction.description}</p>
+                            </div>
+                          </div>
+                          <div className="flex flex-col sm:items-end gap-1 sm:gap-2">
+                            {getStatusBadge(transaction.status)}
+                            <p className="text-xs sm:text-sm text-gray-600">
+                              {formatDate(transaction.createdAt)}
+                            </p>
+                          </div>
+                        </div>
+                      ))}
+                    </div>
+                    
+                    {/* Pagination */}
+                    {transactionsPagination.totalPages > 1 && (
+                      <div className="mt-4 pt-4 border-t">
+                        <Pagination
+                          currentPage={transactionsPagination.currentPage}
+                          totalPages={transactionsPagination.totalPages}
+                          totalItems={transactionsPagination.totalItems}
+                          itemsPerPage={transactionsPagination.itemsPerPage}
+                          onPageChange={handleTransactionPageChange}
+                          hasNextPage={transactionsPagination.hasNextPage}
+                          hasPrevPage={transactionsPagination.hasPrevPage}
+                        />
+                      </div>
+                    )}
+                  </>
                 ) : (
                   <div className="text-center py-6 sm:py-8">
-                    <CreditCard className="w-10 h-10 sm:w-12 sm:h-12 text-gray-400 mx-auto mb-3 sm:mb-4" />
-                    <p className="text-sm sm:text-base text-gray-600">No payments found for this customer</p>
+                    <CreditCard className="w-8 h-8 sm:w-10 sm:h-10 lg:w-12 lg:h-12 text-gray-400 mx-auto mb-3 sm:mb-4" />
+                    <p className="text-xs sm:text-sm lg:text-base text-gray-600">No payments found for this customer</p>
                   </div>
                 )}
               </CardContent>
@@ -1043,13 +1244,13 @@ const CustomerDetail: React.FC = () => {
 
             {/* Invoices */}
             <Card>
-              <CardHeader className="pb-3 sm:pb-6">
-                <CardTitle className="flex items-center text-lg sm:text-xl">
+              <CardHeader className="px-3 sm:px-6 pt-3 sm:pt-6 pb-3 sm:pb-6">
+                <CardTitle className="flex items-center text-sm sm:text-lg lg:text-xl">
                   <FileText className="w-4 h-4 sm:w-5 sm:h-5 mr-2" />
                   Invoices
                 </CardTitle>
               </CardHeader>
-              <CardContent className="pt-0">
+              <CardContent className="px-3 sm:px-6 pt-0 pb-3 sm:pb-6">
                 {invoices.length > 0 ? (
                   <div className="space-y-3 sm:space-y-4">
                     {invoices.map((invoice) => (
@@ -1083,8 +1284,8 @@ const CustomerDetail: React.FC = () => {
                   </div>
                 ) : (
                   <div className="text-center py-6 sm:py-8">
-                    <FileText className="w-10 h-10 sm:w-12 sm:h-12 text-gray-400 mx-auto mb-3 sm:mb-4" />
-                    <p className="text-sm sm:text-base text-gray-600">No invoices found for this customer</p>
+                    <FileText className="w-8 h-8 sm:w-10 sm:h-10 lg:w-12 lg:h-12 text-gray-400 mx-auto mb-3 sm:mb-4" />
+                    <p className="text-xs sm:text-sm lg:text-base text-gray-600">No invoices found for this customer</p>
                   </div>
                 )}
               </CardContent>
@@ -1092,13 +1293,13 @@ const CustomerDetail: React.FC = () => {
 
             {/* Subscriptions */}
             <Card>
-              <CardHeader className="pb-3 sm:pb-6">
-                <CardTitle className="flex items-center text-lg sm:text-xl">
+              <CardHeader className="px-3 sm:px-6 pt-3 sm:pt-6 pb-3 sm:pb-6">
+                <CardTitle className="flex items-center text-sm sm:text-lg lg:text-xl">
                   <TrendingUp className="w-4 h-4 sm:w-5 sm:h-5 mr-2" />
                   Subscriptions
                 </CardTitle>
               </CardHeader>
-              <CardContent className="pt-0">
+              <CardContent className="px-3 sm:px-6 pt-0 pb-3 sm:pb-6">
                 {subscriptions.length > 0 ? (
                   <div className="space-y-3 sm:space-y-4">
                     {subscriptions.map((subscription) => (
@@ -1141,15 +1342,15 @@ const CustomerDetail: React.FC = () => {
                   </div>
                 ) : (
                   <div className="text-center py-6 sm:py-8">
-                    <TrendingUp className="w-10 h-10 sm:w-12 sm:h-12 text-gray-400 mx-auto mb-3 sm:mb-4" />
-                    <p className="text-sm sm:text-base text-gray-600">No subscriptions found for this customer</p>
+                    <TrendingUp className="w-8 h-8 sm:w-10 sm:h-10 lg:w-12 lg:h-12 text-gray-400 mx-auto mb-3 sm:mb-4" />
+                    <p className="text-xs sm:text-sm lg:text-base text-gray-600">No subscriptions found for this customer</p>
                     <Button 
                       variant="outline" 
                       size="sm" 
-                      className="mt-3"
+                      className="mt-3 text-xs sm:text-sm"
                       onClick={() => navigate('/sandbox/subscriptions')}
                     >
-                      <Plus className="w-4 h-4 mr-2" />
+                      <Plus className="w-3 h-3 sm:w-4 sm:h-4 mr-2" />
                       Create Subscription
                     </Button>
                   </div>
@@ -1159,13 +1360,13 @@ const CustomerDetail: React.FC = () => {
 
             {/* Refunds */}
             <Card>
-              <CardHeader className="pb-3 sm:pb-6">
-                <CardTitle className="flex items-center text-lg sm:text-xl">
+              <CardHeader className="px-3 sm:px-6 pt-3 sm:pt-6 pb-3 sm:pb-6">
+                <CardTitle className="flex items-center text-sm sm:text-lg lg:text-xl">
                   <XCircle className="w-4 h-4 sm:w-5 sm:h-5 mr-2" />
                   Refunds
                 </CardTitle>
               </CardHeader>
-              <CardContent className="pt-0">
+              <CardContent className="px-3 sm:px-6 pt-0 pb-3 sm:pb-6">
                 {refunds.length > 0 ? (
                   <div className="space-y-3 sm:space-y-4">
                     {refunds.map((refund) => (
@@ -1207,8 +1408,8 @@ const CustomerDetail: React.FC = () => {
                   </div>
                 ) : (
                   <div className="text-center py-6 sm:py-8">
-                    <XCircle className="w-10 h-10 sm:w-12 sm:h-12 text-gray-400 mx-auto mb-3 sm:mb-4" />
-                    <p className="text-sm sm:text-base text-gray-600">No refunds found for this customer</p>
+                    <XCircle className="w-8 h-8 sm:w-10 sm:h-10 lg:w-12 lg:h-12 text-gray-400 mx-auto mb-3 sm:mb-4" />
+                    <p className="text-xs sm:text-sm lg:text-base text-gray-600">No refunds found for this customer</p>
                   </div>
                 )}
               </CardContent>
@@ -1219,10 +1420,10 @@ const CustomerDetail: React.FC = () => {
           <div className="space-y-4 sm:space-y-6">
             {/* Customer Details */}
             <Card>
-              <CardHeader className="pb-3 sm:pb-6">
-                <CardTitle className="text-base sm:text-lg">Customer Details</CardTitle>
+              <CardHeader className="px-3 sm:px-6 pt-3 sm:pt-6 pb-3 sm:pb-6">
+                <CardTitle className="text-sm sm:text-base lg:text-lg">Customer Details</CardTitle>
               </CardHeader>
-              <CardContent className="space-y-3 sm:space-y-4">
+              <CardContent className="px-3 sm:px-6 pb-3 sm:pb-6 space-y-3 sm:space-y-4">
                 <div>
                   <label className="text-xs sm:text-sm font-medium text-gray-600">Customer ID</label>
                   <p className="text-xs sm:text-sm text-gray-900 font-mono break-all">{customer.customerId}</p>
@@ -1270,10 +1471,10 @@ const CustomerDetail: React.FC = () => {
 
             {/* Recent Activity */}
             <Card>
-              <CardHeader className="pb-3 sm:pb-6">
-                <CardTitle className="text-base sm:text-lg">Recent Activity</CardTitle>
+              <CardHeader className="px-3 sm:px-6 pt-3 sm:pt-6 pb-3 sm:pb-6">
+                <CardTitle className="text-sm sm:text-base lg:text-lg">Recent Activity</CardTitle>
               </CardHeader>
-              <CardContent>
+              <CardContent className="px-3 sm:px-6 pb-3 sm:pb-6">
                 <div className="space-y-2 sm:space-y-3">
                   {transactions.slice(0, 3).map((transaction) => (
                     <div key={transaction.transactionId} className="flex items-start space-x-2 sm:space-x-3">
@@ -1298,21 +1499,22 @@ const CustomerDetail: React.FC = () => {
 
         {/* Create Payment Modal */}
         {showCreatePayment && (
-          <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center p-4 z-50">
-            <div className="bg-white rounded-lg max-w-md w-full max-h-[90vh] overflow-y-auto">
-              <div className="flex items-center justify-between p-6 border-b">
-                <h2 className="text-lg font-semibold">Create Payment</h2>
+          <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center p-2 sm:p-4 z-50">
+            <div className="bg-white rounded-lg max-w-md w-full max-h-[95vh] overflow-y-auto mx-2 sm:mx-0">
+              <div className="flex items-center justify-between p-4 sm:p-6 border-b">
+                <h2 className="text-base sm:text-lg font-semibold">Create Payment</h2>
                 <Button
                   variant="ghost"
                   size="sm"
                   onClick={() => setShowCreatePayment(false)}
+                  className="p-1"
                 >
-                  <X className="w-4 h-4" />
+                  <X className="w-4 h-4 sm:w-5 sm:h-5" />
                 </Button>
               </div>
-              <form onSubmit={handleCreatePayment} className="p-6 space-y-4">
+              <form onSubmit={handleCreatePayment} className="p-4 sm:p-6 space-y-4">
                 <div>
-                  <Label htmlFor="amount">Amount</Label>
+                  <Label htmlFor="amount" className="text-xs sm:text-sm">Amount</Label>
                   <Input
                     id="amount"
                     type="number"
@@ -1320,12 +1522,13 @@ const CustomerDetail: React.FC = () => {
                     onChange={(e) => setPaymentForm({...paymentForm, amount: e.target.value})}
                     placeholder="0.00"
                     required
+                    className="text-xs sm:text-sm"
                   />
                 </div>
                 <div>
-                  <Label htmlFor="currency">Currency</Label>
+                  <Label htmlFor="currency" className="text-xs sm:text-sm">Currency</Label>
                   <Select value={paymentForm.currency} onValueChange={(value) => setPaymentForm({...paymentForm, currency: value})}>
-                    <SelectTrigger>
+                    <SelectTrigger className="text-xs sm:text-sm">
                       <SelectValue />
                     </SelectTrigger>
                     <SelectContent>
@@ -1337,21 +1540,22 @@ const CustomerDetail: React.FC = () => {
                   </Select>
                 </div>
                 <div>
-                  <Label htmlFor="description">Description</Label>
+                  <Label htmlFor="description" className="text-xs sm:text-sm">Description</Label>
                   <Textarea
                     id="description"
                     value={paymentForm.description}
                     onChange={(e) => setPaymentForm({...paymentForm, description: e.target.value})}
                     placeholder="Payment description"
                     rows={3}
+                    className="text-xs sm:text-sm"
                   />
                 </div>
-                <div className="flex gap-3 pt-4">
-                  <Button type="submit" disabled={submitting} className="flex-1">
-                    {submitting ? <Loader2 className="w-4 h-4 mr-2 animate-spin" /> : <Save className="w-4 h-4 mr-2" />}
+                <div className="flex flex-col sm:flex-row gap-3 pt-4">
+                  <Button type="submit" disabled={submitting} className="flex-1 text-xs sm:text-sm">
+                    {submitting ? <Loader2 className="w-3 h-3 sm:w-4 sm:h-4 mr-2 animate-spin" /> : <Save className="w-3 h-3 sm:w-4 sm:h-4 mr-2" />}
                     Create Payment
                   </Button>
-                  <Button type="button" variant="outline" onClick={() => setShowCreatePayment(false)}>
+                  <Button type="button" variant="outline" onClick={() => setShowCreatePayment(false)} className="text-xs sm:text-sm">
                     Cancel
                   </Button>
                 </div>
@@ -1362,21 +1566,22 @@ const CustomerDetail: React.FC = () => {
 
         {/* Create Invoice Modal */}
         {showCreateInvoice && (
-          <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center p-4 z-50">
-            <div className="bg-white rounded-lg max-w-md w-full max-h-[90vh] overflow-y-auto">
-              <div className="flex items-center justify-between p-6 border-b">
-                <h2 className="text-lg font-semibold">Create Invoice</h2>
+          <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center p-2 sm:p-4 z-50">
+            <div className="bg-white rounded-lg max-w-md w-full max-h-[95vh] overflow-y-auto mx-2 sm:mx-0">
+              <div className="flex items-center justify-between p-4 sm:p-6 border-b">
+                <h2 className="text-base sm:text-lg font-semibold">Create Invoice</h2>
                 <Button
                   variant="ghost"
                   size="sm"
                   onClick={() => setShowCreateInvoice(false)}
+                  className="p-1"
                 >
-                  <X className="w-4 h-4" />
+                  <X className="w-4 h-4 sm:w-5 sm:h-5" />
                 </Button>
               </div>
-              <form onSubmit={handleCreateInvoice} className="p-6 space-y-4">
+              <form onSubmit={handleCreateInvoice} className="p-4 sm:p-6 space-y-4">
                 <div>
-                  <Label htmlFor="invoice-amount">Amount</Label>
+                  <Label htmlFor="invoice-amount" className="text-xs sm:text-sm">Amount</Label>
                   <Input
                     id="invoice-amount"
                     type="number"
@@ -1384,12 +1589,13 @@ const CustomerDetail: React.FC = () => {
                     onChange={(e) => setInvoiceForm({...invoiceForm, amount: e.target.value})}
                     placeholder="0.00"
                     required
+                    className="text-xs sm:text-sm"
                   />
                 </div>
                 <div>
-                  <Label htmlFor="invoice-currency">Currency</Label>
+                  <Label htmlFor="invoice-currency" className="text-xs sm:text-sm">Currency</Label>
                   <Select value={invoiceForm.currency} onValueChange={(value) => setInvoiceForm({...invoiceForm, currency: value})}>
-                    <SelectTrigger>
+                    <SelectTrigger className="text-xs sm:text-sm">
                       <SelectValue />
                     </SelectTrigger>
                     <SelectContent>
@@ -1401,7 +1607,7 @@ const CustomerDetail: React.FC = () => {
                   </Select>
                 </div>
                 <div>
-                  <Label htmlFor="invoice-description">Description</Label>
+                  <Label htmlFor="invoice-description" className="text-xs sm:text-sm">Description</Label>
                   <Textarea
                     id="invoice-description"
                     value={invoiceForm.description}
@@ -1409,23 +1615,25 @@ const CustomerDetail: React.FC = () => {
                     placeholder="Invoice description"
                     rows={3}
                     required
+                    className="text-xs sm:text-sm"
                   />
                 </div>
                 <div>
-                  <Label htmlFor="due-date">Due Date</Label>
+                  <Label htmlFor="due-date" className="text-xs sm:text-sm">Due Date</Label>
                   <Input
                     id="due-date"
                     type="date"
                     value={invoiceForm.dueDate}
                     onChange={(e) => setInvoiceForm({...invoiceForm, dueDate: e.target.value})}
+                    className="text-xs sm:text-sm"
                   />
                 </div>
-                <div className="flex gap-3 pt-4">
-                  <Button type="submit" disabled={submitting} className="flex-1">
-                    {submitting ? <Loader2 className="w-4 h-4 mr-2 animate-spin" /> : <FileText className="w-4 h-4 mr-2" />}
+                <div className="flex flex-col sm:flex-row gap-3 pt-4">
+                  <Button type="submit" disabled={submitting} className="flex-1 text-xs sm:text-sm">
+                    {submitting ? <Loader2 className="w-3 h-3 sm:w-4 sm:h-4 mr-2 animate-spin" /> : <FileText className="w-3 h-3 sm:w-4 sm:h-4 mr-2" />}
                     Create Invoice
                   </Button>
-                  <Button type="button" variant="outline" onClick={() => setShowCreateInvoice(false)}>
+                  <Button type="button" variant="outline" onClick={() => setShowCreateInvoice(false)} className="text-xs sm:text-sm">
                     Cancel
                   </Button>
                 </div>
@@ -1447,81 +1655,82 @@ const CustomerDetail: React.FC = () => {
 
         {/* Transaction Details Modal */}
         {showTransactionModal && selectedTransaction && (
-          <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center p-4 z-50">
-            <div className="bg-white rounded-lg max-w-2xl w-full max-h-[90vh] overflow-y-auto">
-              <div className="flex items-center justify-between p-6 border-b">
-                <h2 className="text-xl font-semibold">Transaction Details</h2>
+          <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center p-2 sm:p-4 z-50">
+            <div className="bg-white rounded-lg max-w-2xl w-full max-h-[95vh] overflow-y-auto mx-2 sm:mx-0">
+              <div className="flex items-center justify-between p-4 sm:p-6 border-b">
+                <h2 className="text-lg sm:text-xl font-semibold">Transaction Details</h2>
                 <Button
                   variant="ghost"
                   size="sm"
                   onClick={() => setShowTransactionModal(false)}
+                  className="p-1"
                 >
-                  <X className="w-4 h-4" />
+                  <X className="w-4 h-4 sm:w-5 sm:h-5" />
                 </Button>
               </div>
-              <div className="p-6 space-y-6">
+              <div className="p-4 sm:p-6 space-y-4 sm:space-y-6">
                 {/* Transaction Header */}
-                <div className="flex items-center justify-between">
-                  <div className="flex items-center space-x-4">
-                    <div className="p-3 bg-green-100 rounded-full">
+                <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
+                  <div className="flex items-center space-x-3 sm:space-x-4">
+                    <div className="p-2 sm:p-3 bg-green-100 rounded-full">
                       {getStatusIcon(selectedTransaction.status)}
                     </div>
-                    <div>
-                      <h3 className="text-2xl font-bold text-gray-900">
+                    <div className="min-w-0 flex-1">
+                      <h3 className="text-lg sm:text-2xl font-bold text-gray-900 truncate">
                         {formatAmount(selectedTransaction.amount, selectedTransaction.currency)}
                       </h3>
-                      <p className="text-gray-600">{selectedTransaction.description}</p>
+                      <p className="text-sm sm:text-base text-gray-600 truncate">{selectedTransaction.description}</p>
                     </div>
                   </div>
-                  <div className="text-right">
+                  <div className="text-left sm:text-right">
                     {getStatusBadge(selectedTransaction.status)}
-                    <p className="text-sm text-gray-500 mt-1">
+                    <p className="text-xs sm:text-sm text-gray-500 mt-1">
                       {formatDate(selectedTransaction.createdAt)}
                     </p>
                   </div>
                 </div>
 
                 {/* Transaction Details Grid */}
-                <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-                  <div className="space-y-4">
+                <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 sm:gap-6">
+                  <div className="space-y-3 sm:space-y-4">
                     <div>
-                      <label className="text-sm font-medium text-gray-600">Transaction ID</label>
-                      <p className="text-sm text-gray-900 font-mono break-all">{selectedTransaction.transactionId}</p>
+                      <label className="text-xs sm:text-sm font-medium text-gray-600">Transaction ID</label>
+                      <p className="text-xs sm:text-sm text-gray-900 font-mono break-all">{selectedTransaction.transactionId}</p>
                     </div>
                     <div>
-                      <label className="text-sm font-medium text-gray-600">Session ID</label>
-                      <p className="text-sm text-gray-900 font-mono break-all">{selectedTransaction.sessionId}</p>
+                      <label className="text-xs sm:text-sm font-medium text-gray-600">Session ID</label>
+                      <p className="text-xs sm:text-sm text-gray-900 font-mono break-all">{selectedTransaction.sessionId}</p>
                     </div>
                     <div>
-                      <label className="text-sm font-medium text-gray-600">Customer Email</label>
-                      <p className="text-sm text-gray-900">{selectedTransaction.customerEmail}</p>
+                      <label className="text-xs sm:text-sm font-medium text-gray-600">Customer Email</label>
+                      <p className="text-xs sm:text-sm text-gray-900 break-all">{selectedTransaction.customerEmail}</p>
                     </div>
                     <div>
-                      <label className="text-sm font-medium text-gray-600">Payment Method</label>
-                      <p className="text-sm text-gray-900 capitalize">{selectedTransaction.paymentMethod}</p>
+                      <label className="text-xs sm:text-sm font-medium text-gray-600">Payment Method</label>
+                      <p className="text-xs sm:text-sm text-gray-900 capitalize">{selectedTransaction.paymentMethod}</p>
                     </div>
                   </div>
                   
-                  <div className="space-y-4">
+                  <div className="space-y-3 sm:space-y-4">
                     <div>
-                      <label className="text-sm font-medium text-gray-600">Amount</label>
-                      <p className="text-lg font-semibold text-gray-900">
+                      <label className="text-xs sm:text-sm font-medium text-gray-600">Amount</label>
+                      <p className="text-sm sm:text-lg font-semibold text-gray-900">
                         {formatAmount(selectedTransaction.amount, selectedTransaction.currency)}
                       </p>
                     </div>
                     <div>
-                      <label className="text-sm font-medium text-gray-600">Currency</label>
-                      <p className="text-sm text-gray-900">{selectedTransaction.currency}</p>
+                      <label className="text-xs sm:text-sm font-medium text-gray-600">Currency</label>
+                      <p className="text-xs sm:text-sm text-gray-900">{selectedTransaction.currency}</p>
                     </div>
                     <div>
-                      <label className="text-sm font-medium text-gray-600">Status</label>
+                      <label className="text-xs sm:text-sm font-medium text-gray-600">Status</label>
                       <div className="mt-1">
                         {getStatusBadge(selectedTransaction.status)}
                       </div>
                     </div>
                     <div>
-                      <label className="text-sm font-medium text-gray-600">Date & Time</label>
-                      <p className="text-sm text-gray-900">{formatDate(selectedTransaction.createdAt)}</p>
+                      <label className="text-xs sm:text-sm font-medium text-gray-600">Date & Time</label>
+                      <p className="text-xs sm:text-sm text-gray-900">{formatDate(selectedTransaction.createdAt)}</p>
                     </div>
                   </div>
                 </div>
@@ -1529,34 +1738,34 @@ const CustomerDetail: React.FC = () => {
                 {/* Description Section */}
                 {selectedTransaction.description && (
                   <div>
-                    <label className="text-sm font-medium text-gray-600">Description</label>
-                    <p className="text-sm text-gray-900 mt-1 p-3 bg-gray-50 rounded-lg">
+                    <label className="text-xs sm:text-sm font-medium text-gray-600">Description</label>
+                    <p className="text-xs sm:text-sm text-gray-900 mt-1 p-3 bg-gray-50 rounded-lg">
                       {selectedTransaction.description}
                     </p>
                   </div>
                 )}
 
                 {/* Action Buttons */}
-                <div className="flex gap-3 pt-4 border-t">
-                  <Button variant="outline" className="flex-1" onClick={handleDownloadReceiptForTransaction}>
-                    <Download className="w-4 h-4 mr-2" />
+                <div className="flex flex-col sm:flex-row gap-3 pt-4 border-t">
+                  <Button variant="outline" className="flex-1 text-xs sm:text-sm" onClick={handleDownloadReceiptForTransaction}>
+                    <Download className="w-3 h-3 sm:w-4 sm:h-4 mr-2" />
                     Download Receipt
                   </Button>
-                  <Button variant="outline" className="flex-1" onClick={handleViewInvoiceForTransaction}>
-                    <FileText className="w-4 h-4 mr-2" />
+                  <Button variant="outline" className="flex-1 text-xs sm:text-sm" onClick={handleViewInvoiceForTransaction}>
+                    <FileText className="w-3 h-3 sm:w-4 sm:h-4 mr-2" />
                     View Invoice
                   </Button>
                   {(selectedTransaction.status === 'successful' || selectedTransaction.status === 'completed') ? (
                     <Button 
                       variant="outline" 
-                      className="flex-1 text-orange-600 hover:text-orange-700" 
+                      className="flex-1 text-orange-600 hover:text-orange-700 text-xs sm:text-sm" 
                       onClick={() => setShowRefundModal(true)}
                     >
-                      <XCircle className="w-4 h-4 mr-2" />
+                      <XCircle className="w-3 h-3 sm:w-4 sm:h-4 mr-2" />
                       Refund
                     </Button>
                   ) : null}
-                  <Button variant="outline" onClick={() => setShowTransactionModal(false)}>
+                  <Button variant="outline" onClick={() => setShowTransactionModal(false)} className="text-xs sm:text-sm">
                     Close
                   </Button>
                 </div>

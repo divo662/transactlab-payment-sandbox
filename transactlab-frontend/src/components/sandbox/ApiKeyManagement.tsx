@@ -40,6 +40,7 @@ const ApiKeyManagement: React.FC = () => {
   const { toast } = useToast();
   const [apiKeys, setApiKeys] = useState<any[]>([]);
   const [loading, setLoading] = useState(false);
+  const [initialLoading, setInitialLoading] = useState(true);
   const [showCreateModal, setShowCreateModal] = useState(false);
   const [showKeyModal, setShowKeyModal] = useState(false);
   const [newApiKey, setNewApiKey] = useState('');
@@ -97,6 +98,7 @@ const ApiKeyManagement: React.FC = () => {
       });
     } finally {
       setLoading(false);
+      setInitialLoading(false);
     }
   };
 
@@ -193,73 +195,160 @@ const ApiKeyManagement: React.FC = () => {
   };
 
 
+  if (initialLoading) {
+    return (
+      <div className="space-y-4 sm:space-y-6 p-3 sm:p-0">
+        {/* Header Skeleton */}
+        <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
+          <div className="space-y-2">
+            <div className="h-8 sm:h-10 bg-gray-200 rounded w-64 animate-pulse"></div>
+            <div className="h-4 bg-gray-200 rounded w-80 animate-pulse"></div>
+          </div>
+          <div className="flex flex-col sm:flex-row gap-2">
+            <div className="h-9 bg-gray-200 rounded w-20 animate-pulse"></div>
+            <div className="h-9 bg-gray-200 rounded w-32 animate-pulse"></div>
+          </div>
+        </div>
+
+        {/* Security Alert Skeleton */}
+        <div className="border rounded-lg p-4">
+          <div className="flex items-start space-x-3">
+            <div className="w-4 h-4 bg-gray-200 rounded animate-pulse"></div>
+            <div className="space-y-2 flex-1">
+              <div className="h-4 bg-gray-200 rounded w-48 animate-pulse"></div>
+              <div className="h-3 bg-gray-200 rounded w-full animate-pulse"></div>
+            </div>
+          </div>
+        </div>
+
+        {/* Stats Cards Skeleton */}
+        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4 sm:gap-6">
+          {Array.from({ length: 3 }).map((_, i) => (
+            <div key={i} className="border rounded-lg p-4 sm:p-6">
+              <div className="flex items-center">
+                <div className="p-2 bg-gray-200 rounded-lg w-10 h-10 animate-pulse"></div>
+                <div className="ml-4 space-y-2 flex-1">
+                  <div className="h-4 bg-gray-200 rounded w-20 animate-pulse"></div>
+                  <div className="h-6 bg-gray-200 rounded w-12 animate-pulse"></div>
+                </div>
+              </div>
+            </div>
+          ))}
+        </div>
+
+        {/* API Keys Section Skeleton */}
+        <div className="border rounded-lg p-4 sm:p-6">
+          <div className="space-y-4">
+            <div className="h-5 bg-gray-200 rounded w-32 animate-pulse"></div>
+            <div className="space-y-3">
+              {Array.from({ length: 2 }).map((_, i) => (
+                <div key={i} className="flex items-center justify-between p-4 border rounded-lg">
+                  <div className="flex items-center space-x-4">
+                    <div className="w-5 h-5 bg-gray-200 rounded animate-pulse"></div>
+                    <div className="space-y-2 flex-1">
+                      <div className="h-4 bg-gray-200 rounded w-32 animate-pulse"></div>
+                      <div className="h-3 bg-gray-200 rounded w-48 animate-pulse"></div>
+                      <div className="h-3 bg-gray-200 rounded w-64 animate-pulse"></div>
+                    </div>
+                  </div>
+                  <div className="flex items-center space-x-2">
+                    <div className="w-8 h-8 bg-gray-200 rounded animate-pulse"></div>
+                    <div className="w-8 h-8 bg-gray-200 rounded animate-pulse"></div>
+                    <div className="w-8 h-8 bg-gray-200 rounded animate-pulse"></div>
+                  </div>
+                </div>
+              ))}
+            </div>
+          </div>
+        </div>
+
+        {/* Loading Message */}
+        <div className="text-center py-8">
+          <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-[#0a164d] mx-auto mb-4"></div>
+          <p className="text-gray-600 font-medium">Loading API keys...</p>
+          <p className="text-sm text-gray-500 mt-1">This may take a few moments</p>
+        </div>
+      </div>
+    );
+  }
+
   return (
-    <div className="space-y-6">
+    <div className="space-y-4 sm:space-y-6 p-3 sm:p-0">
       {/* Header */}
       <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
-        <div>
-          <h1 className="text-3xl font-bold text-gray-900">API Key Management</h1>
-          <p className="text-gray-600 mt-1">Secure API key and webhook management for your applications</p>
+        <div className="min-w-0 flex-1">
+          <h1 className="text-2xl sm:text-3xl font-bold text-gray-900">API Key Management</h1>
+          <p className="text-sm sm:text-base text-gray-600 mt-1">Secure API key and webhook management for your applications</p>
         </div>
-        <div className="flex items-center space-x-3">
-          <Button variant="outline" onClick={() => void fetchKeys()} disabled={loading}>
-            <RefreshCw className={`w-4 h-4 mr-2 ${loading ? 'animate-spin' : ''}`}/>
-            Refresh
+        <div className="flex flex-col sm:flex-row items-stretch sm:items-center gap-2 sm:gap-3">
+          <Button 
+            variant="outline" 
+            onClick={() => void fetchKeys()} 
+            disabled={loading}
+            className="w-full sm:w-auto text-xs sm:text-sm"
+          >
+            <RefreshCw className={`w-3 h-3 sm:w-4 sm:h-4 mr-2 ${loading ? 'animate-spin' : ''}`}/>
+            <span className="hidden sm:inline">Refresh</span>
+            <span className="sm:hidden">Refresh</span>
           </Button>
-          <Button onClick={() => setShowCreateModal(true)} className="bg-[#0a164d] hover:bg-[#0a164d]/90">
-            <Plus className="w-4 h-4 mr-2"/>
-            Create API Key
+          <Button 
+            onClick={() => setShowCreateModal(true)} 
+            className="bg-[#0a164d] hover:bg-[#0a164d]/90 w-full sm:w-auto text-xs sm:text-sm"
+          >
+            <Plus className="w-3 h-3 sm:w-4 sm:h-4 mr-2"/>
+            <span className="hidden sm:inline">Create API Key</span>
+            <span className="sm:hidden">Create Key</span>
           </Button>
         </div>
       </div>
 
       {/* Security Alert */}
       <Alert className="border-orange-200 bg-orange-50">
-        <Shield className="w-4 h-4 text-orange-600" />
-        <AlertDescription className="text-orange-800">
+        <Shield className="w-4 h-4 text-orange-600 flex-shrink-0" />
+        <AlertDescription className="text-orange-800 text-xs sm:text-sm">
           <strong>Security Notice:</strong> API keys provide full access to your account. Keep them secure and never share them in client-side code or public repositories.
         </AlertDescription>
       </Alert>
 
       {/* Stats Overview */}
-      <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
+      <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4 sm:gap-6">
         <Card>
-          <CardContent className="p-6">
+          <CardContent className="p-4 sm:p-6">
             <div className="flex items-center">
-              <div className="p-2 bg-blue-100 rounded-lg">
-                <Key className="w-6 h-6 text-blue-600" />
+              <div className="p-2 bg-blue-100 rounded-lg flex-shrink-0">
+                <Key className="w-4 h-4 sm:w-6 sm:h-6 text-blue-600" />
               </div>
-              <div className="ml-4">
-                <p className="text-sm font-medium text-gray-600">Total Keys</p>
-                <p className="text-2xl font-bold text-gray-900">{stats.totalKeys}</p>
+              <div className="ml-3 sm:ml-4 min-w-0 flex-1">
+                <p className="text-xs sm:text-sm font-medium text-gray-600">Total Keys</p>
+                <p className="text-lg sm:text-2xl font-bold text-gray-900">{stats.totalKeys}</p>
               </div>
             </div>
           </CardContent>
         </Card>
 
         <Card>
-          <CardContent className="p-6">
+          <CardContent className="p-4 sm:p-6">
             <div className="flex items-center">
-              <div className="p-2 bg-green-100 rounded-lg">
-                <CheckCircle className="w-6 h-6 text-green-600" />
+              <div className="p-2 bg-green-100 rounded-lg flex-shrink-0">
+                <CheckCircle className="w-4 h-4 sm:w-6 sm:h-6 text-green-600" />
               </div>
-              <div className="ml-4">
-                <p className="text-sm font-medium text-gray-600">Active Keys</p>
-                <p className="text-2xl font-bold text-gray-900">{stats.activeKeys}</p>
+              <div className="ml-3 sm:ml-4 min-w-0 flex-1">
+                <p className="text-xs sm:text-sm font-medium text-gray-600">Active Keys</p>
+                <p className="text-lg sm:text-2xl font-bold text-gray-900">{stats.activeKeys}</p>
               </div>
             </div>
           </CardContent>
         </Card>
 
-        <Card>
-          <CardContent className="p-6">
+        <Card className="sm:col-span-2 lg:col-span-1">
+          <CardContent className="p-4 sm:p-6">
             <div className="flex items-center">
-              <div className="p-2 bg-red-100 rounded-lg">
-                <AlertTriangle className="w-6 h-6 text-red-600" />
+              <div className="p-2 bg-red-100 rounded-lg flex-shrink-0">
+                <AlertTriangle className="w-4 h-4 sm:w-6 sm:h-6 text-red-600" />
               </div>
-              <div className="ml-4">
-                <p className="text-sm font-medium text-gray-600">Expired Keys</p>
-                <p className="text-2xl font-bold text-gray-900">{stats.expiredKeys}</p>
+              <div className="ml-3 sm:ml-4 min-w-0 flex-1">
+                <p className="text-xs sm:text-sm font-medium text-gray-600">Expired Keys</p>
+                <p className="text-lg sm:text-2xl font-bold text-gray-900">{stats.expiredKeys}</p>
               </div>
             </div>
           </CardContent>
@@ -267,66 +356,69 @@ const ApiKeyManagement: React.FC = () => {
       </div>
 
       {/* API Keys Section */}
-      <div className="space-y-6">
+      <div className="space-y-4 sm:space-y-6">
           <Card>
-            <CardHeader>
-              <CardTitle className="flex items-center">
-                <Key className="w-5 h-5 mr-2 text-blue-500" />
+            <CardHeader className="px-3 sm:px-6 pt-3 sm:pt-6 pb-3 sm:pb-6">
+              <CardTitle className="flex items-center text-sm sm:text-lg">
+                <Key className="w-4 h-4 sm:w-5 sm:h-5 mr-2 text-blue-500" />
                 Your API Keys
               </CardTitle>
-              <p className="text-sm text-gray-600">Manage your API keys and their permissions</p>
+              <p className="text-xs sm:text-sm text-gray-600">Manage your API keys and their permissions</p>
             </CardHeader>
-            <CardContent>
-              <div className="space-y-4">
+            <CardContent className="px-3 sm:px-6 pb-3 sm:pb-6">
+              <div className="space-y-3 sm:space-y-4">
                 {apiKeys.map((key: any) => {
                   const keyStatus = getKeyStatus(key);
                   const StatusIcon = keyStatus.icon;
                   const isVisible = showKeyValue[key.apiKey] || false;
                   
                   return (
-                    <div key={key.apiKey} className="flex items-center justify-between p-4 border rounded-lg hover:bg-gray-50">
-                      <div className="flex items-center space-x-4">
-                        <StatusIcon className="w-5 h-5 text-gray-400" />
-                        <div className="flex-1">
-                          <div className="flex items-center space-x-3">
-                            <h3 className="font-medium text-gray-900">{key.name}</h3>
-                            <Badge className={keyStatus.color}>
+                    <div key={key.apiKey} className="flex flex-col sm:flex-row sm:items-center sm:justify-between p-3 sm:p-4 border rounded-lg hover:bg-gray-50 gap-3 sm:gap-4">
+                      <div className="flex items-start sm:items-center space-x-3 sm:space-x-4 min-w-0 flex-1">
+                        <StatusIcon className="w-4 h-4 sm:w-5 sm:h-5 text-gray-400 flex-shrink-0 mt-0.5 sm:mt-0" />
+                        <div className="min-w-0 flex-1">
+                          <div className="flex flex-col sm:flex-row sm:items-center space-y-1 sm:space-y-0 sm:space-x-3">
+                            <h3 className="font-medium text-gray-900 text-sm sm:text-base truncate">{key.name}</h3>
+                            <Badge className={`${keyStatus.color} text-xs`}>
                               {keyStatus.status}
                             </Badge>
                           </div>
-                          <div className="flex items-center space-x-2 mt-1">
-                            <span className="font-mono text-sm bg-gray-100 px-2 py-1 rounded">
+                          <div className="flex flex-col sm:flex-row sm:items-center space-y-2 sm:space-y-0 sm:space-x-2 mt-2">
+                            <span className="font-mono text-xs sm:text-sm bg-gray-100 px-2 py-1 rounded break-all">
                               {maskApiKey(key.apiKey, isVisible)}
                             </span>
                             <Button
                               variant="ghost"
                               size="sm"
                               onClick={() => toggleKeyVisibility(key.apiKey)}
+                              className="w-fit h-8 px-2"
                             >
-                              {isVisible ? <EyeOff className="w-4 h-4" /> : <Eye className="w-4 h-4" />}
+                              {isVisible ? <EyeOff className="w-3 h-3 sm:w-4 sm:h-4" /> : <Eye className="w-3 h-3 sm:w-4 sm:h-4" />}
                             </Button>
                           </div>
                           {key.description && (
-                            <p className="text-sm text-gray-600 mt-1">{key.description}</p>
+                            <p className="text-xs sm:text-sm text-gray-600 mt-1 line-clamp-2">{key.description}</p>
                           )}
-                          <div className="flex items-center space-x-4 mt-2 text-xs text-gray-500">
+                          <div className="flex flex-col sm:flex-row sm:items-center space-y-1 sm:space-y-0 sm:space-x-4 mt-2 text-xs text-gray-500">
                             <span>Created: {new Date(key.createdAt).toLocaleDateString()}</span>
                             {key.expiresAt && (
                               <span>Expires: {new Date(key.expiresAt).toLocaleDateString()}</span>
                             )}
                             {key.rateLimit && (
-                              <span>Rate Limit: {typeof key.rateLimit === 'object' ? (key.rateLimit.requestsPerHour || key.rateLimit.requestsPerMinute || 'N/A') : key.rateLimit}/hour</span>
+                              <span className="break-all">Rate Limit: {typeof key.rateLimit === 'object' ? (key.rateLimit.requestsPerHour || key.rateLimit.requestsPerMinute || 'N/A') : key.rateLimit}/hour</span>
                             )}
                           </div>
                         </div>
                       </div>
-                      <div className="flex items-center space-x-2">
+                      <div className="flex items-center justify-end sm:justify-start space-x-2">
                         <Button
                           variant="ghost"
                           size="sm"
                           onClick={() => copy(key.apiKey)}
+                          className="h-8 w-8 p-0"
+                          title="Copy API Key"
                         >
-                          <Copy className="w-4 h-4" />
+                          <Copy className="w-3 h-3 sm:w-4 sm:h-4" />
                         </Button>
                         <Button
                           variant="outline"
@@ -341,8 +433,10 @@ const ApiKeyManagement: React.FC = () => {
                             });
                             setShowSettings(true);
                           }}
+                          className="h-8 w-8 p-0"
+                          title="Settings"
                         >
-                          <Settings className="w-4 h-4" />
+                          <Settings className="w-3 h-3 sm:w-4 sm:h-4" />
                         </Button>
                         <Button
                           title="Deactivate API Key"
@@ -350,19 +444,19 @@ const ApiKeyManagement: React.FC = () => {
                           size="sm"
                           onClick={() => onDeactivate(key.apiKey)}
                           disabled={key.isActive === false}
-                          className="text-red-600 hover:text-red-700"
+                          className="text-red-600 hover:text-red-700 h-8 w-8 p-0"
                         >
-                          <Trash2 className="w-4 h-4" />
+                          <Trash2 className="w-3 h-3 sm:w-4 sm:h-4" />
                         </Button>
                       </div>
                     </div>
                   );
                 })}
                 {apiKeys.length === 0 && (
-                  <div className="text-center py-12 text-gray-500">
-                    <Key className="w-16 h-16 mx-auto mb-4 opacity-40" />
-                    <p className="text-lg font-medium">No API keys found</p>
-                    <p className="text-sm">Create your first API key to get started</p>
+                  <div className="text-center py-8 sm:py-12 text-gray-500">
+                    <Key className="w-12 h-12 sm:w-16 sm:h-16 mx-auto mb-3 sm:mb-4 opacity-40" />
+                    <p className="text-base sm:text-lg font-medium">No API keys found</p>
+                    <p className="text-xs sm:text-sm">Create your first API key to get started</p>
                   </div>
                 )}
               </div>
@@ -372,53 +466,57 @@ const ApiKeyManagement: React.FC = () => {
 
       {/* Create API Key Modal */}
       {showCreateModal && (
-        <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center p-4 z-50">
-          <div className="bg-white rounded-lg max-w-2xl w-full max-h-[90vh] overflow-y-auto">
-            <div className="flex items-center justify-between p-6 border-b">
-              <h2 className="text-xl font-semibold">Create New API Key</h2>
+        <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center p-2 sm:p-4 z-50">
+          <div className="bg-white rounded-lg max-w-2xl w-full max-h-[95vh] overflow-y-auto mx-2 sm:mx-0">
+            <div className="flex items-center justify-between p-4 sm:p-6 border-b">
+              <h2 className="text-lg sm:text-xl font-semibold">Create New API Key</h2>
               <Button
                 variant="ghost"
                 size="sm"
                 onClick={() => setShowCreateModal(false)}
+                className="p-1"
               >
-                <X className="w-4 h-4" />
+                <X className="w-4 h-4 sm:w-5 sm:h-5" />
               </Button>
             </div>
             
-            <form onSubmit={onCreate} className="p-6 space-y-6">
-              <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+            <form onSubmit={onCreate} className="p-4 sm:p-6 space-y-4 sm:space-y-6">
+              <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 sm:gap-6">
                 <div>
-                  <Label>Key Name *</Label>
+                  <Label className="text-xs sm:text-sm">Key Name *</Label>
                   <Input 
                     value={form.name} 
                     onChange={e => setForm(v => ({...v, name: e.target.value}))} 
                     placeholder="My API Key"
                     required 
+                    className="text-xs sm:text-sm"
                   />
                 </div>
                 <div>
-                  <Label>Expiration Date (optional)</Label>
+                  <Label className="text-xs sm:text-sm">Expiration Date (optional)</Label>
                   <Input 
                     type="datetime-local" 
                     value={form.expiresAt} 
                     onChange={e => setForm(v => ({...v, expiresAt: e.target.value}))} 
+                    className="text-xs sm:text-sm"
                   />
                 </div>
               </div>
 
               <div>
-                <Label>Description</Label>
+                <Label className="text-xs sm:text-sm">Description</Label>
                 <Textarea 
                   value={form.description} 
                   onChange={e => setForm(v => ({...v, description: e.target.value}))} 
                   placeholder="Describe what this API key will be used for..."
                   rows={3}
+                  className="text-xs sm:text-sm"
                 />
               </div>
 
               <div>
-                <Label>Permissions *</Label>
-                <div className="grid grid-cols-2 gap-4 mt-2">
+                <Label className="text-xs sm:text-sm">Permissions *</Label>
+                <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 sm:gap-4 mt-2">
                   {[
                     { id: 'payments:read', label: 'Read Payments', description: 'View payment data' },
                     { id: 'payments:write', label: 'Create Payments', description: 'Create new payments' },
@@ -427,7 +525,7 @@ const ApiKeyManagement: React.FC = () => {
                     { id: 'webhooks:read', label: 'Read Webhooks', description: 'View webhook data' },
                     { id: 'webhooks:write', label: 'Manage Webhooks', description: 'Create/update webhooks' }
                   ].map((permission) => (
-                    <div key={permission.id} className="flex items-start space-x-3">
+                    <div key={permission.id} className="flex items-start space-x-2 sm:space-x-3">
                       <input
                         type="checkbox"
                         id={permission.id}
@@ -439,10 +537,10 @@ const ApiKeyManagement: React.FC = () => {
                             setForm(v => ({...v, permissions: v.permissions.filter(p => p !== permission.id)}));
                           }
                         }}
-                        className="mt-1"
+                        className="mt-1 w-3 h-3 sm:w-4 sm:h-4"
                       />
-                      <div>
-                        <label htmlFor={permission.id} className="text-sm font-medium text-gray-900">
+                      <div className="min-w-0 flex-1">
+                        <label htmlFor={permission.id} className="text-xs sm:text-sm font-medium text-gray-900">
                           {permission.label}
                         </label>
                         <p className="text-xs text-gray-500">{permission.description}</p>
@@ -452,53 +550,57 @@ const ApiKeyManagement: React.FC = () => {
                 </div>
               </div>
 
-              <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+              <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 sm:gap-6">
                 <div>
-                  <Label>Allowed IP Addresses (optional)</Label>
+                  <Label className="text-xs sm:text-sm">Allowed IP Addresses (optional)</Label>
                   <Input 
                     value={form.allowedIps} 
                     onChange={e => setForm(v => ({...v, allowedIps: e.target.value}))} 
                     placeholder="192.168.1.1, 10.0.0.0/8"
+                    className="text-xs sm:text-sm"
                   />
                   <p className="text-xs text-gray-500 mt-1">Comma-separated list of IP addresses or CIDR blocks</p>
                 </div>
                 <div>
-                  <Label>Rate Limit (requests per hour)</Label>
+                  <Label className="text-xs sm:text-sm">Rate Limit (requests per hour)</Label>
                   <Input 
                     type="number"
                     value={form.rateLimit} 
                     onChange={e => setForm(v => ({...v, rateLimit: e.target.value}))} 
                     placeholder="1000"
                     min="1"
+                    className="text-xs sm:text-sm"
                   />
                 </div>
               </div>
 
               <div>
-                <Label>Webhook URL (optional)</Label>
+                <Label className="text-xs sm:text-sm">Webhook URL (optional)</Label>
                 <Input 
                   value={form.webhookUrl} 
                   onChange={e => setForm(v => ({...v, webhookUrl: e.target.value}))} 
                   placeholder="https://example.com/webhooks"
+                  className="text-xs sm:text-sm"
                 />
                 <p className="text-xs text-gray-500 mt-1">URL to receive webhook notifications</p>
               </div>
               
-              <div className="flex justify-end space-x-3 pt-4 border-t">
+              <div className="flex flex-col sm:flex-row gap-3 pt-4 border-t">
                 <Button 
                   type="button" 
                   variant="outline" 
                   onClick={() => setShowCreateModal(false)}
                   disabled={loading}
+                  className="w-full sm:w-auto text-xs sm:text-sm"
                 >
                   Cancel
                 </Button>
                 <Button 
                   type="submit" 
                   disabled={loading}
-                  className="bg-[#0a164d] hover:bg-[#0a164d]/90"
+                  className="bg-[#0a164d] hover:bg-[#0a164d]/90 w-full sm:w-auto text-xs sm:text-sm"
                 >
-                  {loading ? <Loader2 className="w-4 h-4 mr-2 animate-spin" /> : <Key className="w-4 h-4 mr-2" />}
+                  {loading ? <Loader2 className="w-3 h-3 sm:w-4 sm:h-4 mr-2 animate-spin" /> : <Key className="w-3 h-3 sm:w-4 sm:h-4 mr-2" />}
                   Create API Key
                 </Button>
               </div>
@@ -509,40 +611,59 @@ const ApiKeyManagement: React.FC = () => {
 
       {/* Key Settings Modal */}
       {showSettings && selectedKey && (
-        <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center p-4 z-50">
-          <div className="bg-white rounded-lg max-w-xl w-full max-h-[90vh] overflow-y-auto">
-            <div className="flex items-center justify-between p-6 border-b">
-              <h2 className="text-xl font-semibold">Manage API Key</h2>
-              <Button variant="ghost" size="sm" onClick={() => setShowSettings(false)}>
-                <X className="w-4 h-4" />
+        <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center p-2 sm:p-4 z-50">
+          <div className="bg-white rounded-lg max-w-xl w-full max-h-[95vh] overflow-y-auto mx-2 sm:mx-0">
+            <div className="flex items-center justify-between p-4 sm:p-6 border-b">
+              <h2 className="text-lg sm:text-xl font-semibold">Manage API Key</h2>
+              <Button variant="ghost" size="sm" onClick={() => setShowSettings(false)} className="p-1">
+                <X className="w-4 h-4 sm:w-5 sm:h-5" />
               </Button>
             </div>
 
-            <div className="p-6 space-y-6">
-              <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+            <div className="p-4 sm:p-6 space-y-4 sm:space-y-6">
+              <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 sm:gap-6">
                 <div>
-                  <Label>Key Name</Label>
-                  <Input value={editForm.name} onChange={e=>setEditForm(v=>({...v,name:e.target.value}))} />
+                  <Label className="text-xs sm:text-sm">Key Name</Label>
+                  <Input 
+                    value={editForm.name} 
+                    onChange={e=>setEditForm(v=>({...v,name:e.target.value}))} 
+                    className="text-xs sm:text-sm"
+                  />
                 </div>
                 <div>
-                  <Label>Extend Expiry</Label>
-                  <Input type="datetime-local" value={editForm.expiresAt} onChange={e=>setEditForm(v=>({...v,expiresAt:e.target.value}))} />
-                </div>
-              </div>
-
-              <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-                <div>
-                  <Label>Rate Limit (requests/hour)</Label>
-                  <Input type="number" value={editForm.rateLimit} onChange={e=>setEditForm(v=>({...v,rateLimit:e.target.value}))} />
-                </div>
-                <div>
-                  <Label>Allowed IPs</Label>
-                  <Input value={editForm.allowedIps} onChange={e=>setEditForm(v=>({...v,allowedIps:e.target.value}))} placeholder="192.168.1.1, 10.0.0.0/8" />
+                  <Label className="text-xs sm:text-sm">Extend Expiry</Label>
+                  <Input 
+                    type="datetime-local" 
+                    value={editForm.expiresAt} 
+                    onChange={e=>setEditForm(v=>({...v,expiresAt:e.target.value}))} 
+                    className="text-xs sm:text-sm"
+                  />
                 </div>
               </div>
 
-              <div className="flex justify-between pt-4 border-t">
-                <div className="space-x-2">
+              <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 sm:gap-6">
+                <div>
+                  <Label className="text-xs sm:text-sm">Rate Limit (requests/hour)</Label>
+                  <Input 
+                    type="number" 
+                    value={editForm.rateLimit} 
+                    onChange={e=>setEditForm(v=>({...v,rateLimit:e.target.value}))} 
+                    className="text-xs sm:text-sm"
+                  />
+                </div>
+                <div>
+                  <Label className="text-xs sm:text-sm">Allowed IPs</Label>
+                  <Input 
+                    value={editForm.allowedIps} 
+                    onChange={e=>setEditForm(v=>({...v,allowedIps:e.target.value}))} 
+                    placeholder="192.168.1.1, 10.0.0.0/8" 
+                    className="text-xs sm:text-sm"
+                  />
+                </div>
+              </div>
+
+              <div className="flex flex-col sm:flex-row gap-3 pt-4 border-t">
+                <div className="flex flex-col sm:flex-row gap-2">
                   <Button
                     variant="outline"
                     onClick={async ()=>{
@@ -575,11 +696,12 @@ const ApiKeyManagement: React.FC = () => {
                         toast({ title: 'Error', description: 'Failed to update API key', variant: 'destructive' });
                       }
                     }}
+                    className="w-full sm:w-auto text-xs sm:text-sm"
                   >
-                    <Save className="w-4 h-4 mr-2" /> Save
+                    <Save className="w-3 h-3 sm:w-4 sm:h-4 mr-2" /> Save
                   </Button>
                 </div>
-                <div className="space-x-2">
+                <div className="flex flex-col sm:flex-row gap-2">
                   <Button
                     variant="outline"
                     onClick={async ()=>{
@@ -623,8 +745,9 @@ const ApiKeyManagement: React.FC = () => {
                         toast({ title: 'Error', description: 'Failed to rotate key', variant: 'destructive' });
                       }
                     }}
+                    className="w-full sm:w-auto text-xs sm:text-sm"
                   >
-                    <RefreshCw className="w-4 h-4 mr-2" /> Rotate Key
+                    <RefreshCw className="w-3 h-3 sm:w-4 sm:h-4 mr-2" /> Rotate Key
                   </Button>
                 </div>
               </div>
@@ -635,65 +758,70 @@ const ApiKeyManagement: React.FC = () => {
 
       {/* API Key Created Modal */}
       {showKeyModal && (
-        <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center p-4 z-50">
-          <div className="bg-white rounded-lg max-w-2xl w-full">
-            <div className="flex items-center justify-between p-6 border-b">
-              <h2 className="text-xl font-semibold text-green-600">API Key Created Successfully</h2>
+        <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center p-2 sm:p-4 z-50">
+          <div className="bg-white rounded-lg max-w-2xl w-full max-h-[95vh] overflow-y-auto mx-2 sm:mx-0">
+            <div className="flex items-center justify-between p-4 sm:p-6 border-b">
+              <h2 className="text-lg sm:text-xl font-semibold text-green-600">API Key Created Successfully</h2>
               <Button
                 variant="ghost"
                 size="sm"
                 onClick={() => setShowKeyModal(false)}
+                className="p-1"
               >
-                <X className="w-4 h-4" />
+                <X className="w-4 h-4 sm:w-5 sm:h-5" />
               </Button>
             </div>
             
-            <div className="p-6 space-y-6">
+            <div className="p-4 sm:p-6 space-y-4 sm:space-y-6">
               <Alert className="border-red-200 bg-red-50">
-                <AlertTriangle className="w-4 h-4 text-red-600" />
-                <AlertDescription className="text-red-800">
+                <AlertTriangle className="w-4 h-4 text-red-600 flex-shrink-0" />
+                <AlertDescription className="text-red-800 text-xs sm:text-sm">
                   <strong>Important:</strong> This is the only time you'll see this API key. Copy it now and store it securely.
                 </AlertDescription>
               </Alert>
 
               <div>
-                <Label>Your API Key (public)</Label>
-                <div className="flex items-center space-x-2 mt-2">
+                <Label className="text-xs sm:text-sm">Your API Key (public)</Label>
+                <div className="flex flex-col sm:flex-row items-stretch sm:items-center space-y-2 sm:space-y-0 sm:space-x-2 mt-2">
                   <Input 
                     value={newApiKey} 
                     readOnly 
-                    className="font-mono text-sm"
+                    className="font-mono text-xs sm:text-sm"
                   />
                   <Button
                     variant="outline"
                     onClick={() => copy(newApiKey)}
+                    className="w-full sm:w-auto text-xs sm:text-sm"
                   >
-                    <Copy className="w-4 h-4" />
+                    <Copy className="w-3 h-3 sm:w-4 sm:h-4 mr-2" />
+                    Copy
                   </Button>
                 </div>
               </div>
 
               <div>
-                <Label>Your Secret Key (server only)</Label>
-                <div className="flex items-center space-x-2 mt-2">
+                <Label className="text-xs sm:text-sm">Your Secret Key (server only)</Label>
+                <div className="flex flex-col sm:flex-row items-stretch sm:items-center space-y-2 sm:space-y-0 sm:space-x-2 mt-2">
                   <Input 
                     value={newSecretKey} 
                     readOnly 
-                    className="font-mono text-sm"
+                    className="font-mono text-xs sm:text-sm"
                   />
                   <Button
                     variant="outline"
                     onClick={() => copy(newSecretKey)}
+                    className="w-full sm:w-auto text-xs sm:text-sm"
                   >
-                    <Copy className="w-4 h-4" />
+                    <Copy className="w-3 h-3 sm:w-4 sm:h-4 mr-2" />
+                    Copy
                   </Button>
                 </div>
                 <p className="text-xs text-gray-500 mt-1">Use this as <code>x-sandbox-secret</code> for server-to-server requests. Never expose it in the browser.</p>
               </div>
 
-              <div className="bg-gray-50 p-4 rounded-lg">
-                <h3 className="font-medium text-gray-900 mb-2">Server Usage Example</h3>
-                <pre className="text-sm text-gray-600 bg-white p-3 rounded border overflow-x-auto">
+              <div className="bg-gray-50 p-3 sm:p-4 rounded-lg">
+                <h3 className="font-medium text-gray-900 mb-2 text-sm sm:text-base">Server Usage Example</h3>
+                <pre className="text-xs sm:text-sm text-gray-600 bg-white p-2 sm:p-3 rounded border overflow-x-auto">
 {`curl -X POST "http://localhost:5000/api/v1/sandbox/sessions" \\
   -H "x-sandbox-secret: ${newSecretKey}" \\
   -H "Content-Type: application/json" \\
@@ -701,10 +829,10 @@ const ApiKeyManagement: React.FC = () => {
                 </pre>
               </div>
               
-              <div className="flex justify-end space-x-3 pt-4 border-t">
+              <div className="flex justify-end pt-4 border-t">
                 <Button 
                   onClick={() => setShowKeyModal(false)}
-                  className="bg-[#0a164d] hover:bg-[#0a164d]/90"
+                  className="bg-[#0a164d] hover:bg-[#0a164d]/90 w-full sm:w-auto text-xs sm:text-sm"
                 >
                   I've Saved My API Key
                 </Button>

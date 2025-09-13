@@ -67,11 +67,7 @@ const Index = () => {
             {/* Desktop Navigation */}
             <div className="hidden md:flex items-center space-x-6">
               <div className="flex items-center space-x-6">
-                <NavItem label="Features" />
-                <NavItem label="Sandbox" />
-                <NavItem label="Developers" />
-                <NavItem label="Docs" href="/transactlab-docs" />
-                <NavItem label="Pricing" />
+                <NavItem label="Documentation" href="/transactlab-docs" />
               </div>
               <div className="flex items-center space-x-3">
                 <Link to="/auth/login" className="text-gray-300 hover:text-white">
@@ -116,11 +112,10 @@ const Index = () => {
                   </button>
                 </div>
                 <div className="mt-8 flex flex-col space-y-6">
-                  <MobileNavItem label="Features" />
-                  <MobileNavItem label="Sandbox" />
-                  <MobileNavItem label="Developers" />
-                  <MobileNavItem label="Docs" />
-                  <MobileNavItem label="Pricing" />
+                  <Link to="/transactlab-docs" className="flex items-center justify-between border-b border-gray-800 pb-2 text-lg text-white">
+                    <span>Documentation</span>
+                    <ArrowRight className="h-4 w-4 text-gray-400" />
+                  </Link>
                   <div className="pt-4">
                     <Link to="/auth/login" className="w-full justify-start border border-gray-700 text-white">
                       Log in
@@ -138,7 +133,7 @@ const Index = () => {
           {/* Badge */}
           <div className="mx-auto mt-6 flex max-w-fit items-center justify-center space-x-2 rounded-full bg-white/10 px-4 py-2 backdrop-blur-sm">
             <span className="text-sm font-medium text-white">
-              Join thousands of developers today!
+              Trusted by developers worldwide
             </span>
             <ArrowRight className="h-4 w-4 text-white" />
           </div>
@@ -146,24 +141,23 @@ const Index = () => {
           {/* Hero section */}
           <div className="container mx-auto mt-12 px-4 text-center">
             <h1 className="mx-auto max-w-4xl text-5xl font-bold leading-tight text-white md:text-6xl lg:text-7xl">
-              Your money is where you are
+              Build Payment Apps Without Risk
             </h1>
             <p className="mx-auto mt-6 max-w-2xl text-lg text-gray-300">
-              Stand up a production‑like payment gateway sandbox. Generate API keys,
-              create checkout sessions and simulate end‑to‑end webhooks for Paystack,
-              Stripe, Flutterwave and more — with zero real money involved.
+              TransactLab provides a complete payment sandbox environment. Test with realistic data,
+              simulate webhooks, and validate your integrations before going live all with zero real money.
             </p>
             <div className="mt-10 flex flex-col items-center justify-center space-y-4 sm:flex-row sm:space-x-4 sm:space-y-0">
               <Link to="/auth/register">
                 <button className="h-12 rounded-full bg-white px-8 text-base font-medium text-black hover:bg-white/90">
-                  Get Sandbox Access
+                  Start Building Now
                 </button>
               </Link>
-              <Link to="/sandbox">
+              {/* <Link to="/sandbox">
                 <button className="h-12 rounded-full border border-gray-600 px-8 text-base font-medium text-white hover:bg-white/10">
-                  Explore Sandbox
+                  View Live Demo
                 </button>
-              </Link>
+              </Link> */}
             </div>
 
             {/* key bullets from README */}
@@ -182,47 +176,15 @@ const Index = () => {
               </div>
             </div>
 
-            {/* mock dashboard */}
+            {/* Hero Image */}
             <div className="relative mx-auto my-20 w-full max-w-6xl">
-              <div className="absolute inset-0 rounded shadow-lg bg-white blur-[10rem] bg-grainy opacity-20" />
+              <div className="absolute inset-0 rounded-2xl shadow-lg bg-white blur-[10rem] bg-grainy opacity-20" />
               
-              <div className="relative rounded-2xl bg-white/5 ring-1 ring-white/10 p-4 sm:p-6">
-                <div className="flex items-center justify-between text-sm text-white/70">
-                  <div className="flex items-center gap-2">
-                    <div className="size-6 rounded-full bg-white/10 flex items-center justify-center">
-                      <Play className="w-3.5 h-3.5" />
-                    </div>
-                    <span>Sandbox dashboard</span>
-                  </div>
-                  <div className="hidden sm:flex items-center gap-2">
-                    <span className="h-2 w-2 rounded-full bg-emerald-400" />
-                    <span>Live</span>
-                  </div>
-                </div>
-                <div className="mt-5 grid gap-4 sm:grid-cols-2 lg:grid-cols-4">
-                  <div className="rounded-xl bg-black/40 ring-1 ring-white/10 p-4">
-                    <p className="text-xs text-white/60">API calls today</p>
-                    <p className="mt-2 text-2xl font-semibold">0</p>
-                    <p className="text-xs text-white/50 mt-1">sandbox requests</p>
-                  </div>
-                  <div className="rounded-xl bg-black/40 ring-1 ring-white/10 p-4">
-                    <p className="text-xs text-white/60">Webhook deliveries</p>
-                    <p className="mt-2 text-2xl font-semibold">0</p>
-                    <p className="text-xs text-white/50 mt-1">last 24h</p>
-                  </div>
-                  <div className="rounded-xl bg-black/40 ring-1 ring-white/10 p-4">
-                    <p className="text-xs text-white/60">Checkout sessions</p>
-                    <p className="mt-2 text-2xl font-semibold">0</p>
-                    <p className="text-xs text-white/50 mt-1">active</p>
-                  </div>
-                  <div className="rounded-xl bg-black/40 ring-1 ring-white/10 p-4">
-                    <p className="text-xs text-white/60">Subscriptions</p>
-                    <p className="mt-2 text-2xl font-semibold">0</p>
-                    <p className="text-xs text-white/50 mt-1">test plans</p>
-                  </div>
-                </div>
-                <div className="mt-4 rounded-xl h-36 bg-gradient-to-br from-white/5 to-white/0 ring-1 ring-white/10" />
-              </div>
+              <img
+                src="/transactlab/image.png"
+                alt="TransactLab Dashboard"
+                className="relative w-full h-auto shadow-md grayscale-100 rounded-2xl"
+              />
             </div>
           </div>
         </div>
@@ -847,16 +809,15 @@ const Index = () => {
               <h4 className="text-sm font-semibold uppercase tracking-wider mb-4">Product</h4>
               <ul className="space-y-2 text-sm text-gray-400">
                 <li><a href="#features" className="hover:text-white">Features</a></li>
-                <li><a href="#sandbox" className="hover:text-white">Sandbox</a></li>
                 <li><a href="#how-it-works" className="hover:text-white">How It Works</a></li>
+                <li><Link to="/transactlab-docs" className="hover:text-white">Documentation</Link></li>
               </ul>
             </div>
             <div>
               <h4 className="text-sm font-semibold uppercase tracking-wider mb-4">Developers</h4>
               <ul className="space-y-2 text-sm text-gray-400">
-                <li><a href="/docs" className="hover:text-white">Documentation</a></li>
-                <li><a href="/sandbox" className="hover:text-white">API Reference</a></li>
-                <li><a href="/checkout-demo" className="hover:text-white">Demo</a></li>
+                <li><Link to="/transactlab-docs" className="hover:text-white">Documentation</Link></li>
+                <li><Link to="/transactlab-docs" className="hover:text-white">API Reference</Link></li>
               </ul>
             </div>
             <div>
@@ -864,7 +825,6 @@ const Index = () => {
               <ul className="space-y-2 text-sm text-gray-400">
                 <li><a href="/auth/login" className="hover:text-white">Login</a></li>
                 <li><a href="/auth/register" className="hover:text-white">Sign Up</a></li>
-                <li><a href="#support" className="hover:text-white">Support</a></li>
               </ul>
             </div>
           </div>

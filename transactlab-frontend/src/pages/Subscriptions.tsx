@@ -82,21 +82,99 @@ const Subscriptions: React.FC = () => {
     }
   };
 
+  if (loading) {
+    return (
+      <div className="p-3 sm:p-6 space-y-4 sm:space-y-6">
+        {/* Header Skeleton */}
+        <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3 sm:gap-4">
+          <div className="h-8 bg-gray-200 rounded w-32 animate-pulse"></div>
+          <div className="h-9 bg-gray-200 rounded w-32 animate-pulse"></div>
+        </div>
+
+        {/* Create Form Skeleton */}
+        <div className="border rounded-lg p-4 sm:p-6">
+          <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
+            {Array.from({ length: 3 }).map((_, i) => (
+              <div key={i} className="space-y-2">
+                <div className="h-4 bg-gray-200 rounded w-16 animate-pulse"></div>
+                <div className="h-9 bg-gray-200 rounded animate-pulse"></div>
+              </div>
+            ))}
+          </div>
+          <div className="mt-3 flex items-center gap-3">
+            <div className="h-4 w-4 bg-gray-200 rounded animate-pulse"></div>
+            <div className="h-4 bg-gray-200 rounded w-48 animate-pulse"></div>
+          </div>
+        </div>
+
+        {/* Filters Skeleton */}
+        <div className="flex flex-col sm:flex-row items-start sm:items-center gap-3">
+          <div className="h-9 bg-gray-200 rounded w-32 animate-pulse"></div>
+          <div className="h-9 bg-gray-200 rounded w-32 animate-pulse"></div>
+        </div>
+
+        {/* Table Skeleton */}
+        <div className="border rounded-lg">
+          <div className="p-4 sm:p-6 border-b">
+            <div className="h-5 bg-gray-200 rounded w-32 animate-pulse"></div>
+          </div>
+          <div className="divide-y">
+            {Array.from({ length: 3 }).map((_, i) => (
+              <div key={i} className="p-3 sm:p-4">
+                <div className="flex items-center justify-between">
+                  <div className="space-y-2">
+                    <div className="h-4 bg-gray-200 rounded w-32 animate-pulse"></div>
+                    <div className="h-3 bg-gray-200 rounded w-48 animate-pulse"></div>
+                  </div>
+                  <div className="flex gap-2">
+                    <div className="h-8 bg-gray-200 rounded w-16 animate-pulse"></div>
+                    <div className="h-8 bg-gray-200 rounded w-16 animate-pulse"></div>
+                    <div className="h-8 bg-gray-200 rounded w-20 animate-pulse"></div>
+                  </div>
+                </div>
+              </div>
+            ))}
+          </div>
+        </div>
+
+        {/* Loading Message */}
+        <div className="text-center py-8">
+          <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-[#0a164d] mx-auto mb-4"></div>
+          <p className="text-gray-600 font-medium">Loading subscription data...</p>
+          <p className="text-sm text-gray-500 mt-1">This may take a few moments</p>
+        </div>
+      </div>
+    );
+  }
+
   return (
-    <div className="p-4 sm:p-6">
+    <div className="p-3 sm:p-6 space-y-4 sm:space-y-6">
       {/* Header */}
-      <div className="flex items-center justify-between mb-4">
-        <h1 className="text-2xl font-bold">Subscriptions</h1>
-        <Button onClick={onSubmit} disabled={submitting || !selectedPlan || (!selectedCustomer && !form.customerEmail)}>Create subscription</Button>
+      <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3 sm:gap-4">
+        <h1 className="text-xl sm:text-2xl font-bold">Subscriptions</h1>
+        <Button 
+          onClick={onSubmit} 
+          disabled={submitting || !selectedPlan || (!selectedCustomer && !form.customerEmail)}
+          className="w-full sm:w-auto"
+        >
+          {submitting ? (
+            <>
+              <div className="animate-spin rounded-full h-4 w-4 border-b-2 border-white mr-2"></div>
+              Creating...
+            </>
+          ) : (
+            'Create subscription'
+          )}
+        </Button>
       </div>
 
       {/* Create bar like Stripe */}
-      <Card className="mb-6">
-        <CardContent className="pt-6">
-          <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+      <Card>
+        <CardContent className="p-4 sm:p-6">
+          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
             <div>
-              <Label>Customer</Label>
-              <div className="flex gap-2">
+              <Label className="text-xs sm:text-sm">Customer</Label>
+              <div className="flex flex-col sm:flex-row gap-2 mt-1">
                 <Select value={selectedCustomer} onValueChange={(value) => {
                   if (value === 'new') {
                     setSelectedCustomer('new');
@@ -106,7 +184,7 @@ const Subscriptions: React.FC = () => {
                     setForm({...form, customerEmail: value});
                   }
                 }}>
-                  <SelectTrigger className="flex-1">
+                  <SelectTrigger className="flex-1 text-xs sm:text-sm">
                     <SelectValue placeholder="Select customer" />
                   </SelectTrigger>
                   <SelectContent>
@@ -114,7 +192,7 @@ const Subscriptions: React.FC = () => {
                     {customers.map((customer: any) => (
                       <SelectItem key={customer._id} value={customer.email}>
                         <div className="flex flex-col">
-                          <span className="font-medium">{customer.name || 'Unnamed Customer'}</span>
+                          <span className="font-medium text-xs sm:text-sm">{customer.name || 'Unnamed Customer'}</span>
                           <span className="text-xs text-gray-500">{customer.email}</span>
                         </div>
                       </SelectItem>
@@ -126,7 +204,7 @@ const Subscriptions: React.FC = () => {
                     variant="outline" 
                     size="sm" 
                     onClick={() => navigate('/sandbox/customers')}
-                    className="whitespace-nowrap"
+                    className="whitespace-nowrap text-xs sm:text-sm"
                   >
                     Go to Customers
                   </Button>
@@ -138,28 +216,33 @@ const Subscriptions: React.FC = () => {
                     value={form.customerEmail} 
                     onChange={(e)=> setForm({...form, customerEmail: e.target.value})} 
                     placeholder="Enter new customer email" 
+                    className="text-xs sm:text-sm"
                   />
                 </div>
               )}
               {selectedCustomer && selectedCustomer !== 'new' && (
-                <div className="mt-2 text-sm text-gray-600">
+                <div className="mt-2 text-xs sm:text-sm text-gray-600">
                   Selected: {customers.find(c => c.email === selectedCustomer)?.name || selectedCustomer}
                 </div>
               )}
             </div>
             <div>
-              <Label>Product</Label>
+              <Label className="text-xs sm:text-sm">Product</Label>
               <Select value={selectedProduct} onValueChange={(v)=> { setSelectedProduct(v); setSelectedPlan(''); }}>
-                <SelectTrigger><SelectValue placeholder="Select product" /></SelectTrigger>
+                <SelectTrigger className="text-xs sm:text-sm mt-1">
+                  <SelectValue placeholder="Select product" />
+                </SelectTrigger>
                 <SelectContent>
                   {products.map((p:any)=> (<SelectItem key={p._id} value={p._id}>{p.name}</SelectItem>))}
                 </SelectContent>
               </Select>
             </div>
             <div>
-              <Label>Plan</Label>
+              <Label className="text-xs sm:text-sm">Plan</Label>
               <Select value={selectedPlan} onValueChange={(v)=> setSelectedPlan(v)}>
-                <SelectTrigger><SelectValue placeholder="Select plan" /></SelectTrigger>
+                <SelectTrigger className="text-xs sm:text-sm mt-1">
+                  <SelectValue placeholder="Select plan" />
+                </SelectTrigger>
                 <SelectContent>
                   {plans.filter((pl:any)=> !selectedProduct || pl.productId===selectedProduct).map((pl:any)=> (
                     <SelectItem key={pl._id} value={pl._id}>{pl.currency} {(pl.amount/100).toFixed(2)} / {pl.interval}{pl.trialDays?` +${pl.trialDays}d trial`:''}</SelectItem>
@@ -169,16 +252,18 @@ const Subscriptions: React.FC = () => {
             </div>
           </div>
           <div className="mt-3 flex items-center gap-3">
-            <input id="chargeNow" type="checkbox" checked={form.chargeNow} onChange={(e)=> setForm({...form, chargeNow: e.target.checked})} />
-            <Label htmlFor="chargeNow">Charge now (otherwise trial if plan has trialDays)</Label>
+            <input id="chargeNow" type="checkbox" checked={form.chargeNow} onChange={(e)=> setForm({...form, chargeNow: e.target.checked})} className="w-4 h-4" />
+            <Label htmlFor="chargeNow" className="text-xs sm:text-sm">Charge now (otherwise trial if plan has trialDays)</Label>
           </div>
         </CardContent>
       </Card>
 
       {/* Filters */}
-      <div className="flex items-center gap-3 mb-3">
+      <div className="flex flex-col sm:flex-row items-stretch sm:items-center gap-3">
         <Select value={statusFilter} onValueChange={setStatusFilter}>
-          <SelectTrigger className="w-40"><SelectValue /></SelectTrigger>
+          <SelectTrigger className="w-full sm:w-40 text-xs sm:text-sm">
+            <SelectValue />
+          </SelectTrigger>
           <SelectContent>
             <SelectItem value="all">All</SelectItem>
             <SelectItem value="active">Active</SelectItem>
@@ -187,49 +272,95 @@ const Subscriptions: React.FC = () => {
             <SelectItem value="canceled">Canceled</SelectItem>
           </SelectContent>
         </Select>
-        <Button variant="outline" onClick={async()=>{
-          try {
-            await apiCall('/subscriptions/run-renewals', {method:'POST'});
-            toast({ title: 'Renewals executed' });
-            await loadData();
-          } catch (e) {
-            toast({ title: 'Error', description: 'Failed to run renewals', variant: 'destructive' });
-          }
-        }}>Run renewals now</Button>
+        <Button 
+          variant="outline" 
+          onClick={async()=>{
+            try {
+              await apiCall('/subscriptions/run-renewals', {method:'POST'});
+              toast({ title: 'Renewals executed' });
+              await loadData();
+            } catch (e) {
+              toast({ title: 'Error', description: 'Failed to run renewals', variant: 'destructive' });
+            }
+          }}
+          className="w-full sm:w-auto text-xs sm:text-sm"
+        >
+          Run renewals now
+        </Button>
       </div>
 
       {/* Subscriptions table */}
       <Card>
-        <CardHeader><CardTitle>All subscriptions</CardTitle></CardHeader>
-        <CardContent>
+        <CardHeader className="px-3 sm:px-6 pt-3 sm:pt-6">
+          <CardTitle className="text-sm sm:text-base">All subscriptions</CardTitle>
+        </CardHeader>
+        <CardContent className="px-0 sm:px-6 pb-3 sm:pb-6">
           <div className="divide-y border rounded">
             {(() => {
               const filtered = subscriptions.filter((s:any)=> statusFilter==='all' || s.status===statusFilter);
               if (filtered.length === 0) {
-                return <div className="p-6 text-sm text-gray-500 text-center">No data available</div>;
+                return <div className="p-4 sm:p-6 text-xs sm:text-sm text-gray-500 text-center">No data available</div>;
               }
               return filtered.map((s:any)=> (
-                <div key={s._id} className="p-3 flex items-center justify-between cursor-pointer hover:bg-gray-50" onClick={()=> navigate(`/sandbox/subscriptions/${s.subscriptionId}`)}>
-                  <div>
-                    <div className="font-medium">{s.customerEmail}</div>
-                    <div className="text-xs text-gray-500">{s.status} · {new Date(s.currentPeriodStart).toLocaleDateString()} → {new Date(s.currentPeriodEnd).toLocaleDateString()}</div>
+                <div key={s._id} className="cursor-pointer hover:bg-gray-50" onClick={()=> navigate(`/sandbox/subscriptions/${s.subscriptionId}`)}>
+                  {/* Desktop View */}
+                  <div className="hidden sm:flex items-center justify-between p-3">
+                    <div>
+                      <div className="font-medium text-sm">{s.customerEmail}</div>
+                      <div className="text-xs text-gray-500">{s.status} · {new Date(s.currentPeriodStart).toLocaleDateString()} → {new Date(s.currentPeriodEnd).toLocaleDateString()}</div>
+                    </div>
+                    <div className="flex gap-2">
+                      <Button size="sm" variant="outline" disabled={s.status==='paused'} onClick={async(e)=>{
+                        e.stopPropagation();
+                        try { await apiCall(`/subscriptions/${s.subscriptionId}/pause`, {method:'POST'}); toast({ title: 'Paused' }); await loadData(); }
+                        catch { toast({ title: 'Error', description: 'Failed to pause', variant: 'destructive' }); }
+                      }} className="text-xs">Pause</Button>
+                      <Button size="sm" variant="outline" disabled={s.status!=='paused'} onClick={async(e)=>{
+                        e.stopPropagation();
+                        try { await apiCall(`/subscriptions/${s.subscriptionId}/resume`, {method:'POST'}); toast({ title: 'Resumed' }); await loadData(); }
+                        catch { toast({ title: 'Error', description: 'Failed to resume', variant: 'destructive' }); }
+                      }} className="text-xs">Resume</Button>
+                      <Button size="sm" variant="outline" onClick={async(e)=>{
+                        e.stopPropagation();
+                        try { await apiCall(`/subscriptions/${s.subscriptionId}/cancel`, {method:'POST', body: JSON.stringify({atPeriodEnd:true})}); toast({ title: 'Will cancel at period end' }); await loadData(); }
+                        catch { toast({ title: 'Error', description: 'Failed to cancel', variant: 'destructive' }); }
+                      }} className="text-xs">Cancel at period end</Button>
+                    </div>
                   </div>
-                  <div className="flex gap-2">
-                    <Button size="sm" variant="outline" disabled={s.status==='paused'} onClick={async(e)=>{
-                      e.stopPropagation();
-                      try { await apiCall(`/subscriptions/${s.subscriptionId}/pause`, {method:'POST'}); toast({ title: 'Paused' }); await loadData(); }
-                      catch { toast({ title: 'Error', description: 'Failed to pause', variant: 'destructive' }); }
-                    }}>Pause</Button>
-                    <Button size="sm" variant="outline" disabled={s.status!=='paused'} onClick={async(e)=>{
-                      e.stopPropagation();
-                      try { await apiCall(`/subscriptions/${s.subscriptionId}/resume`, {method:'POST'}); toast({ title: 'Resumed' }); await loadData(); }
-                      catch { toast({ title: 'Error', description: 'Failed to resume', variant: 'destructive' }); }
-                    }}>Resume</Button>
-                    <Button size="sm" variant="outline" onClick={async(e)=>{
-                      e.stopPropagation();
-                      try { await apiCall(`/subscriptions/${s.subscriptionId}/cancel`, {method:'POST', body: JSON.stringify({atPeriodEnd:true})}); toast({ title: 'Will cancel at period end' }); await loadData(); }
-                      catch { toast({ title: 'Error', description: 'Failed to cancel', variant: 'destructive' }); }
-                    }}>Cancel at period end</Button>
+
+                  {/* Mobile View */}
+                  <div className="sm:hidden p-3">
+                    <div className="space-y-3">
+                      {/* Header with customer email and status */}
+                      <div className="flex items-center justify-between">
+                        <div className="font-medium text-sm truncate flex-1 min-w-0">{s.customerEmail}</div>
+                        <span className="text-xs bg-gray-100 px-2 py-1 rounded">{s.status}</span>
+                      </div>
+
+                      {/* Period info */}
+                      <div className="text-xs text-gray-500">
+                        {new Date(s.currentPeriodStart).toLocaleDateString()} → {new Date(s.currentPeriodEnd).toLocaleDateString()}
+                      </div>
+
+                      {/* Action buttons */}
+                      <div className="flex flex-wrap gap-2 pt-2 border-t border-gray-100">
+                        <Button size="sm" variant="outline" disabled={s.status==='paused'} onClick={async(e)=>{
+                          e.stopPropagation();
+                          try { await apiCall(`/subscriptions/${s.subscriptionId}/pause`, {method:'POST'}); toast({ title: 'Paused' }); await loadData(); }
+                          catch { toast({ title: 'Error', description: 'Failed to pause', variant: 'destructive' }); }
+                        }} className="text-xs flex-1">Pause</Button>
+                        <Button size="sm" variant="outline" disabled={s.status!=='paused'} onClick={async(e)=>{
+                          e.stopPropagation();
+                          try { await apiCall(`/subscriptions/${s.subscriptionId}/resume`, {method:'POST'}); toast({ title: 'Resumed' }); await loadData(); }
+                          catch { toast({ title: 'Error', description: 'Failed to resume', variant: 'destructive' }); }
+                        }} className="text-xs flex-1">Resume</Button>
+                        <Button size="sm" variant="outline" onClick={async(e)=>{
+                          e.stopPropagation();
+                          try { await apiCall(`/subscriptions/${s.subscriptionId}/cancel`, {method:'POST', body: JSON.stringify({atPeriodEnd:true})}); toast({ title: 'Will cancel at period end' }); await loadData(); }
+                          catch { toast({ title: 'Error', description: 'Failed to cancel', variant: 'destructive' }); }
+                        }} className="text-xs w-full">Cancel at period end</Button>
+                      </div>
+                    </div>
                   </div>
                 </div>
               ));

@@ -21,6 +21,7 @@ const ProductDetail: React.FC = () => {
   const [product, setProduct] = useState<any>(null);
   const [plans, setPlans] = useState<any[]>([]);
   const [loading, setLoading] = useState(true);
+  const [initialLoading, setInitialLoading] = useState(true);
   const [subscriptions, setSubscriptions] = useState<any[]>([]);
   
   // Edit states
@@ -61,7 +62,10 @@ const ProductDetail: React.FC = () => {
       setPlans(plansRes.data || []);
       setSubscriptions((subsRes.data || []).filter((s:any)=> s.productId === productId));
     } catch(e) { toast({ title:'Error', description:'Failed to load product', variant:'destructive' }); }
-    finally { setLoading(false); }
+    finally { 
+      setLoading(false); 
+      setInitialLoading(false);
+    }
   };
 
   const analytics = useMemo(() => {
@@ -190,272 +194,360 @@ const ProductDetail: React.FC = () => {
     }
   };
 
-  return (
-    <div className="p-4 sm:p-6 max-w-7xl mx-auto">
-      {/* Header */}
-      <div className="flex items-center justify-between mb-6">
-        <div className="flex items-center justify-between">
-          <div className="flex items-center gap-4">
-            <Button variant="ghost" size="sm" onClick={()=> navigate('/sandbox/products')}>
-              <ArrowLeft className="h-4 w-4 mr-2" />
-              Back
-            </Button>
-            <div>
+  if (initialLoading) {
+    return (
+      <div className="p-3 sm:p-6 max-w-7xl mx-auto">
+        {/* Header Skeleton */}
+        <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4 mb-6">
+          <div className="flex flex-col sm:flex-row sm:items-center gap-4">
+            <div className="h-8 bg-gray-200 rounded w-16 animate-pulse"></div>
+            <div className="space-y-2">
               <div className="flex items-center gap-3">
-                <h1 className="text-3xl font-bold">{product?.name || 'Product'}</h1>
-                {product && (
-                  <Badge variant={product.active !== false ? 'default' : 'secondary'}>
-                    {product.active !== false ? 'Active' : 'Archived'}
-                  </Badge>
-                )}
+                <div className="h-8 bg-gray-200 rounded w-48 animate-pulse"></div>
+                <div className="h-6 bg-gray-200 rounded w-16 animate-pulse"></div>
               </div>
-              <div className="text-gray-500 mt-1">{product?.description || 'No description'}</div>
+              <div className="h-4 bg-gray-200 rounded w-64 animate-pulse"></div>
             </div>
           </div>
-          <Button variant="outline" size="sm" onClick={handleEditProduct}>
-            <Edit className="h-4 w-4 mr-2" />
-            Edit Product
-          </Button>
+          <div className="h-9 bg-gray-200 rounded w-32 animate-pulse"></div>
         </div>
+
+        {/* Tabs Skeleton */}
+        <div className="space-y-6">
+          <div className="flex gap-2">
+            {[1, 2, 3, 4].map((i) => (
+              <div key={i} className="h-9 bg-gray-200 rounded w-20 animate-pulse"></div>
+            ))}
+          </div>
+
+          {/* Content Skeleton */}
+          <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
+            <div className="lg:col-span-2 space-y-6">
+              <div className="border rounded-lg p-4 sm:p-6">
+                <div className="h-6 bg-gray-200 rounded w-40 mb-4 animate-pulse"></div>
+                <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
+                  {[1, 2, 3].map((i) => (
+                    <div key={i} className="p-4 bg-gray-50 rounded-lg min-h-[100px]">
+                      <div className="h-8 bg-gray-200 rounded w-24 animate-pulse"></div>
+                      <div className="h-4 bg-gray-200 rounded w-32 mt-2 animate-pulse"></div>
+                    </div>
+                  ))}
+                </div>
+              </div>
+              <div className="border rounded-lg p-4 sm:p-6">
+                <div className="h-6 bg-gray-200 rounded w-48 mb-4 animate-pulse"></div>
+                <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                  {[1, 2].map((i) => (
+                    <div key={i} className="p-4 border rounded-lg">
+                      <div className="h-8 bg-gray-200 rounded w-16 animate-pulse"></div>
+                      <div className="h-4 bg-gray-200 rounded w-24 mt-2 animate-pulse"></div>
+                    </div>
+                  ))}
+                </div>
+              </div>
+            </div>
+            <div className="space-y-6">
+              <div className="border rounded-lg p-4 sm:p-6">
+                <div className="h-6 bg-gray-200 rounded w-32 mb-4 animate-pulse"></div>
+                <div className="space-y-3">
+                  {[1, 2, 3, 4].map((i) => (
+                    <div key={i} className="h-9 bg-gray-200 rounded animate-pulse"></div>
+                  ))}
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        {/* Loading Message */}
+        <div className="text-center py-8">
+          <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-[#0a164d] mx-auto mb-4"></div>
+          <p className="text-gray-600 font-medium">Loading product details...</p>
+          <p className="text-sm text-gray-500 mt-1">This may take a few moments</p>
+        </div>
+      </div>
+    );
+  }
+
+  return (
+    <div className="p-3 sm:p-6 max-w-7xl mx-auto">
+      {/* Header */}
+      <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4 mb-4 sm:mb-6">
+        <div className="flex flex-col sm:flex-row sm:items-center gap-4">
+          <Button 
+            variant="ghost" 
+            size="sm" 
+            onClick={()=> navigate('/sandbox/products')}
+            className="w-fit text-xs sm:text-sm h-8 sm:h-9"
+          >
+            <ArrowLeft className="h-3 w-3 sm:h-4 sm:w-4 mr-1 sm:mr-2" />
+            Back
+          </Button>
+          <div>
+            <div className="flex flex-col sm:flex-row sm:items-center gap-2 sm:gap-3">
+              <h1 className="text-xl sm:text-2xl lg:text-3xl font-bold break-words">{product?.name || 'Product'}</h1>
+              {product && (
+                <Badge variant={product.active !== false ? 'default' : 'secondary'} className="w-fit text-xs">
+                  {product.active !== false ? 'Active' : 'Archived'}
+                </Badge>
+              )}
+            </div>
+            <div className="text-xs sm:text-sm text-gray-500 mt-1 break-words">{product?.description || 'No description'}</div>
+          </div>
+        </div>
+        <Button 
+          variant="outline" 
+          size="sm" 
+          onClick={handleEditProduct}
+          className="w-full sm:w-auto text-xs sm:text-sm h-9 sm:h-10"
+        >
+          <Edit className="h-3 w-3 sm:h-4 sm:w-4 mr-1 sm:mr-2" />
+          Edit Product
+        </Button>
       </div>
 
       {/* Tabs */}
       <Tabs defaultValue="overview" className="w-full">
-        <TabsList className="grid w-full grid-cols-4">
-          <TabsTrigger value="overview">Overview</TabsTrigger>
-          <TabsTrigger value="analytics">Analytics</TabsTrigger>
-          <TabsTrigger value="pricing">Pricing</TabsTrigger>
-          <TabsTrigger value="api">API</TabsTrigger>
-        </TabsList>
+        <div className="overflow-x-auto">
+          <TabsList className="inline-flex w-full min-w-max sm:w-auto">
+            <TabsTrigger value="overview" className="text-xs sm:text-sm whitespace-nowrap px-2 sm:px-4">Overview</TabsTrigger>
+            <TabsTrigger value="analytics" className="text-xs sm:text-sm whitespace-nowrap px-2 sm:px-4">Analytics</TabsTrigger>
+            <TabsTrigger value="pricing" className="text-xs sm:text-sm whitespace-nowrap px-2 sm:px-4">Pricing</TabsTrigger>
+            <TabsTrigger value="api" className="text-xs sm:text-sm whitespace-nowrap px-2 sm:px-4">API</TabsTrigger>
+          </TabsList>
+        </div>
 
         {/* Overview Tab */}
-        <TabsContent value="overview" className="mt-6">
-          <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
-            <div className="lg:col-span-2 space-y-6">
+        <TabsContent value="overview" className="mt-4 sm:mt-6">
+          <div className="grid grid-cols-1 lg:grid-cols-3 gap-4 sm:gap-6">
+            <div className="lg:col-span-2 space-y-4 sm:space-y-6">
               <Card>
-                <CardHeader>
-                  <CardTitle className="flex items-center gap-2">
-                    <DollarSign className="h-5 w-5" />
+                <CardHeader className="px-3 sm:px-6 pt-3 sm:pt-6 pb-3 sm:pb-6">
+                  <CardTitle className="flex items-center gap-2 text-sm sm:text-lg">
+                    <DollarSign className="h-4 w-4 sm:h-5 sm:w-5" />
                     Revenue Overview
                   </CardTitle>
                 </CardHeader>
-                <CardContent>
-                  <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-                    <div className="text-center p-4 bg-blue-50 rounded-lg min-h-[100px]">
-                      <div className="text-xl lg:text-2xl font-bold text-blue-600 break-words leading-tight">
+                <CardContent className="px-3 sm:px-6 pb-3 sm:pb-6">
+                  <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-3 sm:gap-4">
+                    <div className="text-center p-3 sm:p-4 bg-blue-50 rounded-lg min-h-[80px] sm:min-h-[100px]">
+                      <div className="text-lg sm:text-xl lg:text-2xl font-bold text-blue-600 break-words leading-tight">
                         {formatCurrency(analytics.mrr*100, plans[0]?.currency || 'NGN')}
                       </div>
-                      <div className="text-xs lg:text-sm text-gray-600 mt-2 leading-tight">Monthly Recurring Revenue</div>
+                      <div className="text-xs sm:text-sm text-gray-600 mt-1 sm:mt-2 leading-tight">Monthly Recurring Revenue</div>
                     </div>
-                    <div className="text-center p-4 bg-green-50 rounded-lg min-h-[100px]">
-                      <div className="text-xl lg:text-2xl font-bold text-green-600 break-words leading-tight">
+                    <div className="text-center p-3 sm:p-4 bg-green-50 rounded-lg min-h-[80px] sm:min-h-[100px]">
+                      <div className="text-lg sm:text-xl lg:text-2xl font-bold text-green-600 break-words leading-tight">
                         {formatCurrency(analytics.drr*100, plans[0]?.currency || 'NGN')}
                       </div>
-                      <div className="text-xs lg:text-sm text-gray-600 mt-2 leading-tight">Daily Recurring Revenue</div>
+                      <div className="text-xs sm:text-sm text-gray-600 mt-1 sm:mt-2 leading-tight">Daily Recurring Revenue</div>
                     </div>
-                    <div className="text-center p-4 bg-purple-50 rounded-lg min-h-[100px]">
-                      <div className="text-xl lg:text-2xl font-bold text-purple-600 break-words leading-tight">
+                    <div className="text-center p-3 sm:p-4 bg-purple-50 rounded-lg min-h-[80px] sm:min-h-[100px] sm:col-span-2 lg:col-span-1">
+                      <div className="text-lg sm:text-xl lg:text-2xl font-bold text-purple-600 break-words leading-tight">
                         {formatCurrency(analytics.yrr*100, plans[0]?.currency || 'NGN')}
                       </div>
-                      <div className="text-xs lg:text-sm text-gray-600 mt-2 leading-tight">Yearly Recurring Revenue</div>
+                      <div className="text-xs sm:text-sm text-gray-600 mt-1 sm:mt-2 leading-tight">Yearly Recurring Revenue</div>
                     </div>
                   </div>
                 </CardContent>
               </Card>
 
-              <Card>
-                <CardHeader>
-                  <CardTitle className="flex items-center gap-2">
-                    <Users className="h-5 w-5" />
-                    Subscription Summary
-                  </CardTitle>
-                </CardHeader>
-                <CardContent>
-                  <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                    <div className="p-4 border rounded-lg">
-                      <div className="text-3xl font-bold">{analytics.activeSubs}</div>
-                      <div className="text-sm text-gray-600">Active Subscriptions</div>
-                    </div>
-                    <div className="p-4 border rounded-lg">
-                      <div className="text-3xl font-bold">{plans.length}</div>
-                      <div className="text-sm text-gray-600">Available Plans</div>
-                    </div>
-                  </div>
-                </CardContent>
-              </Card>
+               <Card>
+                 <CardHeader className="px-3 sm:px-6 pt-3 sm:pt-6 pb-3 sm:pb-6">
+                   <CardTitle className="flex items-center gap-2 text-sm sm:text-lg">
+                     <Users className="h-4 w-4 sm:h-5 sm:w-5" />
+                     Subscription Summary
+                   </CardTitle>
+                 </CardHeader>
+                 <CardContent className="px-3 sm:px-6 pb-3 sm:pb-6">
+                   <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 sm:gap-4">
+                     <div className="p-3 sm:p-4 border rounded-lg">
+                       <div className="text-2xl sm:text-3xl font-bold">{analytics.activeSubs}</div>
+                       <div className="text-xs sm:text-sm text-gray-600">Active Subscriptions</div>
+                     </div>
+                     <div className="p-3 sm:p-4 border rounded-lg">
+                       <div className="text-2xl sm:text-3xl font-bold">{plans.length}</div>
+                       <div className="text-xs sm:text-sm text-gray-600">Available Plans</div>
+                     </div>
+                   </div>
+                 </CardContent>
+               </Card>
             </div>
 
-            <div className="space-y-6">
-              <Card>
-                <CardHeader>
-                  <CardTitle className="flex items-center gap-2">
-                    <Plus className="h-5 w-5" />
-                    Add New Plan
-                  </CardTitle>
-                </CardHeader>
-                <CardContent>
-                  <CreatePlanInline productId={productId!} onCreated={load} />
-                </CardContent>
-              </Card>
+             <div className="space-y-4 sm:space-y-6">
+               <Card>
+                 <CardHeader className="px-3 sm:px-6 pt-3 sm:pt-6 pb-3 sm:pb-6">
+                   <CardTitle className="flex items-center gap-2 text-sm sm:text-lg">
+                     <Plus className="h-4 w-4 sm:h-5 sm:w-5" />
+                     Add New Plan
+                   </CardTitle>
+                 </CardHeader>
+                 <CardContent className="px-3 sm:px-6 pb-3 sm:pb-6">
+                   <CreatePlanInline productId={productId!} onCreated={load} />
+                 </CardContent>
+               </Card>
 
-              <Card>
-                <CardHeader>
-                  <CardTitle className="flex items-center gap-2">
-                    <Settings className="h-5 w-5" />
-                    Product Details
-                  </CardTitle>
-                </CardHeader>
-                <CardContent>
-                  <div className="space-y-4">
-                    <div>
-                      <div className="text-sm text-gray-500">Product ID</div>
-                      <div className="font-mono text-xs break-all bg-gray-100 p-2 rounded mt-1">
-                        {product?._id}
-                      </div>
-                    </div>
-                    <div>
-                      <div className="text-sm text-gray-500">Created</div>
-                      <div className="text-sm">
-                        {product?.createdAt ? new Date(product.createdAt).toLocaleDateString() : '—'}
-                      </div>
-                    </div>
-                    <div>
-                      <div className="text-sm text-gray-500">Status</div>
-                      <div className="text-sm">
-                        {product?.active !== false ? 'Active' : 'Archived'}
-                      </div>
-                    </div>
-                  </div>
-                </CardContent>
-              </Card>
-            </div>
+               <Card>
+                 <CardHeader className="px-3 sm:px-6 pt-3 sm:pt-6 pb-3 sm:pb-6">
+                   <CardTitle className="flex items-center gap-2 text-sm sm:text-lg">
+                     <Settings className="h-4 w-4 sm:h-5 sm:w-5" />
+                     Product Details
+                   </CardTitle>
+                 </CardHeader>
+                 <CardContent className="px-3 sm:px-6 pb-3 sm:pb-6">
+                   <div className="space-y-3 sm:space-y-4">
+                     <div>
+                       <div className="text-xs sm:text-sm text-gray-500">Product ID</div>
+                       <div className="font-mono text-xs break-all bg-gray-100 p-2 rounded mt-1">
+                         {product?._id}
+                       </div>
+                     </div>
+                     <div>
+                       <div className="text-xs sm:text-sm text-gray-500">Created</div>
+                       <div className="text-xs sm:text-sm">
+                         {product?.createdAt ? new Date(product.createdAt).toLocaleDateString() : '—'}
+                       </div>
+                     </div>
+                     <div>
+                       <div className="text-xs sm:text-sm text-gray-500">Status</div>
+                       <div className="text-xs sm:text-sm">
+                         {product?.active !== false ? 'Active' : 'Archived'}
+                       </div>
+                     </div>
+                   </div>
+                 </CardContent>
+               </Card>
+             </div>
           </div>
         </TabsContent>
 
-        {/* Analytics Tab */}
-        <TabsContent value="analytics" className="mt-6">
-          <div className="space-y-6">
-            <Card>
-              <CardHeader>
-                <CardTitle className="flex items-center gap-2">
-                  <BarChart3 className="h-5 w-5" />
-                  Revenue Analytics
-                </CardTitle>
-              </CardHeader>
-              <CardContent>
-                <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
-                  <div className="p-4 bg-gradient-to-br from-blue-50 to-blue-100 rounded-lg min-h-[120px]">
-                    <div className="flex flex-col h-full">
-                      <div className="flex-1">
-                        <div className="text-2xl lg:text-3xl font-bold text-blue-600 break-words leading-tight">
-                          {formatCurrency(analytics.mrr*100, plans[0]?.currency || 'NGN')}
-                        </div>
-                        <div className="text-xs lg:text-sm text-blue-700 mt-2 leading-tight">Monthly Recurring Revenue</div>
-                      </div>
-                      <div className="flex justify-end mt-2">
-                        <TrendingUp className="h-6 w-6 text-blue-600 flex-shrink-0" />
-                      </div>
-                    </div>
-                  </div>
-                  <div className="p-4 bg-gradient-to-br from-green-50 to-green-100 rounded-lg min-h-[120px]">
-                    <div className="flex flex-col h-full">
-                      <div className="flex-1">
-                        <div className="text-2xl lg:text-3xl font-bold text-green-600 break-words leading-tight">
-                          {formatCurrency(analytics.drr*100, plans[0]?.currency || 'NGN')}
-                        </div>
-                        <div className="text-xs lg:text-sm text-green-700 mt-2 leading-tight">Daily Recurring Revenue</div>
-                      </div>
-                      <div className="flex justify-end mt-2">
-                        <TrendingUp className="h-6 w-6 text-green-600 flex-shrink-0" />
-                      </div>
-                    </div>
-                  </div>
-                  <div className="p-4 bg-gradient-to-br from-purple-50 to-purple-100 rounded-lg min-h-[120px]">
-                    <div className="flex flex-col h-full">
-                      <div className="flex-1">
-                        <div className="text-2xl lg:text-3xl font-bold text-purple-600 break-words leading-tight">
-                          {formatCurrency(analytics.yrr*100, plans[0]?.currency || 'NGN')}
-                        </div>
-                        <div className="text-xs lg:text-sm text-purple-700 mt-2 leading-tight">Yearly Recurring Revenue</div>
-                      </div>
-                      <div className="flex justify-end mt-2">
-                        <TrendingUp className="h-6 w-6 text-purple-600 flex-shrink-0" />
-                      </div>
-                    </div>
-                  </div>
-                  <div className="p-4 bg-gradient-to-br from-orange-50 to-orange-100 rounded-lg min-h-[120px]">
-                    <div className="flex flex-col h-full">
-                      <div className="flex-1">
-                        <div className="text-2xl lg:text-3xl font-bold text-orange-600 break-words leading-tight">
-                          {analytics.activeSubs}
-                        </div>
-                        <div className="text-xs lg:text-sm text-orange-700 mt-2 leading-tight">Active Subscriptions</div>
-                      </div>
-                      <div className="flex justify-end mt-2">
-                        <Users className="h-6 w-6 text-orange-600 flex-shrink-0" />
-                      </div>
-                    </div>
-                  </div>
+         {/* Analytics Tab */}
+         <TabsContent value="analytics" className="mt-4 sm:mt-6">
+           <div className="space-y-4 sm:space-y-6">
+             <Card>
+               <CardHeader className="px-3 sm:px-6 pt-3 sm:pt-6 pb-3 sm:pb-6">
+                 <CardTitle className="flex items-center gap-2 text-sm sm:text-lg">
+                   <BarChart3 className="h-4 w-4 sm:h-5 sm:w-5" />
+                   Revenue Analytics
+                 </CardTitle>
+               </CardHeader>
+               <CardContent className="px-3 sm:px-6 pb-3 sm:pb-6">
+                 <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-3 sm:gap-4">
+                   <div className="p-3 sm:p-4 bg-gradient-to-br from-blue-50 to-blue-100 rounded-lg min-h-[100px] sm:min-h-[120px]">
+                     <div className="flex flex-col h-full">
+                       <div className="flex-1">
+                         <div className="text-lg sm:text-xl lg:text-2xl xl:text-3xl font-bold text-blue-600 break-words leading-tight">
+                           {formatCurrency(analytics.mrr*100, plans[0]?.currency || 'NGN')}
+                         </div>
+                         <div className="text-xs sm:text-sm text-blue-700 mt-1 sm:mt-2 leading-tight">Monthly Recurring Revenue</div>
+                       </div>
+                       <div className="flex justify-end mt-2">
+                         <TrendingUp className="h-4 w-4 sm:h-5 sm:w-5 lg:h-6 lg:w-6 text-blue-600 flex-shrink-0" />
+                       </div>
+                     </div>
+                   </div>
+                   <div className="p-3 sm:p-4 bg-gradient-to-br from-green-50 to-green-100 rounded-lg min-h-[100px] sm:min-h-[120px]">
+                     <div className="flex flex-col h-full">
+                       <div className="flex-1">
+                         <div className="text-lg sm:text-xl lg:text-2xl xl:text-3xl font-bold text-green-600 break-words leading-tight">
+                           {formatCurrency(analytics.drr*100, plans[0]?.currency || 'NGN')}
+                         </div>
+                         <div className="text-xs sm:text-sm text-green-700 mt-1 sm:mt-2 leading-tight">Daily Recurring Revenue</div>
+                       </div>
+                       <div className="flex justify-end mt-2">
+                         <TrendingUp className="h-4 w-4 sm:h-5 sm:w-5 lg:h-6 lg:w-6 text-green-600 flex-shrink-0" />
+                       </div>
+                     </div>
+                   </div>
+                   <div className="p-3 sm:p-4 bg-gradient-to-br from-purple-50 to-purple-100 rounded-lg min-h-[100px] sm:min-h-[120px]">
+                     <div className="flex flex-col h-full">
+                       <div className="flex-1">
+                         <div className="text-lg sm:text-xl lg:text-2xl xl:text-3xl font-bold text-purple-600 break-words leading-tight">
+                           {formatCurrency(analytics.yrr*100, plans[0]?.currency || 'NGN')}
+                         </div>
+                         <div className="text-xs sm:text-sm text-purple-700 mt-1 sm:mt-2 leading-tight">Yearly Recurring Revenue</div>
+                       </div>
+                       <div className="flex justify-end mt-2">
+                         <TrendingUp className="h-4 w-4 sm:h-5 sm:w-5 lg:h-6 lg:w-6 text-purple-600 flex-shrink-0" />
+                       </div>
+                     </div>
+                   </div>
+                   <div className="p-3 sm:p-4 bg-gradient-to-br from-orange-50 to-orange-100 rounded-lg min-h-[100px] sm:min-h-[120px]">
+                     <div className="flex flex-col h-full">
+                       <div className="flex-1">
+                         <div className="text-lg sm:text-xl lg:text-2xl xl:text-3xl font-bold text-orange-600 break-words leading-tight">
+                           {analytics.activeSubs}
+                         </div>
+                         <div className="text-xs sm:text-sm text-orange-700 mt-1 sm:mt-2 leading-tight">Active Subscriptions</div>
+                       </div>
+                       <div className="flex justify-end mt-2">
+                         <Users className="h-4 w-4 sm:h-5 sm:w-5 lg:h-6 lg:w-6 text-orange-600 flex-shrink-0" />
+                       </div>
+                     </div>
+                   </div>
                 </div>
               </CardContent>
             </Card>
 
             <Card>
-              <CardHeader>
-                <CardTitle>Plan Performance</CardTitle>
-              </CardHeader>
-              <CardContent>
-                <div className="space-y-4">
-                  {plans.map((plan: any) => {
-                    const planSubs = subscriptions.filter((s: any) => s.planId === plan._id && s.status !== 'canceled');
-                    const revenue = (plan.amount / 100) * planSubs.length;
-                    return (
-                      <div key={plan._id} className="p-4 border rounded-lg">
-                        <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3">
-                          <div className="flex-1 min-w-0">
-                            <div className="font-medium text-sm sm:text-base break-words">
-                              {formatCurrency(plan.amount, plan.currency)} / {plan.interval}
-                            </div>
-                            <div className="text-xs sm:text-sm text-gray-500 mt-1">
-                              {plan.trialDays ? `${plan.trialDays} day trial` : 'No trial'}
-                            </div>
-                          </div>
-                          <div className="text-left sm:text-right flex-shrink-0">
-                            <div className="text-base sm:text-lg font-semibold">
-                              {planSubs.length} subscribers
-                            </div>
-                            <div className="text-xs sm:text-sm text-gray-500">
-                              {formatCurrency(revenue * 100, plan.currency)} MRR
-                            </div>
-                          </div>
-                        </div>
-                      </div>
-                    );
-                  })}
-                  {plans.length === 0 && (
-                    <div className="text-center py-8 text-gray-500">
-                      No plans created yet. Add a plan to see analytics.
-                    </div>
-                  )}
-                </div>
-              </CardContent>
-            </Card>
+               <CardHeader className="px-3 sm:px-6 pt-3 sm:pt-6 pb-3 sm:pb-6">
+                 <CardTitle className="text-sm sm:text-lg">Plan Performance</CardTitle>
+               </CardHeader>
+               <CardContent className="px-3 sm:px-6 pb-3 sm:pb-6">
+                 <div className="space-y-3 sm:space-y-4">
+                   {plans.map((plan: any) => {
+                     const planSubs = subscriptions.filter((s: any) => s.planId === plan._id && s.status !== 'canceled');
+                     const revenue = (plan.amount / 100) * planSubs.length;
+                     return (
+                       <div key={plan._id} className="p-3 sm:p-4 border rounded-lg">
+                         <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-2 sm:gap-3">
+                           <div className="flex-1 min-w-0">
+                             <div className="font-medium text-xs sm:text-sm lg:text-base break-words">
+                               {formatCurrency(plan.amount, plan.currency)} / {plan.interval}
+                             </div>
+                             <div className="text-xs text-gray-500 mt-1">
+                               {plan.trialDays ? `${plan.trialDays} day trial` : 'No trial'}
+                             </div>
+                           </div>
+                           <div className="text-left sm:text-right flex-shrink-0">
+                             <div className="text-sm sm:text-base lg:text-lg font-semibold">
+                               {planSubs.length} subscribers
+                             </div>
+                             <div className="text-xs text-gray-500">
+                               {formatCurrency(revenue * 100, plan.currency)} MRR
+                             </div>
+                           </div>
+                         </div>
+                       </div>
+                     );
+                   })}
+                   {plans.length === 0 && (
+                     <div className="text-center py-6 sm:py-8 text-gray-500 text-sm">
+                       No plans created yet. Add a plan to see analytics.
+                     </div>
+                   )}
+                 </div>
+               </CardContent>
+             </Card>
           </div>
         </TabsContent>
 
-        {/* Pricing Tab */}
-        <TabsContent value="pricing" className="mt-6">
-          <div className="space-y-6">
-            <div className="flex items-center justify-between">
-              <div>
-                <h2 className="text-2xl font-bold">Pricing Plans</h2>
-                <p className="text-gray-500">Manage your product's pricing tiers</p>
-              </div>
-              <Button onClick={() => document.getElementById('add-plan-form')?.scrollIntoView({ behavior: 'smooth' })}>
-                <Plus className="h-4 w-4 mr-2" />
-                Add Plan
-              </Button>
-            </div>
+         {/* Pricing Tab */}
+         <TabsContent value="pricing" className="mt-4 sm:mt-6">
+           <div className="space-y-4 sm:space-y-6">
+             <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3">
+               <div>
+                 <h2 className="text-lg sm:text-xl lg:text-2xl font-bold">Pricing Plans</h2>
+                 <p className="text-xs sm:text-sm text-gray-500">Manage your product's pricing tiers</p>
+               </div>
+               <Button 
+                 onClick={() => document.getElementById('add-plan-form')?.scrollIntoView({ behavior: 'smooth' })}
+                 className="w-full sm:w-auto text-xs sm:text-sm h-9 sm:h-10"
+               >
+                 <Plus className="h-3 w-3 sm:h-4 sm:w-4 mr-1 sm:mr-2" />
+                 Add Plan
+               </Button>
+             </div>
 
             <Card>
               <CardContent className="p-0">
@@ -463,13 +555,13 @@ const ProductDetail: React.FC = () => {
                   <table className="w-full">
                     <thead className="border-b">
                       <tr>
-                        <th className="text-left p-4 font-medium">Price</th>
-                        <th className="text-left p-4 font-medium">Interval</th>
-                        <th className="text-left p-4 font-medium">Trial</th>
-                        <th className="text-left p-4 font-medium">Subscriptions</th>
-                        <th className="text-left p-4 font-medium">Created</th>
-                        <th className="text-left p-4 font-medium">Status</th>
-                        <th className="text-left p-4 font-medium">Actions</th>
+                        <th className="text-left p-2 sm:p-4 font-medium text-xs sm:text-sm">Price</th>
+                        <th className="text-left p-2 sm:p-4 font-medium text-xs sm:text-sm">Interval</th>
+                        <th className="text-left p-2 sm:p-4 font-medium text-xs sm:text-sm">Trial</th>
+                        <th className="text-left p-2 sm:p-4 font-medium text-xs sm:text-sm">Subscriptions</th>
+                        <th className="text-left p-2 sm:p-4 font-medium text-xs sm:text-sm">Created</th>
+                        <th className="text-left p-2 sm:p-4 font-medium text-xs sm:text-sm">Status</th>
+                        <th className="text-left p-2 sm:p-4 font-medium text-xs sm:text-sm">Actions</th>
                       </tr>
                     </thead>
                     <tbody>
@@ -477,49 +569,50 @@ const ProductDetail: React.FC = () => {
                         const count = subscriptions.filter((s: any) => s.planId === plan._id && s.status !== 'canceled').length;
                         return (
                           <tr key={plan._id} className="border-b hover:bg-gray-50">
-                            <td className="p-4">
-                              <div className="font-medium">{formatCurrency(plan.amount, plan.currency)}</div>
+                            <td className="p-2 sm:p-4">
+                              <div className="font-medium text-xs sm:text-sm">{formatCurrency(plan.amount, plan.currency)}</div>
                             </td>
-                            <td className="p-4">
-                              <Badge variant="outline">{plan.interval}</Badge>
+                            <td className="p-2 sm:p-4">
+                              <Badge variant="outline" className="text-xs">{plan.interval}</Badge>
                             </td>
-                            <td className="p-4">
-                              {plan.trialDays ? `${plan.trialDays} days` : '—'}
+                            <td className="p-2 sm:p-4">
+                              <span className="text-xs sm:text-sm">{plan.trialDays ? `${plan.trialDays} days` : '—'}</span>
                             </td>
-                            <td className="p-4">
-                              <div className="flex items-center gap-2">
-                                <span className="font-medium">{count}</span>
-                                <span className="text-sm text-gray-500">active</span>
+                            <td className="p-2 sm:p-4">
+                              <div className="flex items-center gap-1 sm:gap-2">
+                                <span className="font-medium text-xs sm:text-sm">{count}</span>
+                                <span className="text-xs text-gray-500">active</span>
                               </div>
                             </td>
-                            <td className="p-4 text-sm text-gray-600">
+                            <td className="p-2 sm:p-4 text-xs sm:text-sm text-gray-600">
                               {new Date(plan.createdAt).toLocaleDateString()}
                             </td>
-                            <td className="p-4">
-                              <Badge variant={plan.active !== false ? 'default' : 'secondary'}>
+                            <td className="p-2 sm:p-4">
+                              <Badge variant={plan.active !== false ? 'default' : 'secondary'} className="text-xs">
                                 {plan.active !== false ? 'Active' : 'Inactive'}
                               </Badge>
                             </td>
-                            <td className="p-4">
-                              <div className="flex items-center gap-2">
+                            <td className="p-2 sm:p-4">
+                              <div className="flex items-center gap-1 sm:gap-2">
                                 <Button
                                   variant="ghost"
                                   size="sm"
                                   onClick={() => handleEditPlan(plan)}
+                                  className="h-7 w-7 sm:h-8 sm:w-8 p-0"
                                 >
-                                  <Edit className="h-4 w-4" />
+                                  <Edit className="h-3 w-3 sm:h-4 sm:w-4" />
                                 </Button>
                                 <Button
                                   variant="ghost"
                                   size="sm"
                                   onClick={() => handleDeletePlan(plan)}
                                   disabled={deletingPlan === plan._id}
-                                  className="text-red-600 hover:text-red-700"
+                                  className="text-red-600 hover:text-red-700 h-7 w-7 sm:h-8 sm:w-8 p-0"
                                 >
                                   {deletingPlan === plan._id ? (
-                                    <Loader2 className="h-4 w-4 animate-spin" />
+                                    <Loader2 className="h-3 w-3 sm:h-4 sm:w-4 animate-spin" />
                                   ) : (
-                                    <Trash2 className="h-4 w-4" />
+                                    <Trash2 className="h-3 w-3 sm:h-4 sm:w-4" />
                                   )}
                                 </Button>
                               </div>
@@ -530,7 +623,7 @@ const ProductDetail: React.FC = () => {
                     </tbody>
                   </table>
                   {plans.length === 0 && (
-                    <div className="text-center py-12 text-gray-500">
+                    <div className="text-center py-8 sm:py-12 text-gray-500 text-sm">
                       No pricing plans yet. Create your first plan to get started.
                     </div>
                   )}
@@ -539,10 +632,10 @@ const ProductDetail: React.FC = () => {
             </Card>
 
             <Card id="add-plan-form">
-              <CardHeader>
-                <CardTitle>Add New Plan</CardTitle>
+              <CardHeader className="px-3 sm:px-6 pt-3 sm:pt-6 pb-3 sm:pb-6">
+                <CardTitle className="text-sm sm:text-lg">Add New Plan</CardTitle>
               </CardHeader>
-              <CardContent>
+              <CardContent className="px-3 sm:px-6 pb-3 sm:pb-6">
                 <CreatePlanInline productId={productId!} onCreated={load} />
               </CardContent>
             </Card>
@@ -550,7 +643,7 @@ const ProductDetail: React.FC = () => {
         </TabsContent>
 
         {/* API Tab */}
-        <TabsContent value="api" className="mt-6">
+        <TabsContent value="api" className="mt-4 sm:mt-6">
           <ApiWorkbench examples={[
             { title: 'Get Product', method: 'GET', path: `/products/${productId}` },
             { title: 'Update Product', method: 'PUT', path: `/products/${productId}`, body: { name: 'Updated Product Name', description: 'Updated description' } },
@@ -564,54 +657,62 @@ const ProductDetail: React.FC = () => {
 
       {/* Edit Product Modal */}
       {showEditProductModal && (
-        <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center p-4 z-50">
-          <div className="bg-white rounded-lg max-w-md w-full max-h-[90vh] overflow-y-auto">
-            <div className="flex items-center justify-between p-6 border-b">
-              <h2 className="text-lg font-semibold">Edit Product</h2>
+        <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center p-2 sm:p-4 z-50">
+          <div className="bg-white rounded-lg max-w-md w-full max-h-[95vh] overflow-y-auto mx-2 sm:mx-0">
+            <div className="flex items-center justify-between p-4 sm:p-6 border-b">
+              <h2 className="text-base sm:text-lg font-semibold">Edit Product</h2>
               <Button
                 variant="ghost"
                 size="sm"
                 onClick={() => setShowEditProductModal(false)}
+                className="h-8 w-8 p-0"
               >
                 <X className="w-4 h-4" />
               </Button>
             </div>
-            <form onSubmit={handleUpdateProduct} className="p-6 space-y-4">
+            <form onSubmit={handleUpdateProduct} className="p-4 sm:p-6 space-y-4">
               <div>
-                <Label htmlFor="edit-product-name">Product Name *</Label>
+                <Label htmlFor="edit-product-name" className="text-xs sm:text-sm">Product Name *</Label>
                 <Input
                   id="edit-product-name"
                   value={editProductForm.name}
                   onChange={(e) => setEditProductForm({...editProductForm, name: e.target.value})}
                   placeholder="Enter product name"
                   required
+                  className="text-xs sm:text-sm"
                 />
               </div>
               <div>
-                <Label htmlFor="edit-product-description">Description</Label>
+                <Label htmlFor="edit-product-description" className="text-xs sm:text-sm">Description</Label>
                 <Textarea
                   id="edit-product-description"
                   value={editProductForm.description}
                   onChange={(e) => setEditProductForm({...editProductForm, description: e.target.value})}
                   placeholder="Enter product description"
                   rows={3}
+                  className="text-xs sm:text-sm"
                 />
               </div>
-              <div className="flex gap-3 pt-4">
-                <Button type="submit" disabled={updatingProduct} className="flex-1">
+              <div className="flex flex-col sm:flex-row gap-3 pt-4">
+                <Button type="submit" disabled={updatingProduct} className="flex-1 text-xs sm:text-sm h-9 sm:h-10">
                   {updatingProduct ? (
                     <>
-                      <Loader2 className="w-4 h-4 mr-2 animate-spin" />
+                      <Loader2 className="w-3 h-3 sm:w-4 sm:h-4 mr-2 animate-spin" />
                       Updating...
                     </>
                   ) : (
                     <>
-                      <Save className="w-4 h-4 mr-2" />
+                      <Save className="w-3 h-3 sm:w-4 sm:h-4 mr-2" />
                       Update Product
                     </>
                   )}
                 </Button>
-                <Button type="button" variant="outline" onClick={() => setShowEditProductModal(false)}>
+                <Button 
+                  type="button" 
+                  variant="outline" 
+                  onClick={() => setShowEditProductModal(false)}
+                  className="text-xs sm:text-sm h-9 sm:h-10"
+                >
                   Cancel
                 </Button>
               </div>
@@ -622,33 +723,35 @@ const ProductDetail: React.FC = () => {
 
       {/* Edit Plan Modal */}
       {showEditPlanModal && editingPlan && (
-        <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center p-4 z-50">
-          <div className="bg-white rounded-lg max-w-md w-full max-h-[90vh] overflow-y-auto">
-            <div className="flex items-center justify-between p-6 border-b">
-              <h2 className="text-lg font-semibold">Edit Plan</h2>
+        <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center p-2 sm:p-4 z-50">
+          <div className="bg-white rounded-lg max-w-md w-full max-h-[95vh] overflow-y-auto mx-2 sm:mx-0">
+            <div className="flex items-center justify-between p-4 sm:p-6 border-b">
+              <h2 className="text-base sm:text-lg font-semibold">Edit Plan</h2>
               <Button
                 variant="ghost"
                 size="sm"
                 onClick={() => setShowEditPlanModal(false)}
+                className="h-8 w-8 p-0"
               >
                 <X className="w-4 h-4" />
               </Button>
             </div>
-            <form onSubmit={handleUpdatePlan} className="p-6 space-y-4">
+            <form onSubmit={handleUpdatePlan} className="p-4 sm:p-6 space-y-4">
               <div>
-                <Label htmlFor="edit-plan-amount">Amount</Label>
+                <Label htmlFor="edit-plan-amount" className="text-xs sm:text-sm">Amount</Label>
                 <Input
                   id="edit-plan-amount"
                   type="text"
                   value={formatMoneyInput(editPlanForm.amount)}
                   onChange={(e) => setEditPlanForm({...editPlanForm, amount: parseMoneyInput(e.target.value)})}
                   placeholder="10,000"
+                  className="text-xs sm:text-sm"
                 />
               </div>
               <div>
-                <Label htmlFor="edit-plan-currency">Currency</Label>
+                <Label htmlFor="edit-plan-currency" className="text-xs sm:text-sm">Currency</Label>
                 <Select value={editPlanForm.currency} onValueChange={(v) => setEditPlanForm({...editPlanForm, currency: v})}>
-                  <SelectTrigger>
+                  <SelectTrigger className="text-xs sm:text-sm">
                     <SelectValue />
                   </SelectTrigger>
                   <SelectContent>
@@ -660,9 +763,9 @@ const ProductDetail: React.FC = () => {
                 </Select>
               </div>
               <div>
-                <Label htmlFor="edit-plan-interval">Interval</Label>
+                <Label htmlFor="edit-plan-interval" className="text-xs sm:text-sm">Interval</Label>
                 <Select value={editPlanForm.interval} onValueChange={(v) => setEditPlanForm({...editPlanForm, interval: v})}>
-                  <SelectTrigger>
+                  <SelectTrigger className="text-xs sm:text-sm">
                     <SelectValue />
                   </SelectTrigger>
                   <SelectContent>
@@ -675,29 +778,35 @@ const ProductDetail: React.FC = () => {
                 </Select>
               </div>
               <div>
-                <Label htmlFor="edit-plan-trial">Trial Days</Label>
+                <Label htmlFor="edit-plan-trial" className="text-xs sm:text-sm">Trial Days</Label>
                 <Input
                   id="edit-plan-trial"
                   type="number"
                   value={editPlanForm.trialDays}
                   onChange={(e) => setEditPlanForm({...editPlanForm, trialDays: Number(e.target.value)})}
+                  className="text-xs sm:text-sm"
                 />
               </div>
-              <div className="flex gap-3 pt-4">
-                <Button type="submit" disabled={updatingPlan} className="flex-1">
+              <div className="flex flex-col sm:flex-row gap-3 pt-4">
+                <Button type="submit" disabled={updatingPlan} className="flex-1 text-xs sm:text-sm h-9 sm:h-10">
                   {updatingPlan ? (
                     <>
-                      <Loader2 className="w-4 h-4 mr-2 animate-spin" />
+                      <Loader2 className="w-3 h-3 sm:w-4 sm:h-4 mr-2 animate-spin" />
                       Updating...
                     </>
                   ) : (
                     <>
-                      <Save className="w-4 h-4 mr-2" />
+                      <Save className="w-3 h-3 sm:w-4 sm:h-4 mr-2" />
                       Update Plan
                     </>
                   )}
                 </Button>
-                <Button type="button" variant="outline" onClick={() => setShowEditPlanModal(false)}>
+                <Button 
+                  type="button" 
+                  variant="outline" 
+                  onClick={() => setShowEditPlanModal(false)}
+                  className="text-xs sm:text-sm h-9 sm:h-10"
+                >
                   Cancel
                 </Button>
               </div>
@@ -708,29 +817,30 @@ const ProductDetail: React.FC = () => {
 
       {/* Delete Plan Confirmation Modal */}
       {showDeletePlanModal && planToDelete && (
-        <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center p-4 z-50">
-          <div className="bg-white rounded-lg max-w-md w-full">
-            <div className="flex items-center justify-between p-6 border-b">
+        <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center p-2 sm:p-4 z-50">
+          <div className="bg-white rounded-lg max-w-md w-full mx-2 sm:mx-0">
+            <div className="flex items-center justify-between p-4 sm:p-6 border-b">
               <div className="flex items-center gap-3">
                 <div className="p-2 bg-red-100 rounded-full">
-                  <AlertTriangle className="h-5 w-5 text-red-600" />
+                  <AlertTriangle className="h-4 w-4 sm:h-5 sm:w-5 text-red-600" />
                 </div>
-                <h2 className="text-lg font-semibold">Delete Plan</h2>
+                <h2 className="text-base sm:text-lg font-semibold">Delete Plan</h2>
               </div>
               <Button
                 variant="ghost"
                 size="sm"
                 onClick={() => setShowDeletePlanModal(false)}
+                className="h-8 w-8 p-0"
               >
                 <X className="w-4 h-4" />
               </Button>
             </div>
-            <div className="p-6">
-              <p className="text-gray-600 mb-4">
+            <div className="p-4 sm:p-6">
+              <p className="text-sm sm:text-base text-gray-600 mb-4">
                 Are you sure you want to delete this plan?
               </p>
               <div className="bg-gray-50 border rounded-lg p-3 mb-4">
-                <div className="text-sm">
+                <div className="text-xs sm:text-sm">
                   <div className="font-medium text-gray-900">
                     {formatCurrency(planToDelete.amount, planToDelete.currency)} / {planToDelete.interval}
                   </div>
@@ -739,29 +849,29 @@ const ProductDetail: React.FC = () => {
                   </div>
                 </div>
               </div>
-              <p className="text-sm text-gray-600 mb-4">
+              <p className="text-xs sm:text-sm text-gray-600 mb-4">
                 This action cannot be undone and will permanently remove the plan and all its data.
               </p>
               <div className="bg-yellow-50 border border-yellow-200 rounded-lg p-3 mb-4">
-                <p className="text-sm text-yellow-800">
+                <p className="text-xs sm:text-sm text-yellow-800">
                   <strong>Note:</strong> If this plan has active subscriptions, you'll need to cancel or pause them first.
                 </p>
               </div>
-              <div className="flex gap-3 pt-4">
+              <div className="flex flex-col sm:flex-row gap-3 pt-4">
                 <Button 
                   variant="destructive" 
                   onClick={confirmDeletePlan}
                   disabled={deletingPlan === planToDelete._id}
-                  className="flex-1"
+                  className="flex-1 text-xs sm:text-sm h-9 sm:h-10"
                 >
                   {deletingPlan === planToDelete._id ? (
                     <>
-                      <Loader2 className="w-4 h-4 mr-2 animate-spin" />
+                      <Loader2 className="w-3 h-3 sm:w-4 sm:h-4 mr-2 animate-spin" />
                       Deleting...
                     </>
                   ) : (
                     <>
-                      <Trash2 className="w-4 h-4 mr-2" />
+                      <Trash2 className="w-3 h-3 sm:w-4 sm:h-4 mr-2" />
                       Delete Plan
                     </>
                   )}
@@ -770,6 +880,7 @@ const ProductDetail: React.FC = () => {
                   variant="outline" 
                   onClick={() => setShowDeletePlanModal(false)}
                   disabled={deletingPlan === planToDelete._id}
+                  className="text-xs sm:text-sm h-9 sm:h-10"
                 >
                   Cancel
                 </Button>
@@ -804,20 +915,21 @@ function CreatePlanInline({ productId, onCreated }: { productId: string; onCreat
     } catch(e) { toast({ title:'Error', description:'Failed to create plan', variant:'destructive' }); } finally { setSaving(false); }
   };
   return (
-    <form onSubmit={submit} className="grid grid-cols-1 gap-3">
+    <form onSubmit={submit} className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-1 gap-3">
       <div>
-        <Label>Amount</Label>
+        <Label className="text-xs sm:text-sm">Amount</Label>
         <Input
           type="text"
           value={formatMoneyInput(amount)}
           onChange={(e)=> setAmount(parseMoneyInput(e.target.value))}
           placeholder="10,000"
+          className="text-xs sm:text-sm"
         />
       </div>
       <div>
-        <Label>Currency</Label>
+        <Label className="text-xs sm:text-sm">Currency</Label>
         <Select value={currency} onValueChange={(v)=> setCurrency(v)}>
-          <SelectTrigger><SelectValue /></SelectTrigger>
+          <SelectTrigger className="text-xs sm:text-sm"><SelectValue /></SelectTrigger>
           <SelectContent>
             <SelectItem value="NGN">NGN</SelectItem>
             <SelectItem value="USD">USD</SelectItem>
@@ -827,9 +939,9 @@ function CreatePlanInline({ productId, onCreated }: { productId: string; onCreat
         </Select>
       </div>
       <div>
-        <Label>Interval</Label>
+        <Label className="text-xs sm:text-sm">Interval</Label>
         <Select value={interval} onValueChange={(v)=> setInterval(v)}>
-          <SelectTrigger><SelectValue /></SelectTrigger>
+          <SelectTrigger className="text-xs sm:text-sm"><SelectValue /></SelectTrigger>
           <SelectContent>
             <SelectItem value="day">Day</SelectItem>
             <SelectItem value="week">Week</SelectItem>
@@ -840,11 +952,22 @@ function CreatePlanInline({ productId, onCreated }: { productId: string; onCreat
         </Select>
       </div>
       <div>
-        <Label>Trial Days</Label>
-        <Input type="number" value={trialDays} onChange={(e)=> setTrialDays(Number(e.target.value))} />
+        <Label className="text-xs sm:text-sm">Trial Days</Label>
+        <Input 
+          type="number" 
+          value={trialDays} 
+          onChange={(e)=> setTrialDays(Number(e.target.value))} 
+          className="text-xs sm:text-sm"
+        />
       </div>
-      <div>
-        <Button type="submit" disabled={saving}>{saving?'Saving...':'Add Plan'}</Button>
+      <div className="sm:col-span-2 lg:col-span-1">
+        <Button 
+          type="submit" 
+          disabled={saving}
+          className="w-full text-xs sm:text-sm h-9 sm:h-10"
+        >
+          {saving?'Saving...':'Add Plan'}
+        </Button>
       </div>
     </form>
   );

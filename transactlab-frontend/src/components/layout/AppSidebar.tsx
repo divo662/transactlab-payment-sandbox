@@ -61,7 +61,7 @@ const developerItems = [
 // Additional tools
 const toolsItems = [
   { title: "Products", url: "/sandbox/products", icon: Package },
-  { title: "Documentation", url: "/docs", icon: FileText },
+  { title: "Documentation", url: "/transactlab-docs", icon: FileText },
 ];
 
 export function AppSidebar() {

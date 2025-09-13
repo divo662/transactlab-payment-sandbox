@@ -4,6 +4,7 @@ import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
+import { Badge } from '@/components/ui/badge';
 import { useSandbox } from '@/contexts/SandboxContext';
 import { useToast } from '@/hooks/use-toast';
 import Pagination from '@/components/ui/pagination';
@@ -25,7 +26,13 @@ import {
   RotateCcw,
   Loader2,
   Repeat,
-  Zap
+  Zap,
+  Filter,
+  Search,
+  CalendarDays,
+  DollarSign as DollarIcon,
+  User,
+  ChevronDown
 } from 'lucide-react';
 
 const TransactionHistory: React.FC = () => {
@@ -41,6 +48,17 @@ const TransactionHistory: React.FC = () => {
   });
   const [submitting, setSubmitting] = useState(false);
   const [paymentTypeFilter, setPaymentTypeFilter] = useState<'all' | 'subscription' | 'one-time'>('all');
+  const [statusFilter, setStatusFilter] = useState<'all' | 'successful' | 'pending' | 'failed' | 'refunded'>('all');
+  const [dateRangeFilter, setDateRangeFilter] = useState({
+    startDate: '',
+    endDate: ''
+  });
+  const [amountRangeFilter, setAmountRangeFilter] = useState({
+    minAmount: '',
+    maxAmount: ''
+  });
+  const [customerSearchFilter, setCustomerSearchFilter] = useState('');
+  const [showAdvancedFilters, setShowAdvancedFilters] = useState(false);
   const [pagination, setPagination] = useState({
     currentPage: 1,
     totalPages: 1,
@@ -74,15 +92,85 @@ const TransactionHistory: React.FC = () => {
     fetchTx(page);
   };
 
-  // Filter transactions based on payment type
+  // Enhanced filtering function with all filter types
   const getFilteredTransactions = () => {
-    if (paymentTypeFilter === 'all') return transactions;
     return transactions.filter(transaction => {
-      if (paymentTypeFilter === 'subscription') {
-        return isSubscriptionPayment(transaction);
-      } else if (paymentTypeFilter === 'one-time') {
-        return !isSubscriptionPayment(transaction);
+      // Payment type filter
+      if (paymentTypeFilter !== 'all') {
+        if (paymentTypeFilter === 'subscription' && !isSubscriptionPayment(transaction)) {
+          return false;
+        }
+        if (paymentTypeFilter === 'one-time' && isSubscriptionPayment(transaction)) {
+          return false;
+        }
       }
+
+      // Status filter
+      if (statusFilter !== 'all') {
+        const transactionStatus = transaction.status?.toLowerCase();
+        if (statusFilter === 'successful' && transactionStatus !== 'successful' && transactionStatus !== 'completed') {
+          return false;
+        }
+        if (statusFilter === 'pending' && transactionStatus !== 'pending') {
+          return false;
+        }
+        if (statusFilter === 'failed' && transactionStatus !== 'failed') {
+          return false;
+        }
+        if (statusFilter === 'refunded' && transactionStatus !== 'refunded') {
+          return false;
+        }
+      }
+
+      // Date range filter
+      if (dateRangeFilter.startDate || dateRangeFilter.endDate) {
+        const transactionDate = new Date(transaction.createdAt);
+        const startDate = dateRangeFilter.startDate ? new Date(dateRangeFilter.startDate) : null;
+        const endDate = dateRangeFilter.endDate ? new Date(dateRangeFilter.endDate) : null;
+
+        if (startDate && transactionDate < startDate) {
+          return false;
+        }
+        if (endDate) {
+          // Set end date to end of day
+          const endOfDay = new Date(endDate);
+          endOfDay.setHours(23, 59, 59, 999);
+          if (transactionDate > endOfDay) {
+            return false;
+          }
+        }
+      }
+
+      // Amount range filter
+      if (amountRangeFilter.minAmount || amountRangeFilter.maxAmount) {
+        const transactionAmount = transaction.amount;
+        const minAmount = amountRangeFilter.minAmount ? parseFloat(amountRangeFilter.minAmount) * 100 : null;
+        const maxAmount = amountRangeFilter.maxAmount ? parseFloat(amountRangeFilter.maxAmount) * 100 : null;
+
+        if (minAmount && transactionAmount < minAmount) {
+          return false;
+        }
+        if (maxAmount && transactionAmount > maxAmount) {
+          return false;
+        }
+      }
+
+      // Customer search filter
+      if (customerSearchFilter) {
+        const searchTerm = customerSearchFilter.toLowerCase();
+        const customerEmail = transaction.customerEmail?.toLowerCase() || '';
+        const customerName = transaction.customerName?.toLowerCase() || '';
+        const transactionId = transaction.transactionId?.toLowerCase() || '';
+        const sessionId = transaction.sessionId?.toLowerCase() || '';
+
+        if (!customerEmail.includes(searchTerm) && 
+            !customerName.includes(searchTerm) && 
+            !transactionId.includes(searchTerm) && 
+            !sessionId.includes(searchTerm)) {
+          return false;
+        }
+      }
+
       return true;
     });
   };
@@ -91,6 +179,37 @@ const TransactionHistory: React.FC = () => {
 
   const fmtMoney = (a:number,c:string)=> new Intl.NumberFormat('en-US',{style:'currency',currency:c}).format((a||0)/100);
   const fmtDate = (d?:string)=> d? new Date(d).toLocaleString() : '—';
+
+  // Clear all filters
+  const clearAllFilters = () => {
+    setPaymentTypeFilter('all');
+    setStatusFilter('all');
+    setDateRangeFilter({ startDate: '', endDate: '' });
+    setAmountRangeFilter({ minAmount: '', maxAmount: '' });
+    setCustomerSearchFilter('');
+  };
+
+  // Check if any filters are active
+  const hasActiveFilters = () => {
+    return paymentTypeFilter !== 'all' ||
+           statusFilter !== 'all' ||
+           dateRangeFilter.startDate ||
+           dateRangeFilter.endDate ||
+           amountRangeFilter.minAmount ||
+           amountRangeFilter.maxAmount ||
+           customerSearchFilter;
+  };
+
+  // Get filter count
+  const getFilterCount = () => {
+    let count = 0;
+    if (paymentTypeFilter !== 'all') count++;
+    if (statusFilter !== 'all') count++;
+    if (dateRangeFilter.startDate || dateRangeFilter.endDate) count++;
+    if (amountRangeFilter.minAmount || amountRangeFilter.maxAmount) count++;
+    if (customerSearchFilter) count++;
+    return count;
+  };
 
   // Check if transaction is subscription-based
   const isSubscriptionPayment = (transaction: any) => {
@@ -237,7 +356,7 @@ const TransactionHistory: React.FC = () => {
   };
 
   if (loading && transactions.length === 0) {
-    return (
+  return (
       <div className="space-y-4 sm:space-y-6">
         {/* Header Skeleton */}
         <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3 sm:gap-4">
@@ -301,12 +420,66 @@ const TransactionHistory: React.FC = () => {
 
   return (
     <div className="space-y-4 sm:space-y-6 p-3 sm:p-0">
-      <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3 sm:gap-4">
-        <h1 className="text-xl sm:text-2xl font-semibold">Transactions</h1>
-        <div className="flex flex-col sm:flex-row items-stretch sm:items-center gap-2 sm:gap-3">
+      <div className="space-y-4">
+        {/* Header */}
+        <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3 sm:gap-4">
+          <div className="flex items-center gap-3">
+            <h1 className="text-xl sm:text-2xl font-semibold">Transactions</h1>
+            {hasActiveFilters() && (
+              <div className="flex items-center gap-2">
+                <Badge variant="secondary" className="bg-blue-100 text-blue-800">
+                  {getFilterCount()} filter{getFilterCount() > 1 ? 's' : ''}
+                </Badge>
+                <Button 
+                  variant="ghost" 
+                  size="sm" 
+                  onClick={clearAllFilters}
+                  className="text-xs text-gray-500 hover:text-gray-700"
+                >
+                  Clear all
+                </Button>
+              </div>
+            )}
+          </div>
+          <div className="flex flex-col sm:flex-row items-stretch sm:items-center gap-2 sm:gap-3">
+            <Button variant="outline" onClick={() => void fetchTx()} disabled={loading} className="w-full sm:w-auto">
+              <RefreshCw className={`w-4 h-4 mr-2 ${loading ? 'animate-spin' : ''}`}/>
+              {loading ? 'Refreshing...' : 'Refresh'}
+            </Button>
+            <Button 
+              variant="outline" 
+              onClick={() => setShowAdvancedFilters(!showAdvancedFilters)}
+              className="w-full sm:w-auto"
+            >
+              <Filter className="w-4 h-4 mr-2" />
+              Filters
+              {hasActiveFilters() && (
+                <Badge variant="secondary" className="ml-2 bg-blue-100 text-blue-800 text-xs">
+                  {getFilterCount()}
+                </Badge>
+              )}
+              <ChevronDown className={`w-4 h-4 ml-2 transition-transform ${showAdvancedFilters ? 'rotate-180' : ''}`} />
+            </Button>
+          </div>
+        </div>
+
+        {/* Advanced Filters Panel */}
+        {showAdvancedFilters && (
+          <div className="bg-gray-50 border border-gray-200 rounded-lg p-4 space-y-4">
+            <div className="flex items-center justify-between">
+              <h3 className="text-sm font-medium text-gray-900">Advanced Filters</h3>
+              <Button variant="ghost" size="sm" onClick={clearAllFilters} className="text-xs">
+                Clear all filters
+              </Button>
+            </div>
+            
+            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+              {/* Payment Type Filter */}
+              <div className="space-y-2">
+                <Label className="text-xs font-medium text-gray-700">Payment Type</Label>
           <Select value={paymentTypeFilter} onValueChange={(value: 'all' | 'subscription' | 'one-time') => setPaymentTypeFilter(value)}>
-            <SelectTrigger className="w-full sm:w-40">
-              <SelectValue placeholder="Filter by type" />
+                  <SelectTrigger className="h-9">
+                    <SelectValue placeholder="All Payments" />
             </SelectTrigger>
             <SelectContent>
               <SelectItem value="all">All Payments</SelectItem>
@@ -314,11 +487,130 @@ const TransactionHistory: React.FC = () => {
               <SelectItem value="one-time">One-time</SelectItem>
             </SelectContent>
           </Select>
-          <Button variant="outline" onClick={() => void fetchTx()} disabled={loading} className="w-full sm:w-auto">
-            <RefreshCw className={`w-4 h-4 mr-2 ${loading ? 'animate-spin' : ''}`}/>
-            {loading ? 'Refreshing...' : 'Refresh'}
-          </Button>
         </div>
+
+              {/* Status Filter */}
+              <div className="space-y-2">
+                <Label className="text-xs font-medium text-gray-700">Status</Label>
+                <Select value={statusFilter} onValueChange={(value: 'all' | 'successful' | 'pending' | 'failed' | 'refunded') => setStatusFilter(value)}>
+                  <SelectTrigger className="h-9">
+                    <SelectValue placeholder="All Statuses" />
+                  </SelectTrigger>
+                  <SelectContent>
+                    <SelectItem value="all">All Statuses</SelectItem>
+                    <SelectItem value="successful">Successful</SelectItem>
+                    <SelectItem value="pending">Pending</SelectItem>
+                    <SelectItem value="failed">Failed</SelectItem>
+                    <SelectItem value="refunded">Refunded</SelectItem>
+                  </SelectContent>
+                </Select>
+              </div>
+
+              {/* Customer Search */}
+              <div className="space-y-2">
+                <Label className="text-xs font-medium text-gray-700">Search Customer</Label>
+                <div className="relative">
+                  <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 w-4 h-4 text-gray-400" />
+                  <Input
+                    placeholder="Email, name, or ID..."
+                    value={customerSearchFilter}
+                    onChange={(e) => setCustomerSearchFilter(e.target.value)}
+                    className="pl-9 h-9"
+                  />
+                </div>
+              </div>
+
+              {/* Date Range */}
+              <div className="space-y-2">
+                <Label className="text-xs font-medium text-gray-700">Start Date</Label>
+                <div className="relative">
+                  <CalendarDays className="absolute left-3 top-1/2 transform -translate-y-1/2 w-4 h-4 text-gray-400" />
+                  <Input
+                    type="date"
+                    value={dateRangeFilter.startDate}
+                    onChange={(e) => setDateRangeFilter(prev => ({ ...prev, startDate: e.target.value }))}
+                    className="pl-9 h-9"
+                  />
+                </div>
+              </div>
+
+              <div className="space-y-2">
+                <Label className="text-xs font-medium text-gray-700">End Date</Label>
+                <div className="relative">
+                  <CalendarDays className="absolute left-3 top-1/2 transform -translate-y-1/2 w-4 h-4 text-gray-400" />
+                  <Input
+                    type="date"
+                    value={dateRangeFilter.endDate}
+                    onChange={(e) => setDateRangeFilter(prev => ({ ...prev, endDate: e.target.value }))}
+                    className="pl-9 h-9"
+                  />
+                </div>
+              </div>
+
+              {/* Amount Range */}
+              <div className="space-y-2">
+                <Label className="text-xs font-medium text-gray-700">Min Amount</Label>
+                <div className="relative">
+                  <DollarIcon className="absolute left-3 top-1/2 transform -translate-y-1/2 w-4 h-4 text-gray-400" />
+                  <Input
+                    type="number"
+                    placeholder="0.00"
+                    value={amountRangeFilter.minAmount}
+                    onChange={(e) => setAmountRangeFilter(prev => ({ ...prev, minAmount: e.target.value }))}
+                    className="pl-9 h-9"
+                    step="0.01"
+                  />
+                </div>
+              </div>
+
+              <div className="space-y-2">
+                <Label className="text-xs font-medium text-gray-700">Max Amount</Label>
+                <div className="relative">
+                  <DollarIcon className="absolute left-3 top-1/2 transform -translate-y-1/2 w-4 h-4 text-gray-400" />
+                  <Input
+                    type="number"
+                    placeholder="1000.00"
+                    value={amountRangeFilter.maxAmount}
+                    onChange={(e) => setAmountRangeFilter(prev => ({ ...prev, maxAmount: e.target.value }))}
+                    className="pl-9 h-9"
+                    step="0.01"
+                  />
+                </div>
+              </div>
+            </div>
+
+            {/* Filter Summary */}
+            {hasActiveFilters() && (
+              <div className="flex flex-wrap gap-2 pt-2 border-t border-gray-200">
+                {paymentTypeFilter !== 'all' && (
+                  <Badge variant="secondary" className="bg-blue-100 text-blue-800">
+                    Type: {paymentTypeFilter === 'subscription' ? 'Subscriptions' : 'One-time'}
+                  </Badge>
+                )}
+                {statusFilter !== 'all' && (
+                  <Badge variant="secondary" className="bg-green-100 text-green-800">
+                    Status: {statusFilter}
+                  </Badge>
+                )}
+                {(dateRangeFilter.startDate || dateRangeFilter.endDate) && (
+                  <Badge variant="secondary" className="bg-purple-100 text-purple-800">
+                    Date: {dateRangeFilter.startDate || 'Start'} - {dateRangeFilter.endDate || 'End'}
+                  </Badge>
+                )}
+                {(amountRangeFilter.minAmount || amountRangeFilter.maxAmount) && (
+                  <Badge variant="secondary" className="bg-orange-100 text-orange-800">
+                    Amount: ${amountRangeFilter.minAmount || '0'} - ${amountRangeFilter.maxAmount || '∞'}
+                  </Badge>
+                )}
+                {customerSearchFilter && (
+                  <Badge variant="secondary" className="bg-gray-100 text-gray-800">
+                    Search: {customerSearchFilter}
+                  </Badge>
+                )}
+              </div>
+            )}
+          </div>
+        )}
       </div>
 
       <Card>
@@ -331,103 +623,119 @@ const TransactionHistory: React.FC = () => {
             return filteredTransactions.length === 0 ? (
               <div className="text-center text-muted-foreground py-8 sm:py-12 px-4">
                 <DollarSign className="w-8 h-8 sm:w-10 sm:h-10 mx-auto mb-2 opacity-40" />
-                <p className="text-sm sm:text-base">{transactions.length === 0 ? 'No transactions yet.' : 'No transactions match the selected filter.'}</p>
+                <p className="text-sm sm:text-base">
+                  {transactions.length === 0 
+                    ? 'No transactions yet.' 
+                    : hasActiveFilters() 
+                      ? 'No transactions match the selected filters.' 
+                      : 'No transactions found.'}
+                </p>
+                {hasActiveFilters() && (
+                  <Button 
+                    variant="outline" 
+                    size="sm" 
+                    onClick={clearAllFilters}
+                    className="mt-3"
+                  >
+                    Clear filters to see all transactions
+                  </Button>
+                )}
               </div>
             ) : (
               <>
                 {/* Desktop View */}
                 <div className="hidden sm:block divide-y divide-gray-200">
-                  {filteredTransactions.map((t: any) => (
-                  <div 
-                    key={t.transactionId || t.sessionId} 
-                    className="p-4 hover:bg-gray-50 cursor-pointer transition-colors"
-                    onClick={() => openModal(t)}
-                  >
-                    <div className="flex items-center justify-between">
-                      <div className="flex items-center space-x-4">
-                        <div className="flex-shrink-0">
-                          {getStatusIcon(t.status)}
-                        </div>
-                        <div className="min-w-0 flex-1">
-                          <div className="flex items-center space-x-3 mb-1">
-                            <p className="text-lg font-semibold text-gray-900">
-                              {fmtMoney(t.amount, t.currency)}
-                            </p>
-                            <span className={`inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium ${getStatusColor(t.status)}`}>
-                              {t.status}
-                            </span>
-                            <span className={`inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium ${getPaymentTypeInfo(t).color}`}>
-                              {getPaymentTypeInfo(t).icon}
-                              <span className="ml-1">{getPaymentTypeInfo(t).label}</span>
-                            </span>
-                          </div>
-                          <div className="flex items-center space-x-2">
-                            <p className="text-sm text-gray-600 truncate">
-                              {t.customerEmail || 'No email provided'}
-                            </p>
-                            <span className="text-xs text-gray-500">•</span>
-                            <p className="text-xs text-gray-500 truncate">
-                              {getPaymentTypeInfo(t).description}
-                            </p>
-                          </div>
-                        </div>
+                {filteredTransactions.map((t: any) => (
+                <div 
+                  key={t.transactionId || t.sessionId} 
+                  className="p-4 hover:bg-gray-50 cursor-pointer transition-colors"
+                  onClick={() => openModal(t)}
+                >
+                  <div className="flex items-center justify-between">
+                    <div className="flex items-center space-x-4">
+                      <div className="flex-shrink-0">
+                        {getStatusIcon(t.status)}
                       </div>
-                      <div className="flex items-center space-x-2">
-                        <span className="text-sm text-gray-500">
-                          {fmtDate(t.createdAt)}
-                        </span>
-                        <div className="flex items-center space-x-1">
-                          {(t.status === 'completed' || t.status === 'successful') && (
-                            <Button
-                              variant="ghost"
-                              size="sm"
-                              className="h-8 w-8 p-0 text-orange-600 hover:text-orange-700 hover:bg-orange-50"
-                              onClick={(e) => {
-                                e.stopPropagation();
-                                setSelectedTransaction(t);
-                                setShowRefundModal(true);
-                              }}
-                              title="Refund"
-                            >
-                              <RotateCcw className="w-4 h-4" />
-                            </Button>
-                          )}
-                            <Button
-                              variant="ghost"
-                              size="sm"
-                              className="h-8 w-8 p-0 text-blue-600 hover:text-blue-700 hover:bg-blue-50"
-                              onClick={(e) => {
-                                e.stopPropagation();
-                                setSelectedTransaction(t);
-                                handleDownloadReceipt();
-                              }}
-                              disabled={downloadingReceipt}
-                              title="Download Receipt"
-                            >
-                              {downloadingReceipt ? (
-                                <Loader2 className="w-4 h-4 animate-spin" />
-                              ) : (
-                                <Download className="w-4 h-4" />
-                              )}
-                            </Button>
-                          <Button
-                            variant="ghost"
-                            size="sm"
-                            className="h-8 w-8 p-0 text-gray-600 hover:text-gray-700 hover:bg-gray-50"
-                            onClick={(e) => {
-                              e.stopPropagation();
-                              openModal(t);
-                            }}
-                            title="View Details"
-                          >
-                            <Eye className="w-4 h-4" />
-                          </Button>
+                      <div className="min-w-0 flex-1">
+                        <div className="flex items-center space-x-3 mb-1">
+                          <p className="text-lg font-semibold text-gray-900">
+                            {fmtMoney(t.amount, t.currency)}
+                          </p>
+                          <span className={`inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium ${getStatusColor(t.status)}`}>
+                            {t.status}
+                          </span>
+                          <span className={`inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium ${getPaymentTypeInfo(t).color}`}>
+                            {getPaymentTypeInfo(t).icon}
+                            <span className="ml-1">{getPaymentTypeInfo(t).label}</span>
+                          </span>
+                        </div>
+                        <div className="flex items-center space-x-2">
+                          <p className="text-sm text-gray-600 truncate">
+                            {t.customerEmail || 'No email provided'}
+                          </p>
+                          <span className="text-xs text-gray-500">•</span>
+                          <p className="text-xs text-gray-500 truncate">
+                            {getPaymentTypeInfo(t).description}
+                          </p>
                         </div>
                       </div>
                     </div>
+                    <div className="flex items-center space-x-2">
+                      <span className="text-sm text-gray-500">
+                        {fmtDate(t.createdAt)}
+                      </span>
+                      <div className="flex items-center space-x-1">
+                        {(t.status === 'completed' || t.status === 'successful') && (
+                          <Button
+                            variant="ghost"
+                            size="sm"
+                            className="h-8 w-8 p-0 text-orange-600 hover:text-orange-700 hover:bg-orange-50"
+                            onClick={(e) => {
+                              e.stopPropagation();
+                              setSelectedTransaction(t);
+                              setShowRefundModal(true);
+                            }}
+                            title="Refund"
+                          >
+                            <RotateCcw className="w-4 h-4" />
+                          </Button>
+                        )}
+                        <Button
+                          variant="ghost"
+                          size="sm"
+                          className="h-8 w-8 p-0 text-blue-600 hover:text-blue-700 hover:bg-blue-50"
+                          onClick={(e) => {
+                            e.stopPropagation();
+                            setSelectedTransaction(t);
+                            handleDownloadReceipt();
+                          }}
+                              disabled={downloadingReceipt}
+                          title="Download Receipt"
+                        >
+                              {downloadingReceipt ? (
+                                <Loader2 className="w-4 h-4 animate-spin" />
+                              ) : (
+                          <Download className="w-4 h-4" />
+                              )}
+                        </Button>
+                        <Button
+                          variant="ghost"
+                          size="sm"
+                          className="h-8 w-8 p-0 text-gray-600 hover:text-gray-700 hover:bg-gray-50"
+                          onClick={(e) => {
+                            e.stopPropagation();
+                            openModal(t);
+                          }}
+                          title="View Details"
+                        >
+                          <Eye className="w-4 h-4" />
+                        </Button>
+                      </div>
+                    </div>
                   </div>
-                ))}
                 </div>
+              ))}
+              </div>
 
                 {/* Mobile View */}
                 <div className="sm:hidden space-y-3 p-3">
@@ -568,20 +876,20 @@ const TransactionHistory: React.FC = () => {
             <div className="p-4 sm:p-6 space-y-4 sm:space-y-6">
               {/* Transaction Status */}
               <div className="flex flex-col sm:flex-row sm:items-center space-y-2 sm:space-y-0 sm:space-x-3">
-                <div className="flex items-center space-x-3">
-                  {getStatusIcon(selectedTransaction.status)}
+              <div className="flex items-center space-x-3">
+                {getStatusIcon(selectedTransaction.status)}
                   <h3 className="text-lg sm:text-xl font-semibold text-gray-900">
                     {fmtMoney(selectedTransaction.amount, selectedTransaction.currency)}
                   </h3>
                 </div>
                 <div className="flex flex-wrap gap-2">
                   <span className={`inline-flex items-center px-2 sm:px-3 py-1 rounded-full text-xs sm:text-sm font-medium ${getStatusColor(selectedTransaction.status)}`}>
-                    {selectedTransaction.status}
-                  </span>
+                      {selectedTransaction.status}
+                    </span>
                   <span className={`inline-flex items-center px-2 sm:px-3 py-1 rounded-full text-xs sm:text-sm font-medium ${getPaymentTypeInfo(selectedTransaction).color}`}>
-                    {getPaymentTypeInfo(selectedTransaction).icon}
-                    <span className="ml-1">{getPaymentTypeInfo(selectedTransaction).label}</span>
-                  </span>
+                      {getPaymentTypeInfo(selectedTransaction).icon}
+                      <span className="ml-1">{getPaymentTypeInfo(selectedTransaction).label}</span>
+                    </span>
                 </div>
               </div>
 
@@ -734,7 +1042,7 @@ const TransactionHistory: React.FC = () => {
                   {downloadingReceipt ? (
                     <Loader2 className="w-4 h-4 mr-2 animate-spin" />
                   ) : (
-                    <Download className="w-4 h-4 mr-2" />
+                  <Download className="w-4 h-4 mr-2" />
                   )}
                   {downloadingReceipt ? 'Downloading...' : 'Download Receipt'}
                 </Button>
@@ -767,14 +1075,14 @@ const TransactionHistory: React.FC = () => {
                 <h3 className="font-medium text-gray-900 mb-2 text-sm sm:text-base">Transaction Details</h3>
                 <div className="space-y-1">
                   <p className="text-xs sm:text-sm text-gray-600 break-words">
-                    <strong>Amount:</strong> {fmtMoney(selectedTransaction.amount, selectedTransaction.currency)}
-                  </p>
+                  <strong>Amount:</strong> {fmtMoney(selectedTransaction.amount, selectedTransaction.currency)}
+                </p>
                   <p className="text-xs sm:text-sm text-gray-600 break-words">
-                    <strong>Description:</strong> {selectedTransaction.description || 'Payment'}
-                  </p>
+                  <strong>Description:</strong> {selectedTransaction.description || 'Payment'}
+                </p>
                   <p className="text-xs sm:text-sm text-gray-600 break-all">
-                    <strong>Transaction ID:</strong> {selectedTransaction.sessionId || selectedTransaction.transactionId}
-                  </p>
+                  <strong>Transaction ID:</strong> {selectedTransaction.sessionId || selectedTransaction.transactionId}
+                </p>
                 </div>
               </div>
               

@@ -111,14 +111,42 @@ const Dashboard = () => {
   const loadStats = React.useCallback(async () => {
     try {
       setLoading(true);
-      const res = await getSandboxStats({ product: product as any });
+      
+      // Calculate days between start and end date
+      const start = new Date(startDate);
+      const end = new Date(endDate);
+      const daysDiff = Math.ceil((end.getTime() - start.getTime()) / (1000 * 60 * 60 * 24)) + 1;
+      
+      console.log('Dashboard: Loading stats with params:', {
+        product,
+        days: daysDiff,
+        freq: frequency,
+        startDate,
+        endDate
+      });
+      
+      const res = await getSandboxStats({ 
+        product: product as any,
+        days: daysDiff,
+        freq: frequency
+      });
+      
+      console.log('Dashboard: Stats response:', res);
+      
       if (res?.success) setStats(res.data || {});
     } finally {
       setLoading(false);
     }
-  }, [getSandboxStats, product]);
+  }, [getSandboxStats, product, startDate, endDate, frequency]);
 
   React.useEffect(() => { void loadStats(); }, [loadStats]);
+
+  // Reload stats when date range or filters change
+  React.useEffect(() => {
+    if (startDate && endDate) {
+      void loadStats();
+    }
+  }, [startDate, endDate, frequency, product]);
 
   if (!user) {
     return (

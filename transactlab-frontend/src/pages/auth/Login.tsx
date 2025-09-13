@@ -9,6 +9,20 @@ import { Link, useNavigate, useSearchParams } from "react-router-dom";
 import { useAuth } from "@/contexts/AuthContext";
 import { LoginRequest } from "@/types";
 import { formatApiError } from "@/lib/utils";
+import { Eye, EyeOff } from "lucide-react";
+import "./Login.css";
+
+// --- HELPER COMPONENTS ---
+
+// --- SUB-COMPONENTS ---
+
+const GlassInputWrapper = ({ children, error }: { children: React.ReactNode, error?: boolean }) => (
+  <div className={`rounded-2xl border transition-colors focus-within:border-violet-400/70 focus-within:bg-violet-500/10 ${
+    error ? 'border-red-500/50 bg-red-500/5' : 'border-border bg-foreground/5 backdrop-blur-sm'
+  }`}>
+    {children}
+  </div>
+);
 
 const schema = z.object({
   email: z.string().email("Please enter a valid email address"),
@@ -120,51 +134,32 @@ const Login = () => {
   };
 
   return (
-    <div className="min-h-screen flex">
-      {/* Left Column - Promotional Section */}
-      <div className="hidden lg:flex lg:w-1/2 bg-gradient-to-b from-[#0a164d]/10 via-[#0a164d]/20 to-[#0a164d]/30 relative overflow-hidden">
-        {/* Background decorative elements */}
-        <div className="absolute inset-0">
-          <div className="absolute top-20 left-10 w-32 h-32 bg-[#0a164d]/20 rounded-full blur-xl"></div>
-          <div className="absolute bottom-20 right-10 w-40 h-40 bg-[#0a164d]/25 rounded-full blur-xl"></div>
-          <div className="absolute top-1/2 left-1/4 w-24 h-24 bg-[#0a164d]/15 rounded-full blur-lg"></div>
-        </div>
-        
-        {/* Content Panel */}
-        <div className="relative z-10 flex items-center justify-center w-full">
-          <div className="bg-white/20 backdrop-blur-md rounded-2xl p-8 max-w-md text-center border border-white/30 shadow-2xl">
-            <div className="flex items-center justify-center mb-6">
-              <div className="w-16 h-16 bg-[#0a164d]/20 rounded-full flex items-center justify-center">
-                <svg className="w-8 h-8 text-[#0a164d]" fill="currentColor" viewBox="0 0 24 24">
-                  <path d="M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2zm-2 15l-5-5 1.41-1.41L10 14.17l7.59-7.59L19 8l-9 9z"/>
-                </svg>
+    <div className="min-h-screen w-full flex flex-col md:flex-row font-geist bg-background text-foreground overflow-hidden">
+      {/* Left column: sign-in form */}
+      <section className="flex-1 flex items-center justify-center p-4 sm:p-6 md:p-8 lg:p-12 w-full">
+        <div className="w-full max-w-xs sm:max-w-sm md:max-w-md lg:max-w-lg">
+          <div className="flex flex-col gap-4 sm:gap-6 md:gap-8">
+            {/* Header */}
+            <div className="text-center mb-4 sm:mb-6 md:mb-8">
+              <div className="flex items-center justify-center mb-3 sm:mb-4 md:mb-6">
+                <div className="relative group">
+                  <div className="absolute inset-0 bg-gradient-to-r from-violet-500 to-purple-600 rounded-full blur-lg opacity-30 group-hover:opacity-50 transition-opacity duration-300"></div>
+                  <img 
+                    src="/transactlab/1.png" 
+                    alt="TransactLab Logo" 
+                    className="relative w-14 h-14 sm:w-16 sm:h-16 md:w-18 md:h-18 object-cover rounded-full transition-transform duration-300 group-hover:scale-110"
+                  />
+                </div>
               </div>
+              <h1 className="animate-element animate-delay-100 text-xl sm:text-2xl md:text-3xl lg:text-4xl font-semibold leading-tight">
+                <span className="font-light text-foreground tracking-tighter bg-gradient-to-r from-foreground via-foreground to-violet-600 bg-clip-text text-transparent">
+                  Welcome
+                </span>
+              </h1>
+              <p className="animate-element animate-delay-200 text-muted-foreground mt-2 text-sm sm:text-base md:text-lg max-w-md mx-auto leading-relaxed">
+                Access your account and continue your journey with us
+              </p>
             </div>
-            <h2 className="text-2xl font-bold text-[#0a164d] mb-2">
-              Secure & Reliable
-            </h2>
-            <p className="text-[#0a164d]/80 text-lg">
-              Your trusted partner for secure payment processing and financial solutions
-            </p>
-          </div>
-        </div>
-      </div>
-
-      {/* Right Column - Login Form */}
-      <div className="w-full lg:w-1/2 flex items-center justify-center p-6 bg-white">
-        <div className="w-full max-w-md">
-          {/* Header */}
-          <div className="text-center mb-8">
-            <div className="flex items-center justify-center mb-4">
-              <img 
-                src="/transactlab/1.png" 
-                alt="TransactLab Logo" 
-                className="w-12 h-12 object-cover"
-              />
-            </div>
-            <h1 className="text-2xl font-bold text-gray-900 mb-2">Welcome Back</h1>
-            <p className="text-gray-600">Sign in to your TransactLab account</p>
-          </div>
 
           {/* Verification Alert */}
           {searchParams.get("verification") === "required" && (
@@ -223,114 +218,188 @@ const Login = () => {
             </div>
           )}
 
-          {/* Login Form */}
-          <form onSubmit={handleSubmit(onSubmit)} className="space-y-6">
-            {/* Email Field */}
-            <div className="space-y-2">
-              <label htmlFor="email" className="text-sm font-medium text-gray-700">Email</label>
-              <Input 
-                id="email" 
-                type="email" 
-                placeholder="Enter your email"
-                {...register("email")}
-                className={`w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-[#0a164d] focus:border-transparent ${errors.email ? "border-red-500" : ""}`}
-              />
-              {errors.email && (
-                <p className="text-sm text-red-500">{errors.email.message}</p>
-              )}
-            </div>
-
-            {/* Password Field */}
-            <div className="space-y-2">
-              <label htmlFor="password" className="text-sm font-medium text-gray-700">Password</label>
-              <div className="relative">
-                <Input 
-                  id="password" 
-                  type={showPassword ? "text" : "password"}
-                  placeholder="Enter your password"
-                  {...register("password")}
-                  className={`w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-[#0a164d] focus:border-transparent pr-10 ${errors.password ? "border-red-500" : ""}`}
-                />
-                <button
-                  type="button"
-                  className="absolute right-3 top-1/2 transform -translate-y-1/2 text-gray-500 hover:text-gray-700"
-                  onClick={() => setShowPassword(!showPassword)}
-                >
-                  {showPassword ? (
-                    <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M13.875 18.825A10.05 10.05 0 0112 19c-4.478 0-8.268-2.943-9.543-7a9.97 9.97 0 011.563-3.029m5.858.908a3 3 0 114.243 4.243M9.878 9.878l4.242 4.242M9.878 9.878L3 3m6.878 6.878L21 21" />
-                    </svg>
-                  ) : (
-                    <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 12a3 3 0 11-6 0 3 3 0 016 0z" />
-                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M2.458 12C3.732 7.943 7.523 5 12 5c4.478 0 8.268 2.943 9.542 7-1.274 4.057-5.064 7-9.542 7-4.477 0-8.268-2.943-9.542-7z" />
-                    </svg>
-                  )}
-                </button>
+            {/* Login Form */}
+            <form onSubmit={handleSubmit(onSubmit)} className="space-y-3 sm:space-y-4">
+              {/* Email Field */}
+              <div className="animate-element animate-delay-300 group">
+                <label className="text-xs sm:text-sm font-medium text-muted-foreground block mb-1 transition-colors group-focus-within:text-violet-600">
+                  Email Address
+                </label>
+                <GlassInputWrapper error={!!errors.email}>
+                  <input 
+                    {...register("email")}
+                    type="email" 
+                    placeholder="Enter your email address" 
+                    className="w-full bg-transparent text-sm p-2.5 sm:p-3 rounded-xl focus:outline-none transition-all duration-200 placeholder:text-muted-foreground/60" 
+                  />
+                </GlassInputWrapper>
+                {errors.email && (
+                  <p className="text-xs text-red-500 mt-1 animate-fade-in">{errors.email.message}</p>
+                )}
               </div>
-              {errors.password && (
-                <p className="text-sm text-red-500">{errors.password.message}</p>
-              )}
-            </div>
 
-            {/* Security Question Answer Field */}
-            <div className="space-y-2">
-              <label htmlFor="securityAnswer" className="text-sm font-medium text-gray-700">Security Question Answer</label>
-              <Input 
-                id="securityAnswer" 
-                type="text"
-                placeholder="Answer your security question"
-                {...register("securityAnswer")}
-                className={`w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-[#0a164d] focus:border-transparent ${errors.securityAnswer ? "border-red-500" : ""}`}
-              />
-              {errors.securityAnswer && (
-                <p className="text-sm text-red-500">{errors.securityAnswer.message}</p>
-              )}
-              <p className="text-xs text-gray-500">
-                Enter the answer to the security question you set during registration
-              </p>
-            </div>
+              {/* Password Field */}
+              <div className="animate-element animate-delay-400 group">
+                <label className="text-xs sm:text-sm font-medium text-muted-foreground block mb-1 transition-colors group-focus-within:text-violet-600">
+                  Password
+                </label>
+                <GlassInputWrapper error={!!errors.password}>
+                  <div className="relative">
+                    <input 
+                      {...register("password")}
+                      type={showPassword ? 'text' : 'password'} 
+                      placeholder="Enter your password" 
+                      className="w-full bg-transparent text-sm p-2.5 sm:p-3 pr-8 sm:pr-10 rounded-xl focus:outline-none transition-all duration-200 placeholder:text-muted-foreground/60" 
+                    />
+                    <button 
+                      type="button" 
+                      onClick={() => setShowPassword(!showPassword)} 
+                      className="absolute inset-y-0 right-2 flex items-center p-1.5 hover:bg-muted/20 rounded-lg transition-all duration-200"
+                    >
+                      {showPassword ? (
+                        <EyeOff className="w-4 h-4 text-muted-foreground hover:text-foreground transition-colors" />
+                      ) : (
+                        <Eye className="w-4 h-4 text-muted-foreground hover:text-foreground transition-colors" />
+                      )}
+                    </button>
+                  </div>
+                </GlassInputWrapper>
+                {errors.password && (
+                  <p className="text-xs text-red-500 mt-1 animate-fade-in">{errors.password.message}</p>
+                )}
+              </div>
 
-            {/* Forgot Password and Security Question Reset */}
-            <div className="flex flex-col space-y-1 items-end">
-              <Link to="/auth/forgot" className="text-sm text-[#0a164d] hover:text-[#0a164d]/80 font-medium">
-                Forgot password?
-              </Link>
-                                      <Link to="/auth/initiate-security-question-reset" className="text-sm text-[#0a164d] hover:text-[#0a164d]/80 font-medium">
-                          Reset security question
-                        </Link>
-            </div>
+              {/* Security Question Answer Field */}
+              <div className="animate-element animate-delay-450 group">
+                <label className="text-xs sm:text-sm font-medium text-muted-foreground block mb-1 transition-colors group-focus-within:text-violet-600">
+                  Security Question Answer
+                </label>
+                <GlassInputWrapper error={!!errors.securityAnswer}>
+                  <input 
+                    {...register("securityAnswer")}
+                    type="text"
+                    placeholder="Answer your security question" 
+                    className="w-full bg-transparent text-sm p-2.5 sm:p-3 rounded-xl focus:outline-none transition-all duration-200 placeholder:text-muted-foreground/60" 
+                  />
+                </GlassInputWrapper>
+                {errors.securityAnswer && (
+                  <p className="text-xs text-red-500 mt-1 animate-fade-in">{errors.securityAnswer.message}</p>
+                )}
+                <p className="text-xs text-muted-foreground mt-1 leading-relaxed">
+                  Enter the answer to the security question you set during registration
+                </p>
+              </div>
 
-            {/* Login Button */}
-            <Button 
-              type="submit" 
-              className="w-full bg-[#0a164d] hover:bg-[#0a164d]/90 text-white font-semibold py-3 rounded-lg transition-all duration-200 transform hover:scale-[1.02]"
-              disabled={isLoading}
-            >
-              {isLoading ? (
-                <div className="flex items-center space-x-2">
-                  <div className="w-4 h-4 border-2 border-white border-t-transparent rounded-full animate-spin"></div>
-                  <span>Signing in...</span>
+              {/* Forgot Password and Security Question Reset */}
+              <div className="animate-element animate-delay-500 flex flex-col sm:flex-row sm:items-center sm:justify-between gap-1 sm:gap-0 text-xs">
+                <div className="flex flex-col sm:flex-row gap-1 sm:gap-4">
+                  <Link 
+                    to="/auth/forgot" 
+                    className="hover:underline text-violet-400 transition-all duration-200 hover:text-violet-500 hover:scale-105 inline-block"
+                  >
+                    Forgot password?
+                  </Link>
+                  <Link 
+                    to="/auth/initiate-security-question-reset" 
+                    className="hover:underline text-violet-400 transition-all duration-200 hover:text-violet-500 hover:scale-105 inline-block"
+                  >
+                    Reset security question
+                  </Link>
                 </div>
-              ) : (
-                "Login"
-              )}
-            </Button>
-          </form>
+              </div>
+
+              {/* Login Button */}
+              <button 
+                type="submit" 
+                disabled={isLoading}
+                className="animate-element animate-delay-600 w-full rounded-xl bg-gradient-to-r from-violet-600 to-purple-600 hover:from-violet-700 hover:to-purple-700 py-2.5 sm:py-3 font-medium text-white transition-all duration-300 transform hover:scale-[1.02] hover:shadow-lg hover:shadow-violet-500/25 disabled:opacity-50 disabled:cursor-not-allowed disabled:transform-none disabled:shadow-none"
+              >
+                {isLoading ? (
+                  <div className="flex items-center justify-center space-x-2">
+                    <div className="w-4 h-4 border-2 border-white border-t-transparent rounded-full animate-spin"></div>
+                    <span className="text-sm">Signing in...</span>
+                  </div>
+                ) : (
+                  <span className="text-sm">Sign In</span>
+                )}
+              </button>
+            </form>
 
 
-
-          {/* Register Link */}
-          <div className="mt-6 text-center">
-            <p className="text-sm text-gray-600">
-              Don't have an account?{" "}
-              <Link to="/auth/register" className="text-[#0a164d] hover:text-[#0a164d]/80 font-medium">
-                Create one
+            {/* Register Link */}
+            <p className="animate-element animate-delay-700 text-center text-xs sm:text-sm text-muted-foreground">
+              New to our platform?{" "}
+              <Link 
+                to="/auth/register" 
+                className="text-violet-400 hover:text-violet-500 hover:underline transition-all duration-200 hover:scale-105 inline-block font-medium"
+              >
+                Create Account
               </Link>
             </p>
           </div>
         </div>
-      </div>
+      </section>
+
+      {/* Right column: hero image + testimonials carousel */}
+      <section className="hidden md:block flex-1 relative p-4 w-full">
+        <div className="animate-slide-right animate-delay-300 absolute inset-4 rounded-3xl bg-cover bg-center" style={{ backgroundImage: `url(https://images.unsplash.com/photo-1642615835477-d303d7dc9ee9?w=2160&q=80)` }}></div>
+        
+        {/* Testimonials Carousel */}
+        <div className="absolute bottom-8 left-4 right-4">
+          <div className="testimonial-carousel overflow-hidden relative w-full">
+            <div className="testimonial-track flex gap-3 animate-scroll">
+              {/* Testimonial 1 */}
+              <div className="flex-shrink-0 flex items-start gap-2 rounded-2xl bg-card/40 dark:bg-zinc-800/40 backdrop-blur-xl border border-white/10 p-3 w-64 sm:w-72">
+                <img src="https://randomuser.me/api/portraits/women/57.jpg" className="h-8 w-8 object-cover rounded-xl" alt="avatar" />
+                <div className="text-xs leading-snug">
+                  <p className="flex items-center gap-1 font-medium">Sarah Chen</p>
+                  <p className="text-muted-foreground text-xs">@sarahdigital</p>
+                  <p className="mt-1 text-foreground/80 text-xs">Amazing platform! The user experience is seamless and the features are exactly what I needed.</p>
+                </div>
+              </div>
+              
+              {/* Testimonial 2 */}
+              <div className="flex-shrink-0 flex items-start gap-2 rounded-2xl bg-card/40 dark:bg-zinc-800/40 backdrop-blur-xl border border-white/10 p-3 w-64 sm:w-72">
+                <img src="https://randomuser.me/api/portraits/men/64.jpg" className="h-8 w-8 object-cover rounded-xl" alt="avatar" />
+                <div className="text-xs leading-snug">
+                  <p className="flex items-center gap-1 font-medium">Marcus Johnson</p>
+                  <p className="text-muted-foreground text-xs">@marcustech</p>
+                  <p className="mt-1 text-foreground/80 text-xs">This service has transformed how I work. Clean design, powerful features, and excellent support.</p>
+                </div>
+              </div>
+              
+              {/* Testimonial 3 */}
+              <div className="flex-shrink-0 flex items-start gap-2 rounded-2xl bg-card/40 dark:bg-zinc-800/40 backdrop-blur-xl border border-white/10 p-3 w-64 sm:w-72">
+                <img src="https://randomuser.me/api/portraits/men/32.jpg" className="h-8 w-8 object-cover rounded-xl" alt="avatar" />
+                <div className="text-xs leading-snug">
+                  <p className="flex items-center gap-1 font-medium">David Martinez</p>
+                  <p className="text-muted-foreground text-xs">@davidcreates</p>
+                  <p className="mt-1 text-foreground/80 text-xs">I've tried many platforms, but this one stands out. Intuitive, reliable, and genuinely helpful for productivity.</p>
+                </div>
+              </div>
+              
+              {/* Duplicate testimonials for seamless loop */}
+              <div className="flex-shrink-0 flex items-start gap-2 rounded-2xl bg-card/40 dark:bg-zinc-800/40 backdrop-blur-xl border border-white/10 p-3 w-64 sm:w-72">
+                <img src="https://randomuser.me/api/portraits/women/57.jpg" className="h-8 w-8 object-cover rounded-xl" alt="avatar" />
+                <div className="text-xs leading-snug">
+                  <p className="flex items-center gap-1 font-medium">Sarah Chen</p>
+                  <p className="text-muted-foreground text-xs">@sarahdigital</p>
+                  <p className="mt-1 text-foreground/80 text-xs">Amazing platform! The user experience is seamless and the features are exactly what I needed.</p>
+                </div>
+              </div>
+              
+              <div className="flex-shrink-0 flex items-start gap-2 rounded-2xl bg-card/40 dark:bg-zinc-800/40 backdrop-blur-xl border border-white/10 p-3 w-64 sm:w-72">
+                <img src="https://randomuser.me/api/portraits/men/64.jpg" className="h-8 w-8 object-cover rounded-xl" alt="avatar" />
+                <div className="text-xs leading-snug">
+                  <p className="flex items-center gap-1 font-medium">Marcus Johnson</p>
+                  <p className="text-muted-foreground text-xs">@marcustech</p>
+                  <p className="mt-1 text-foreground/80 text-xs">This service has transformed how I work. Clean design, powerful features, and excellent support.</p>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+      </section>
     </div>
   );
 };

@@ -49,6 +49,7 @@ const WebhookManagement: React.FC = () => {
   const [selectedWebhook, setSelectedWebhook] = useState<any>(null);
   const [showWebhookModal, setShowWebhookModal] = useState(false);
   const [loading, setLoading] = useState(false);
+  const [initialLoading, setInitialLoading] = useState(true);
   const [stats, setStats] = useState({
     totalWebhooks: 0,
     activeWebhooks: 0,
@@ -115,6 +116,7 @@ const WebhookManagement: React.FC = () => {
       });
     } finally {
       setLoading(false);
+      setInitialLoading(false);
     }
   };
 
@@ -133,12 +135,7 @@ const WebhookManagement: React.FC = () => {
       const res = await createWebhook({ 
         name: form.name, 
         url: form.url, 
-        events: form.events,
-        secret: form.secret,
-        description: form.description,
-        isActive: form.isActive,
-        retryPolicy: form.retryPolicy,
-        timeout: form.timeout
+        events: form.events
       });
       
       if (res?.success) { 
@@ -178,12 +175,7 @@ const WebhookManagement: React.FC = () => {
     try {
       const res = await testWebhook(webhook.id || webhook._id, { 
         webhookUrl: webhook.url, 
-        eventType: 'webhook.test',
-        payload: {
-          test: true,
-          timestamp: new Date().toISOString(),
-          webhookId: webhook.id || webhook._id
-        }
+        eventType: 'webhook.test'
       });
       
       if (res?.success) {
@@ -267,102 +259,197 @@ const WebhookManagement: React.FC = () => {
     return result;
   };
 
-  return (
-    <div className="space-y-6">
-      {/* Header */}
-      <div className="flex items-center justify-between">
-        <div>
-          <h1 className="text-3xl font-bold text-gray-900">Webhook Management</h1>
-          <p className="text-gray-600 mt-1">Configure and manage webhook endpoints for real-time event notifications</p>
+  if (initialLoading) {
+    return (
+      <div className="space-y-4 sm:space-y-6 p-3 sm:p-0">
+        {/* Header Skeleton */}
+        <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
+          <div className="space-y-2">
+            <div className="h-8 sm:h-10 bg-gray-200 rounded w-64 animate-pulse"></div>
+            <div className="h-4 bg-gray-200 rounded w-80 animate-pulse"></div>
+          </div>
+          <div className="flex flex-col sm:flex-row gap-2">
+            <div className="h-9 bg-gray-200 rounded w-20 animate-pulse"></div>
+            <div className="h-9 bg-gray-200 rounded w-32 animate-pulse"></div>
+          </div>
         </div>
-        <div className="flex items-center space-x-3">
-          <Button variant="outline" onClick={fetchWebhooks} disabled={loading}>
-            <RefreshCw className={`w-4 h-4 mr-2 ${loading ? 'animate-spin' : ''}`} />
-            Refresh
+
+        {/* Security Notice Skeleton */}
+        <div className="border rounded-lg p-4">
+          <div className="flex items-start space-x-3">
+            <div className="w-4 h-4 bg-gray-200 rounded animate-pulse"></div>
+            <div className="space-y-2 flex-1">
+              <div className="h-4 bg-gray-200 rounded w-48 animate-pulse"></div>
+              <div className="h-3 bg-gray-200 rounded w-full animate-pulse"></div>
+            </div>
+          </div>
+        </div>
+
+        {/* Stats Cards Skeleton */}
+        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-5 gap-4 sm:gap-6">
+          {Array.from({ length: 5 }).map((_, i) => (
+            <div key={i} className="border rounded-lg p-4 sm:p-6">
+              <div className="flex items-center">
+                <div className="p-2 bg-gray-200 rounded-lg w-10 h-10 animate-pulse"></div>
+                <div className="ml-4 space-y-2 flex-1">
+                  <div className="h-4 bg-gray-200 rounded w-20 animate-pulse"></div>
+                  <div className="h-6 bg-gray-200 rounded w-12 animate-pulse"></div>
+                </div>
+              </div>
+            </div>
+          ))}
+        </div>
+
+        {/* Tabs Skeleton */}
+        <div className="space-y-4">
+          <div className="flex space-x-1 bg-gray-100 rounded-lg p-1">
+            <div className="h-9 bg-gray-200 rounded w-32 animate-pulse"></div>
+            <div className="h-9 bg-gray-200 rounded w-32 animate-pulse"></div>
+          </div>
+          
+          {/* Content Skeleton */}
+          <div className="border rounded-lg p-4 sm:p-6">
+            <div className="space-y-4">
+              <div className="h-5 bg-gray-200 rounded w-32 animate-pulse"></div>
+              <div className="space-y-3">
+                {Array.from({ length: 2 }).map((_, i) => (
+                  <div key={i} className="flex items-center justify-between p-4 border rounded-lg">
+                    <div className="flex items-center space-x-4">
+                      <div className="w-4 h-4 bg-gray-200 rounded animate-pulse"></div>
+                      <div className="space-y-2 flex-1">
+                        <div className="h-4 bg-gray-200 rounded w-32 animate-pulse"></div>
+                        <div className="h-3 bg-gray-200 rounded w-48 animate-pulse"></div>
+                      </div>
+                    </div>
+                    <div className="flex items-center space-x-2">
+                      <div className="w-8 h-8 bg-gray-200 rounded animate-pulse"></div>
+                      <div className="w-8 h-8 bg-gray-200 rounded animate-pulse"></div>
+                      <div className="w-8 h-8 bg-gray-200 rounded animate-pulse"></div>
+                      <div className="w-8 h-8 bg-gray-200 rounded animate-pulse"></div>
+                    </div>
+                  </div>
+                ))}
+              </div>
+            </div>
+          </div>
+        </div>
+
+        {/* Loading Message */}
+        <div className="text-center py-8">
+          <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-[#0a164d] mx-auto mb-4"></div>
+          <p className="text-gray-600 font-medium">Loading webhooks...</p>
+          <p className="text-sm text-gray-500 mt-1">This may take a few moments</p>
+        </div>
+      </div>
+    );
+  }
+
+  return (
+    <div className="space-y-4 sm:space-y-6 p-3 sm:p-0">
+      {/* Header */}
+      <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
+        <div className="min-w-0 flex-1">
+          <h1 className="text-2xl sm:text-3xl font-bold text-gray-900">Webhook Management</h1>
+          <p className="text-sm sm:text-base text-gray-600 mt-1">Configure and manage webhook endpoints for real-time event notifications</p>
+        </div>
+        <div className="flex flex-col sm:flex-row items-stretch sm:items-center gap-2 sm:gap-3">
+          <Button 
+            variant="outline" 
+            onClick={fetchWebhooks} 
+            disabled={loading}
+            className="w-full sm:w-auto text-xs sm:text-sm"
+          >
+            <RefreshCw className={`w-3 h-3 sm:w-4 sm:h-4 mr-2 ${loading ? 'animate-spin' : ''}`} />
+            <span className="hidden sm:inline">Refresh</span>
+            <span className="sm:hidden">Refresh</span>
           </Button>
-          <Button onClick={() => setShowCreateModal(true)}>
-            <Plus className="w-4 h-4 mr-2" />
-            Create Webhook
+          <Button 
+            onClick={() => setShowCreateModal(true)}
+            className="w-full sm:w-auto text-xs sm:text-sm"
+          >
+            <Plus className="w-3 h-3 sm:w-4 sm:h-4 mr-2" />
+            <span className="hidden sm:inline">Create Webhook</span>
+            <span className="sm:hidden">Create</span>
           </Button>
         </div>
       </div>
 
       {/* Security Notice */}
       <Alert>
-        <Shield className="h-4 w-4" />
-        <AlertDescription>
+        <Shield className="h-4 w-4 flex-shrink-0" />
+        <AlertDescription className="text-xs sm:text-sm">
           <strong>Security Notice:</strong> Webhook secrets are used to verify the authenticity of incoming webhooks. 
           Keep your secrets secure and never expose them in client-side code or logs.
         </AlertDescription>
       </Alert>
 
       {/* Statistics Overview */}
-      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-5 gap-4">
+      <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-5 gap-4 sm:gap-6">
         <Card>
-          <CardContent className="p-6">
+          <CardContent className="p-4 sm:p-6">
             <div className="flex items-center">
-              <div className="p-2 bg-blue-100 rounded-lg">
-                <Webhook className="w-6 h-6 text-blue-600" />
+              <div className="p-2 bg-blue-100 rounded-lg flex-shrink-0">
+                <Webhook className="w-4 h-4 sm:w-6 sm:h-6 text-blue-600" />
               </div>
-              <div className="ml-4">
-                <p className="text-sm font-medium text-gray-600">Total Webhooks</p>
-                <p className="text-2xl font-bold text-gray-900">{stats.totalWebhooks}</p>
+              <div className="ml-3 sm:ml-4 min-w-0 flex-1">
+                <p className="text-xs sm:text-sm font-medium text-gray-600">Total Webhooks</p>
+                <p className="text-lg sm:text-2xl font-bold text-gray-900">{stats.totalWebhooks}</p>
               </div>
             </div>
           </CardContent>
         </Card>
 
         <Card>
-          <CardContent className="p-6">
+          <CardContent className="p-4 sm:p-6">
             <div className="flex items-center">
-              <div className="p-2 bg-green-100 rounded-lg">
-                <CheckCircle className="w-6 h-6 text-green-600" />
+              <div className="p-2 bg-green-100 rounded-lg flex-shrink-0">
+                <CheckCircle className="w-4 h-4 sm:w-6 sm:h-6 text-green-600" />
               </div>
-              <div className="ml-4">
-                <p className="text-sm font-medium text-gray-600">Active</p>
-                <p className="text-2xl font-bold text-gray-900">{stats.activeWebhooks}</p>
+              <div className="ml-3 sm:ml-4 min-w-0 flex-1">
+                <p className="text-xs sm:text-sm font-medium text-gray-600">Active</p>
+                <p className="text-lg sm:text-2xl font-bold text-gray-900">{stats.activeWebhooks}</p>
               </div>
             </div>
           </CardContent>
         </Card>
 
         <Card>
-          <CardContent className="p-6">
+          <CardContent className="p-4 sm:p-6">
             <div className="flex items-center">
-              <div className="p-2 bg-red-100 rounded-lg">
-                <XCircle className="w-6 h-6 text-red-600" />
+              <div className="p-2 bg-red-100 rounded-lg flex-shrink-0">
+                <XCircle className="w-4 h-4 sm:w-6 sm:h-6 text-red-600" />
               </div>
-              <div className="ml-4">
-                <p className="text-sm font-medium text-gray-600">Failed</p>
-                <p className="text-2xl font-bold text-gray-900">{stats.failedWebhooks}</p>
+              <div className="ml-3 sm:ml-4 min-w-0 flex-1">
+                <p className="text-xs sm:text-sm font-medium text-gray-600">Failed</p>
+                <p className="text-lg sm:text-2xl font-bold text-gray-900">{stats.failedWebhooks}</p>
               </div>
             </div>
           </CardContent>
         </Card>
 
         <Card>
-          <CardContent className="p-6">
+          <CardContent className="p-4 sm:p-6">
             <div className="flex items-center">
-              <div className="p-2 bg-purple-100 rounded-lg">
-                <Activity className="w-6 h-6 text-purple-600" />
+              <div className="p-2 bg-purple-100 rounded-lg flex-shrink-0">
+                <Activity className="w-4 h-4 sm:w-6 sm:h-6 text-purple-600" />
               </div>
-              <div className="ml-4">
-                <p className="text-sm font-medium text-gray-600">Total Deliveries</p>
-                <p className="text-2xl font-bold text-gray-900">{stats.totalDeliveries}</p>
+              <div className="ml-3 sm:ml-4 min-w-0 flex-1">
+                <p className="text-xs sm:text-sm font-medium text-gray-600">Total Deliveries</p>
+                <p className="text-lg sm:text-2xl font-bold text-gray-900">{stats.totalDeliveries}</p>
               </div>
             </div>
           </CardContent>
         </Card>
 
-        <Card>
-          <CardContent className="p-6">
+        <Card className="sm:col-span-2 lg:col-span-1">
+          <CardContent className="p-4 sm:p-6">
             <div className="flex items-center">
-              <div className="p-2 bg-yellow-100 rounded-lg">
-                <TrendingUp className="w-6 h-6 text-yellow-600" />
+              <div className="p-2 bg-yellow-100 rounded-lg flex-shrink-0">
+                <TrendingUp className="w-4 h-4 sm:w-6 sm:h-6 text-yellow-600" />
               </div>
-              <div className="ml-4">
-                <p className="text-sm font-medium text-gray-600">Success Rate</p>
-                <p className="text-2xl font-bold text-gray-900">{stats.successRate}%</p>
+              <div className="ml-3 sm:ml-4 min-w-0 flex-1">
+                <p className="text-xs sm:text-sm font-medium text-gray-600">Success Rate</p>
+                <p className="text-lg sm:text-2xl font-bold text-gray-900">{stats.successRate}%</p>
               </div>
             </div>
           </CardContent>
@@ -370,74 +457,81 @@ const WebhookManagement: React.FC = () => {
       </div>
 
       {/* Main Content */}
-      <Tabs value={activeTab} onValueChange={setActiveTab} className="space-y-6">
-        <TabsList className="grid w-full grid-cols-2">
-          <TabsTrigger value="overview">Webhook Overview</TabsTrigger>
-          <TabsTrigger value="events">Event Management</TabsTrigger>
+      <Tabs value={activeTab} onValueChange={setActiveTab} className="space-y-4 sm:space-y-6">
+        <TabsList className="grid w-full grid-cols-3">
+          <TabsTrigger value="overview" className="text-xs sm:text-sm">Webhook Overview</TabsTrigger>
+          <TabsTrigger value="events" className="text-xs sm:text-sm">Event Management</TabsTrigger>
+          <TabsTrigger value="deliveries" className="text-xs sm:text-sm">Deliveries</TabsTrigger>
         </TabsList>
 
-        <TabsContent value="overview" className="space-y-6">
+        <TabsContent value="overview" className="space-y-4 sm:space-y-6">
           {/* Webhooks List */}
           <Card>
-            <CardHeader>
-              <CardTitle className="flex items-center">
-                <Webhook className="w-5 h-5 mr-2" />
+            <CardHeader className="px-3 sm:px-6 pt-3 sm:pt-6 pb-3 sm:pb-6">
+              <CardTitle className="flex items-center text-sm sm:text-lg">
+                <Webhook className="w-4 h-4 sm:w-5 sm:h-5 mr-2" />
                 Your Webhooks
               </CardTitle>
             </CardHeader>
-            <CardContent>
+            <CardContent className="px-3 sm:px-6 pb-3 sm:pb-6">
               {webhooks.length === 0 ? (
-                <div className="text-center py-12">
-                  <Webhook className="w-12 h-12 text-gray-400 mx-auto mb-4" />
-                  <h3 className="text-lg font-medium text-gray-900 mb-2">No webhooks yet</h3>
-                  <p className="text-gray-600 mb-4">Create your first webhook to start receiving real-time notifications</p>
-                  <Button onClick={() => setShowCreateModal(true)}>
-                    <Plus className="w-4 h-4 mr-2" />
+                <div className="text-center py-8 sm:py-12">
+                  <Webhook className="w-12 h-12 sm:w-16 sm:h-16 text-gray-400 mx-auto mb-3 sm:mb-4" />
+                  <h3 className="text-base sm:text-lg font-medium text-gray-900 mb-2">No webhooks yet</h3>
+                  <p className="text-sm sm:text-base text-gray-600 mb-4">Create your first webhook to start receiving real-time notifications</p>
+                  <Button onClick={() => setShowCreateModal(true)} className="text-xs sm:text-sm">
+                    <Plus className="w-3 h-3 sm:w-4 sm:h-4 mr-2" />
                     Create Webhook
                   </Button>
                 </div>
               ) : (
-                <div className="space-y-4">
+                <div className="space-y-3 sm:space-y-4">
                   {webhooks.map((webhook: any) => {
                     const statusBadge = getStatusBadge(webhook);
                     return (
-                      <div key={webhook.id || webhook._id} className="flex items-center justify-between p-4 border rounded-lg hover:bg-gray-50">
-                        <div className="flex items-center space-x-4">
-                          <div className="flex items-center space-x-2">
+                      <div key={webhook.id || webhook._id} className="flex flex-col sm:flex-row sm:items-center sm:justify-between p-3 sm:p-4 border rounded-lg hover:bg-gray-50 gap-3 sm:gap-4">
+                        <div className="flex items-start sm:items-center space-x-3 sm:space-x-4 min-w-0 flex-1">
+                          <div className="flex items-center space-x-2 sm:space-x-2">
                             {getStatusIcon(webhook)}
-                            <div>
-                              <h3 className="font-medium text-gray-900">{webhook.name}</h3>
-                              <p className="text-sm text-gray-600">{webhook.url}</p>
+                            <div className="min-w-0 flex-1">
+                              <h3 className="font-medium text-gray-900 text-sm sm:text-base truncate">{webhook.name}</h3>
+                              <p className="text-xs sm:text-sm text-gray-600 truncate">{webhook.url}</p>
                             </div>
                           </div>
-                          <Badge className={statusBadge.className}>
+                          <Badge className={`${statusBadge.className} text-xs flex-shrink-0`}>
                             {statusBadge.text}
                           </Badge>
                         </div>
-                        <div className="flex items-center space-x-2">
+                        <div className="flex items-center justify-end sm:justify-start space-x-2">
                           <Button
                             variant="ghost"
                             size="sm"
                             onClick={() => copy(webhook.url)}
+                            className="h-8 w-8 p-0"
+                            title="Copy URL"
                           >
-                            <Copy className="w-4 h-4" />
+                            <Copy className="w-3 h-3 sm:w-4 sm:h-4" />
                           </Button>
                           <Button
                             variant="outline"
                             size="sm"
                             onClick={() => onTest(webhook)}
                             disabled={loading}
+                            className="h-8 px-2 text-xs sm:text-sm"
+                            title="Test Webhook"
                           >
-                            <TestTube className="w-4 h-4 mr-2" />
-                            Test
+                            <TestTube className="w-3 h-3 sm:w-4 sm:h-4 mr-1 sm:mr-2" />
+                            <span className="hidden sm:inline">Test</span>
                           </Button>
                           <Button
                             variant="outline"
                             size="sm"
                             onClick={() => onToggleActive(webhook)}
                             disabled={loading}
+                            className="h-8 w-8 p-0"
+                            title={webhook.isActive ? "Deactivate" : "Activate"}
                           >
-                            {webhook.isActive ? <Lock className="w-4 h-4" /> : <Unlock className="w-4 h-4" />}
+                            {webhook.isActive ? <Lock className="w-3 h-3 sm:w-4 sm:h-4" /> : <Unlock className="w-3 h-3 sm:w-4 sm:h-4" />}
                           </Button>
                           <Button
                             variant="outline"
@@ -446,8 +540,10 @@ const WebhookManagement: React.FC = () => {
                               setSelectedWebhook(webhook);
                               setShowWebhookModal(true);
                             }}
+                            className="h-8 w-8 p-0"
+                            title="Settings"
                           >
-                            <Settings className="w-4 h-4" />
+                            <Settings className="w-3 h-3 sm:w-4 sm:h-4" />
                           </Button>
                         </div>
                       </div>
@@ -459,26 +555,26 @@ const WebhookManagement: React.FC = () => {
           </Card>
         </TabsContent>
 
-        <TabsContent value="events" className="space-y-6">
+        <TabsContent value="events" className="space-y-4 sm:space-y-6">
           <Card>
-            <CardHeader>
-              <CardTitle className="flex items-center">
-                <Zap className="w-5 h-5 mr-2" />
+            <CardHeader className="px-3 sm:px-6 pt-3 sm:pt-6 pb-3 sm:pb-6">
+              <CardTitle className="flex items-center text-sm sm:text-lg">
+                <Zap className="w-4 h-4 sm:w-5 sm:h-5 mr-2" />
                 Available Events
               </CardTitle>
             </CardHeader>
-            <CardContent>
-              <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+            <CardContent className="px-3 sm:px-6 pb-3 sm:pb-6">
+              <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 sm:gap-4">
                 {availableEvents.map((event) => (
-                  <div key={event.id} className="p-4 border rounded-lg hover:bg-gray-50">
-                    <div className="flex items-start space-x-3">
-                      <div className="p-2 bg-blue-100 rounded-lg">
-                        <Zap className="w-4 h-4 text-blue-600" />
+                  <div key={event.id} className="p-3 sm:p-4 border rounded-lg hover:bg-gray-50">
+                    <div className="flex items-start space-x-2 sm:space-x-3">
+                      <div className="p-2 bg-blue-100 rounded-lg flex-shrink-0">
+                        <Zap className="w-3 h-3 sm:w-4 sm:h-4 text-blue-600" />
                       </div>
-                      <div className="flex-1">
-                        <h3 className="font-medium text-gray-900">{event.label}</h3>
-                        <p className="text-sm text-gray-600 mt-1">{event.description}</p>
-                        <Badge variant="outline" className="mt-2">
+                      <div className="flex-1 min-w-0">
+                        <h3 className="font-medium text-gray-900 text-sm sm:text-base">{event.label}</h3>
+                        <p className="text-xs sm:text-sm text-gray-600 mt-1">{event.description}</p>
+                        <Badge variant="outline" className="mt-2 text-xs">
                           {event.id}
                         </Badge>
                       </div>
@@ -489,57 +585,205 @@ const WebhookManagement: React.FC = () => {
             </CardContent>
           </Card>
         </TabsContent>
+
+        <TabsContent value="deliveries" className="space-y-4 sm:space-y-6">
+          {/* Delivery Statistics */}
+          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4 sm:gap-6">
+            <Card>
+              <CardContent className="p-4 sm:p-6">
+                <div className="flex items-center">
+                  <div className="p-2 bg-green-100 rounded-lg flex-shrink-0">
+                    <CheckCircle className="w-4 h-4 sm:w-6 sm:h-6 text-green-600" />
+                  </div>
+                  <div className="ml-3 sm:ml-4 min-w-0 flex-1">
+                    <p className="text-xs sm:text-sm font-medium text-gray-600">Successful</p>
+                    <p className="text-lg sm:text-2xl font-bold text-gray-900">
+                      {webhooks.reduce((sum, w) => sum + (w.successfulDeliveries || 0), 0)}
+                    </p>
+                  </div>
+                </div>
+              </CardContent>
+            </Card>
+
+            <Card>
+              <CardContent className="p-4 sm:p-6">
+                <div className="flex items-center">
+                  <div className="p-2 bg-red-100 rounded-lg flex-shrink-0">
+                    <XCircle className="w-4 h-4 sm:w-6 sm:h-6 text-red-600" />
+                  </div>
+                  <div className="ml-3 sm:ml-4 min-w-0 flex-1">
+                    <p className="text-xs sm:text-sm font-medium text-gray-600">Failed</p>
+                    <p className="text-lg sm:text-2xl font-bold text-gray-900">
+                      {webhooks.reduce((sum, w) => sum + (w.failedDeliveries || 0), 0)}
+                    </p>
+                  </div>
+                </div>
+              </CardContent>
+            </Card>
+
+            <Card>
+              <CardContent className="p-4 sm:p-6">
+                <div className="flex items-center">
+                  <div className="p-2 bg-yellow-100 rounded-lg flex-shrink-0">
+                    <Clock className="w-4 h-4 sm:w-6 sm:h-6 text-yellow-600" />
+                  </div>
+                  <div className="ml-3 sm:ml-4 min-w-0 flex-1">
+                    <p className="text-xs sm:text-sm font-medium text-gray-600">Pending</p>
+                    <p className="text-lg sm:text-2xl font-bold text-gray-900">
+                      {webhooks.reduce((sum, w) => sum + (w.pendingDeliveries || 0), 0)}
+                    </p>
+                  </div>
+                </div>
+              </CardContent>
+            </Card>
+
+            <Card>
+              <CardContent className="p4 sm:p-6">
+                <div className="flex items-center">
+                  <div className="p-2 bg-blue-100 rounded-lg flex-shrink-0">
+                    <Activity className="w-4 h-4 sm:w-6 sm:h-6 text-blue-600" />
+                  </div>
+                  <div className="ml-3 sm:ml-4 min-w-0 flex-1">
+                    <p className="text-xs sm:text-sm font-medium text-gray-600">Total</p>
+                    <p className="text-lg sm:text-2xl font-bold text-gray-900">{stats.totalDeliveries}</p>
+                  </div>
+                </div>
+              </CardContent>
+            </Card>
+          </div>
+
+          {/* Recent Deliveries */}
+          <Card>
+            <CardHeader className="px-3 sm:px-6 pt-3 sm:pt-6 pb-3 sm:pb-6">
+              <CardTitle className="flex items-center text-sm sm:text-lg">
+                <Database className="w-4 h-4 sm:w-5 sm:h-5 mr-2" />
+                Recent Deliveries
+              </CardTitle>
+            </CardHeader>
+            <CardContent className="px-3 sm:px-6 pb-3 sm:pb-6">
+              {webhooks.length === 0 ? (
+                <div className="text-center py-8 sm:py-12">
+                  <Database className="w-12 h-12 sm:w-16 sm:h-16 text-gray-400 mx-auto mb-3 sm:mb-4" />
+                  <h3 className="text-base sm:text-lg font-medium text-gray-900 mb-2">No deliveries yet</h3>
+                  <p className="text-sm sm:text-base text-gray-600">Create webhooks to start tracking deliveries</p>
+                </div>
+              ) : (
+                <div className="space-y-3 sm:space-y-4">
+                  {webhooks.map((webhook: any) => {
+                    const deliveries = webhook.recentDeliveries || [];
+                    return (
+                      <div key={webhook.id || webhook._id} className="border rounded-lg p-3 sm:p-4">
+                        <div className="flex items-center justify-between mb-3">
+                          <div className="flex items-center space-x-2">
+                            <Webhook className="w-4 h-4 text-blue-600" />
+                            <h3 className="font-medium text-gray-900 text-sm sm:text-base">{webhook.name}</h3>
+                            <Badge className={`${getStatusBadge(webhook).className} text-xs`}>
+                              {getStatusBadge(webhook).text}
+                            </Badge>
+                          </div>
+                          <div className="text-xs sm:text-sm text-gray-500">
+                            {webhook.deliveryCount || 0} total deliveries
+                          </div>
+                        </div>
+                        
+                        {deliveries.length === 0 ? (
+                          <p className="text-xs sm:text-sm text-gray-500 italic">No recent deliveries</p>
+                        ) : (
+                          <div className="space-y-2">
+                            {deliveries.slice(0, 3).map((delivery: any, index: number) => (
+                              <div key={index} className="flex items-center justify-between p-2 bg-gray-50 rounded">
+                                <div className="flex items-center space-x-2">
+                                  {delivery.status === 'success' ? (
+                                    <CheckCircle className="w-3 h-3 text-green-500" />
+                                  ) : delivery.status === 'failed' ? (
+                                    <XCircle className="w-3 h-3 text-red-500" />
+                                  ) : (
+                                    <Clock className="w-3 h-3 text-yellow-500" />
+                                  )}
+                                  <span className="text-xs sm:text-sm font-medium text-gray-900">
+                                    {delivery.eventType || 'Unknown Event'}
+                                  </span>
+                                  <Badge variant="outline" className="text-xs">
+                                    {delivery.status || 'pending'}
+                                  </Badge>
+                                </div>
+                                <div className="text-xs text-gray-500">
+                                  {delivery.timestamp ? 
+                                    new Date(delivery.timestamp).toLocaleString() : 
+                                    'Unknown time'
+                                  }
+                                </div>
+                              </div>
+                            ))}
+                            {deliveries.length > 3 && (
+                              <p className="text-xs text-gray-500 text-center">
+                                +{deliveries.length - 3} more deliveries
+                              </p>
+                            )}
+                          </div>
+                        )}
+                      </div>
+                    );
+                  })}
+                </div>
+              )}
+            </CardContent>
+          </Card>
+        </TabsContent>
       </Tabs>
 
       {/* Create Webhook Modal */}
       {showCreateModal && (
-        <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
-          <div className="bg-white rounded-lg p-6 w-full max-w-2xl max-h-[90vh] overflow-y-auto">
-            <div className="flex items-center justify-between mb-6">
-              <h2 className="text-xl font-semibold">Create New Webhook</h2>
-              <Button variant="ghost" size="sm" onClick={() => setShowCreateModal(false)}>
-                <X className="w-4 h-4" />
+        <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center p-2 sm:p-4 z-50">
+          <div className="bg-white rounded-lg p-4 sm:p-6 w-full max-w-2xl max-h-[95vh] overflow-y-auto mx-2 sm:mx-0">
+            <div className="flex items-center justify-between mb-4 sm:mb-6">
+              <h2 className="text-lg sm:text-xl font-semibold">Create New Webhook</h2>
+              <Button variant="ghost" size="sm" onClick={() => setShowCreateModal(false)} className="p-1">
+                <X className="w-4 h-4 sm:w-5 sm:h-5" />
               </Button>
             </div>
 
-            <form onSubmit={onCreate} className="space-y-4">
-              <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+            <form onSubmit={onCreate} className="space-y-3 sm:space-y-4">
+              <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 sm:gap-4">
                 <div>
-                  <Label htmlFor="name">Webhook Name *</Label>
+                  <Label htmlFor="name" className="text-xs sm:text-sm">Webhook Name *</Label>
                   <Input
                     id="name"
                     value={form.name}
                     onChange={e => setForm(v => ({...v, name: e.target.value}))}
                     placeholder="My Payment Webhook"
                     required
+                    className="text-xs sm:text-sm"
                   />
                 </div>
                 <div>
-                  <Label htmlFor="url">Webhook URL *</Label>
+                  <Label htmlFor="url" className="text-xs sm:text-sm">Webhook URL *</Label>
                   <Input
                     id="url"
                     value={form.url}
                     onChange={e => setForm(v => ({...v, url: e.target.value}))}
                     placeholder="https://your-domain.com/webhooks"
                     required
+                    className="text-xs sm:text-sm"
                   />
                 </div>
               </div>
 
               <div>
-                <Label htmlFor="description">Description</Label>
+                <Label htmlFor="description" className="text-xs sm:text-sm">Description</Label>
                 <Textarea
                   id="description"
                   value={form.description}
                   onChange={e => setForm(v => ({...v, description: e.target.value}))}
                   placeholder="Optional description for this webhook"
                   rows={3}
+                  className="text-xs sm:text-sm"
                 />
               </div>
 
               <div>
-                <Label>Events to Subscribe To *</Label>
-                <div className="grid grid-cols-1 md:grid-cols-2 gap-2 mt-2 max-h-40 overflow-y-auto">
+                <Label className="text-xs sm:text-sm">Events to Subscribe To *</Label>
+                <div className="grid grid-cols-1 sm:grid-cols-2 gap-2 mt-2 max-h-40 overflow-y-auto">
                   {availableEvents.map((event) => (
                     <div key={event.id} className="flex items-start space-x-2">
                       <input
@@ -553,9 +797,9 @@ const WebhookManagement: React.FC = () => {
                             setForm(v => ({...v, events: v.events.filter(ev => ev !== event.id)}));
                           }
                         }}
-                        className="mt-1"
+                        className="mt-1 w-3 h-3 sm:w-4 sm:h-4"
                       />
-                      <label htmlFor={event.id} className="text-sm">
+                      <label htmlFor={event.id} className="text-xs sm:text-sm">
                         <div className="font-medium">{event.label}</div>
                         <div className="text-gray-500 text-xs">{event.id}</div>
                       </label>
@@ -564,27 +808,29 @@ const WebhookManagement: React.FC = () => {
                 </div>
               </div>
 
-              <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+              <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 sm:gap-4">
                 <div>
-                  <Label htmlFor="secret">Webhook Secret</Label>
-                  <div className="flex space-x-2">
+                  <Label htmlFor="secret" className="text-xs sm:text-sm">Webhook Secret</Label>
+                  <div className="flex flex-col sm:flex-row space-y-2 sm:space-y-0 sm:space-x-2">
                     <Input
                       id="secret"
                       value={form.secret}
                       onChange={e => setForm(v => ({...v, secret: e.target.value}))}
                       placeholder="Leave empty to auto-generate"
+                      className="text-xs sm:text-sm"
                     />
                     <Button
                       type="button"
                       variant="outline"
                       onClick={() => setForm(v => ({...v, secret: generateWebhookSecret()}))}
+                      className="w-full sm:w-auto text-xs sm:text-sm"
                     >
                       Generate
                     </Button>
                   </div>
                 </div>
                 <div>
-                  <Label htmlFor="timeout">Timeout (seconds)</Label>
+                  <Label htmlFor="timeout" className="text-xs sm:text-sm">Timeout (seconds)</Label>
                   <Input
                     id="timeout"
                     type="number"
@@ -592,14 +838,15 @@ const WebhookManagement: React.FC = () => {
                     onChange={e => setForm(v => ({...v, timeout: parseInt(e.target.value) || 30}))}
                     min="5"
                     max="300"
+                    className="text-xs sm:text-sm"
                   />
                 </div>
               </div>
 
               <div>
-                <Label htmlFor="retryPolicy">Retry Policy</Label>
+                <Label htmlFor="retryPolicy" className="text-xs sm:text-sm">Retry Policy</Label>
                 <Select value={form.retryPolicy} onValueChange={value => setForm(v => ({...v, retryPolicy: value}))}>
-                  <SelectTrigger>
+                  <SelectTrigger className="text-xs sm:text-sm">
                     <SelectValue />
                   </SelectTrigger>
                   <SelectContent>
@@ -616,18 +863,19 @@ const WebhookManagement: React.FC = () => {
                   id="isActive"
                   checked={form.isActive}
                   onChange={e => setForm(v => ({...v, isActive: e.target.checked}))}
+                  className="w-3 h-3 sm:w-4 sm:h-4"
                 />
-                <label htmlFor="isActive" className="text-sm font-medium">
+                <label htmlFor="isActive" className="text-xs sm:text-sm font-medium">
                   Activate webhook immediately
                 </label>
               </div>
 
-              <div className="flex justify-end space-x-3 pt-4">
-                <Button type="button" variant="outline" onClick={() => setShowCreateModal(false)}>
+              <div className="flex flex-col sm:flex-row gap-3 pt-4">
+                <Button type="button" variant="outline" onClick={() => setShowCreateModal(false)} className="w-full sm:w-auto text-xs sm:text-sm">
                   Cancel
                 </Button>
-                <Button type="submit" disabled={loading}>
-                  {loading && <Loader2 className="w-4 h-4 mr-2 animate-spin" />}
+                <Button type="submit" disabled={loading} className="w-full sm:w-auto text-xs sm:text-sm">
+                  {loading && <Loader2 className="w-3 h-3 sm:w-4 sm:h-4 mr-2 animate-spin" />}
                   Create Webhook
                 </Button>
               </div>
@@ -638,53 +886,54 @@ const WebhookManagement: React.FC = () => {
 
       {/* Webhook Details Modal */}
       {showWebhookModal && selectedWebhook && (
-        <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
-          <div className="bg-white rounded-lg p-6 w-full max-w-2xl max-h-[90vh] overflow-y-auto">
-            <div className="flex items-center justify-between mb-6">
-              <h2 className="text-xl font-semibold">Webhook Details</h2>
-              <Button variant="ghost" size="sm" onClick={() => setShowWebhookModal(false)}>
-                <X className="w-4 h-4" />
+        <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center p-2 sm:p-4 z-50">
+          <div className="bg-white rounded-lg p-4 sm:p-6 w-full max-w-2xl max-h-[95vh] overflow-y-auto mx-2 sm:mx-0">
+            <div className="flex items-center justify-between mb-4 sm:mb-6">
+              <h2 className="text-lg sm:text-xl font-semibold">Webhook Details</h2>
+              <Button variant="ghost" size="sm" onClick={() => setShowWebhookModal(false)} className="p-1">
+                <X className="w-4 h-4 sm:w-5 sm:h-5" />
               </Button>
             </div>
 
-            <div className="space-y-4">
+            <div className="space-y-3 sm:space-y-4">
               <div>
-                <Label className="text-sm font-medium text-gray-700">Name</Label>
-                <p className="text-gray-900">{selectedWebhook.name}</p>
+                <Label className="text-xs sm:text-sm font-medium text-gray-700">Name</Label>
+                <p className="text-sm sm:text-base text-gray-900">{selectedWebhook.name}</p>
               </div>
 
               <div>
-                <Label className="text-sm font-medium text-gray-700">URL</Label>
-                <div className="flex items-center space-x-2">
-                  <p className="text-gray-900 font-mono text-sm">{selectedWebhook.url}</p>
-                  <Button variant="ghost" size="sm" onClick={() => copy(selectedWebhook.url)}>
-                    <Copy className="w-4 h-4" />
+                <Label className="text-xs sm:text-sm font-medium text-gray-700">URL</Label>
+                <div className="flex flex-col sm:flex-row items-start sm:items-center space-y-2 sm:space-y-0 sm:space-x-2 mt-1">
+                  <p className="text-xs sm:text-sm text-gray-900 font-mono break-all flex-1">{selectedWebhook.url}</p>
+                  <Button variant="ghost" size="sm" onClick={() => copy(selectedWebhook.url)} className="w-fit text-xs sm:text-sm">
+                    <Copy className="w-3 h-3 sm:w-4 sm:h-4 mr-1" />
+                    Copy
                   </Button>
                 </div>
               </div>
 
               <div>
-                <Label className="text-sm font-medium text-gray-700">Status</Label>
-                <div className="flex items-center space-x-2">
+                <Label className="text-xs sm:text-sm font-medium text-gray-700">Status</Label>
+                <div className="flex items-center space-x-2 mt-1">
                   {getStatusIcon(selectedWebhook)}
-                  <Badge className={getStatusBadge(selectedWebhook).className}>
+                  <Badge className={`${getStatusBadge(selectedWebhook).className} text-xs`}>
                     {getStatusBadge(selectedWebhook).text}
                   </Badge>
                 </div>
               </div>
 
               <div>
-                <Label className="text-sm font-medium text-gray-700">Events</Label>
-                <div className="flex flex-wrap gap-2 mt-1">
+                <Label className="text-xs sm:text-sm font-medium text-gray-700">Events</Label>
+                <div className="flex flex-wrap gap-1 sm:gap-2 mt-1">
                   {(selectedWebhook.events || []).map((event: string) => (
-                    <Badge key={event} variant="outline">{event}</Badge>
+                    <Badge key={event} variant="outline" className="text-xs">{event}</Badge>
                   ))}
                 </div>
               </div>
 
               <div>
-                <Label className="text-sm font-medium text-gray-700">Last Delivery</Label>
-                <p className="text-gray-900">
+                <Label className="text-xs sm:text-sm font-medium text-gray-700">Last Delivery</Label>
+                <p className="text-sm sm:text-base text-gray-900">
                   {selectedWebhook.lastDelivery ? 
                     new Date(selectedWebhook.lastDelivery).toLocaleString() : 
                     'Never'
@@ -693,16 +942,16 @@ const WebhookManagement: React.FC = () => {
               </div>
 
               <div>
-                <Label className="text-sm font-medium text-gray-700">Delivery Count</Label>
-                <p className="text-gray-900">{selectedWebhook.deliveryCount || 0}</p>
+                <Label className="text-xs sm:text-sm font-medium text-gray-700">Delivery Count</Label>
+                <p className="text-sm sm:text-base text-gray-900">{selectedWebhook.deliveryCount || 0}</p>
               </div>
 
-              <div className="flex justify-end space-x-3 pt-4">
-                <Button variant="outline" onClick={() => setShowWebhookModal(false)}>
+              <div className="flex flex-col sm:flex-row gap-3 pt-4">
+                <Button variant="outline" onClick={() => setShowWebhookModal(false)} className="w-full sm:w-auto text-xs sm:text-sm">
                   Close
                 </Button>
-                <Button onClick={() => onTest(selectedWebhook)} disabled={loading}>
-                  <TestTube className="w-4 h-4 mr-2" />
+                <Button onClick={() => onTest(selectedWebhook)} disabled={loading} className="w-full sm:w-auto text-xs sm:text-sm">
+                  <TestTube className="w-3 h-3 sm:w-4 sm:h-4 mr-2" />
                   Test Webhook
                 </Button>
               </div>

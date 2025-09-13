@@ -52,7 +52,7 @@ const App = () => (
           <TooltipProvider>
           <Toaster />
           <Sonner />
-          <BrowserRouter>
+          <BrowserRouter future={{ v7_startTransition: true, v7_relativeSplatPath: true }}>
             <Routes>
               {/* Landing page */}
               <Route path="/" element={<Index />} />
@@ -68,11 +68,13 @@ const App = () => (
               <Route path="/auth/kyc/callback" element={<KycCallback />} />
               <Route path="/auth/kyc/callback/:sessionId" element={<KycCallback />} />
 
+              {/* Standalone docs page */}
+              <Route path="/transactlab-docs" element={<TransactLabDocs />} />
+
               {/* App routes with layout */}
               <Route element={<AppLayout />}>
                 <Route path="/dashboard" element={<Dashboard />} />
                 <Route path="/docs" element={<Docs />} />
-                <Route path="/transactlab-docs" element={<TransactLabDocs />} />
                 <Route path="/settings/profile" element={<Profile />} />
                 <Route path="/settings/security" element={<Security />} />
 

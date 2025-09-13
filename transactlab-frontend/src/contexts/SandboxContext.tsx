@@ -156,8 +156,6 @@ export const SandboxProvider: React.FC<SandboxProviderProps> = ({ children }) =>
     // Read both per-user and global keys to be safe
     const activeOwner = localStorage.getItem('activeOwnerId') || localStorage.getItem(`activeOwnerId:${localStorage.getItem('currentUserId') || 'anon'}`) || '';
     const activeTeamId = localStorage.getItem('activeTeamId') || localStorage.getItem(`activeTeamId:${localStorage.getItem('currentUserId') || 'anon'}`) || '';
-    // Debug header values
-    try { console.debug('[SandboxContext] apiCall', { endpoint, activeOwner, activeTeamId }); } catch {}
     if (!token) {
       // If no token, force redirect to login
       if (typeof window !== 'undefined') {
@@ -174,15 +172,6 @@ export const SandboxProvider: React.FC<SandboxProviderProps> = ({ children }) =>
       ...options.headers,
     };
     
-    console.log('[SandboxContext] Making API call with headers:', {
-      endpoint,
-      activeOwner,
-      activeTeamId,
-      headers: {
-        'x-owner-id': headers['x-owner-id'],
-        'x-team-id': headers['x-team-id']
-      }
-    });
 
     const response = await fetch(`${API_BASE}${endpoint}`, {
       ...options,

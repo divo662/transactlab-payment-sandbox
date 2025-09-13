@@ -177,46 +177,46 @@ export const SearchModal: React.FC<SearchModalProps> = ({ isOpen, onClose }) => 
 
   return (
     <Dialog open={isOpen} onOpenChange={onClose}>
-      <DialogContent className="sm:max-w-2xl p-0 overflow-hidden [&>button]:hidden max-h-[90vh]">
-        <div className="p-4 sm:p-6 border-b">
+      <DialogContent className="w-[95vw] max-w-2xl p-0 overflow-hidden [&>button]:hidden max-h-[95vh] sm:max-h-[90vh]">
+        <div className="p-3 sm:p-4 md:p-6 border-b">
           <div className="flex items-center gap-2 sm:gap-3">
-            <Search className="h-4 w-4 sm:h-5 sm:w-5 text-gray-400" />
+            <Search className="h-4 w-4 sm:h-5 sm:w-5 text-gray-400 flex-shrink-0" />
             <Input
               ref={searchInputRef}
               placeholder="Search for features, pages, and more..."
               value={query}
               onChange={(e) => setQuery(e.target.value)}
               onKeyDown={handleKeyDown}
-              className="border-0 shadow-none text-base sm:text-lg placeholder:text-gray-400 focus-visible:ring-0 text-gray-900 flex-1 px-3 py-2"
+              className="border-0 shadow-none text-sm sm:text-base md:text-lg placeholder:text-gray-400 focus-visible:ring-0 text-gray-900 flex-1 px-2 sm:px-3 py-2 sm:py-3 min-w-0"
             />
             <Button
               variant="ghost"
               size="sm"
               onClick={onClose}
-              className="h-8 w-8 p-0 ml-2"
+              className="h-8 w-8 sm:h-9 sm:w-9 p-0 ml-1 sm:ml-2 flex-shrink-0"
             >
               <X className="h-4 w-4" />
             </Button>
           </div>
         </div>
 
-        <div className="h-80 sm:h-96 overflow-y-auto">
+        <div className="h-72 sm:h-80 md:h-96 overflow-y-auto">
           {query.trim() === '' ? (
-            <div className="p-4 sm:p-6 h-full flex flex-col justify-center">
-              <div className="text-center text-gray-500 mb-6">
-                <Search className="h-10 w-10 sm:h-12 sm:w-12 mx-auto mb-4 text-gray-300" />
-                <p className="text-base sm:text-lg font-medium mb-2">Search TransactLab</p>
-                <p className="text-sm">Search for features, pages, and functionality</p>
-                <div className="mt-4 hidden sm:flex items-center justify-center gap-2 text-xs text-gray-400">
+            <div className="p-3 sm:p-4 md:p-6 h-full flex flex-col justify-center">
+              <div className="text-center text-gray-500 mb-4 sm:mb-6">
+                <Search className="h-8 w-8 sm:h-10 sm:w-10 md:h-12 md:w-12 mx-auto mb-3 sm:mb-4 text-gray-300" />
+                <p className="text-sm sm:text-base md:text-lg font-medium mb-1 sm:mb-2">Search TransactLab</p>
+                <p className="text-xs sm:text-sm">Search for features, pages, and functionality</p>
+                <div className="mt-3 sm:mt-4 hidden sm:flex items-center justify-center gap-2 text-xs text-gray-400">
                   <Command className="h-3 w-3" />
                   <span>Press Cmd+K to search anytime</span>
                 </div>
               </div>
               
               {/* Popular Searches */}
-              <div className="space-y-4">
-                <h3 className="text-sm font-medium text-gray-700 mb-3">Popular Features</h3>
-                <div className="grid grid-cols-1 gap-2">
+              <div className="space-y-3 sm:space-y-4">
+                <h3 className="text-xs sm:text-sm font-medium text-gray-700 mb-2 sm:mb-3">Popular Features</h3>
+                <div className="grid grid-cols-1 gap-1 sm:gap-2">
                   {[
                     { id: 'popular-dashboard', title: 'Dashboard', description: 'Main dashboard overview', path: '/dashboard', category: 'Popular', icon: LayoutDashboard, color: 'text-blue-600' },
                     { id: 'popular-transactions', title: 'Transactions', description: 'View and manage payment transactions', path: '/sandbox/transactions', category: 'Popular', icon: DollarSign, color: 'text-green-600' },
@@ -228,14 +228,14 @@ export const SearchModal: React.FC<SearchModalProps> = ({ isOpen, onClose }) => 
                     <button
                       key={index}
                       onClick={() => handleResultSelect(item)}
-                      className="flex items-center gap-2 sm:gap-3 p-2 sm:p-3 text-left hover:bg-gray-50 rounded-lg transition-colors"
+                      className="flex items-center gap-2 sm:gap-3 p-2 sm:p-3 text-left hover:bg-gray-50 active:bg-gray-100 rounded-lg transition-colors touch-manipulation"
                     >
-                      <div className={`w-6 h-6 sm:w-8 sm:h-8 rounded-lg flex items-center justify-center bg-${item.color.split('-')[1]}-100`}>
+                      <div className={`w-5 h-5 sm:w-6 sm:h-6 md:w-8 md:h-8 rounded-lg flex items-center justify-center bg-${item.color.split('-')[1]}-100 flex-shrink-0`}>
                         <item.icon className={`h-3 w-3 sm:h-4 sm:w-4 ${item.color}`} />
                       </div>
-                      <div>
-                        <h4 className="font-medium text-gray-900 text-sm sm:text-base">{item.title}</h4>
-                        <p className="text-xs sm:text-sm text-gray-500">{item.description}</p>
+                      <div className="min-w-0 flex-1">
+                        <h4 className="font-medium text-gray-900 text-xs sm:text-sm md:text-base truncate">{item.title}</h4>
+                        <p className="text-xs sm:text-sm text-gray-500 overflow-hidden" style={{ display: '-webkit-box', WebkitLineClamp: 2, WebkitBoxOrient: 'vertical' }}>{item.description}</p>
                       </div>
                     </button>
                   ))}
@@ -243,16 +243,16 @@ export const SearchModal: React.FC<SearchModalProps> = ({ isOpen, onClose }) => 
               </div>
             </div>
           ) : results.length === 0 ? (
-            <div className="p-4 sm:p-6 h-full flex flex-col items-center justify-center text-center text-gray-500">
-              <Search className="h-10 w-10 sm:h-12 sm:w-12 mx-auto mb-4 text-gray-300" />
-              <p className="text-base sm:text-lg font-medium mb-2">No results found</p>
+            <div className="p-3 sm:p-4 md:p-6 h-full flex flex-col items-center justify-center text-center text-gray-500">
+              <Search className="h-8 w-8 sm:h-10 sm:w-10 md:h-12 md:w-12 mx-auto mb-3 sm:mb-4 text-gray-300" />
+              <p className="text-sm sm:text-base md:text-lg font-medium mb-1 sm:mb-2">No results found</p>
               <p className="text-xs sm:text-sm">Try searching with different keywords</p>
             </div>
           ) : (
             <div className="divide-y">
               {Object.entries(groupedResults).map(([category, categoryResults]) => (
                 <div key={category}>
-                  <div className="px-4 sm:px-6 py-3 bg-gray-50 text-xs font-medium text-gray-500 uppercase tracking-wider">
+                  <div className="px-3 sm:px-4 md:px-6 py-2 sm:py-3 bg-gray-50 text-xs font-medium text-gray-500 uppercase tracking-wider">
                     {category}
                   </div>
                   {categoryResults.map((result, index) => {
@@ -262,15 +262,15 @@ export const SearchModal: React.FC<SearchModalProps> = ({ isOpen, onClose }) => 
                     return (
                       <div
                         key={result.id}
-                        className={`px-4 sm:px-6 py-3 sm:py-4 cursor-pointer transition-colors ${
-                          isSelected ? 'bg-blue-50 border-l-2 border-blue-500' : 'hover:bg-gray-50'
+                        className={`px-3 sm:px-4 md:px-6 py-2 sm:py-3 md:py-4 cursor-pointer transition-colors touch-manipulation ${
+                          isSelected ? 'bg-blue-50 border-l-2 border-blue-500' : 'hover:bg-gray-50 active:bg-gray-100'
                         }`}
                         onClick={() => handleResultSelect(result)}
                       >
                         <div className="flex items-center justify-between">
-                          <div className="flex-1">
+                          <div className="flex-1 min-w-0">
                             <div className="flex items-center gap-2 sm:gap-3">
-                              <div className={`w-6 h-6 sm:w-8 sm:h-8 rounded-lg flex items-center justify-center ${
+                              <div className={`w-5 h-5 sm:w-6 sm:h-6 md:w-8 md:h-8 rounded-lg flex items-center justify-center flex-shrink-0 ${
                                 result.color ? `bg-${result.color.split('-')[1]}-100` : 'bg-blue-100'
                               }`}>
                                 {result.icon ? (
@@ -279,13 +279,13 @@ export const SearchModal: React.FC<SearchModalProps> = ({ isOpen, onClose }) => 
                                   <Search className="h-3 w-3 sm:h-4 sm:w-4 text-blue-600" />
                                 )}
                               </div>
-                              <div>
-                                <h4 className="font-medium text-gray-900 text-sm sm:text-base">{result.title}</h4>
-                                <p className="text-xs sm:text-sm text-gray-500">{result.description}</p>
+                              <div className="min-w-0 flex-1">
+                                <h4 className="font-medium text-gray-900 text-xs sm:text-sm md:text-base truncate">{result.title}</h4>
+                                <p className="text-xs sm:text-sm text-gray-500 overflow-hidden" style={{ display: '-webkit-box', WebkitLineClamp: 2, WebkitBoxOrient: 'vertical' }}>{result.description}</p>
                               </div>
                             </div>
                           </div>
-                          <ArrowRight className={`h-3 w-3 sm:h-4 sm:w-4 text-gray-400 transition-colors ${
+                          <ArrowRight className={`h-3 w-3 sm:h-4 sm:w-4 text-gray-400 transition-colors flex-shrink-0 ml-2 ${
                             isSelected ? 'text-blue-500' : ''
                           }`} />
                         </div>
@@ -299,11 +299,11 @@ export const SearchModal: React.FC<SearchModalProps> = ({ isOpen, onClose }) => 
         </div>
 
         {results.length > 0 && (
-          <div className="p-3 sm:p-4 border-t bg-gray-50 text-xs text-gray-500">
+          <div className="p-2 sm:p-3 md:p-4 border-t bg-gray-50 text-xs text-gray-500">
             <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-1 sm:gap-0">
               <span className="hidden sm:inline">Use ↑↓ to navigate, Enter to select</span>
-              <span className="sm:hidden">Tap to select</span>
-              <span>{results.length} result{results.length !== 1 ? 's' : ''}</span>
+              <span className="sm:hidden text-xs">Tap to select</span>
+              <span className="text-xs sm:text-xs">{results.length} result{results.length !== 1 ? 's' : ''}</span>
             </div>
           </div>
         )}

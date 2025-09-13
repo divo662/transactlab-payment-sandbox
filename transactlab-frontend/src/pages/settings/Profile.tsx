@@ -56,15 +56,15 @@ const TeamSection: React.FC = () => {
   };
 
   if (initialLoading) {
-    return (
-      <div className="grid gap-4">
+  return (
+    <div className="grid gap-4">
         <div className="grid grid-cols-1 sm:grid-cols-[1fr,160px] gap-3">
           <div className="h-9 bg-gray-200 rounded animate-pulse"></div>
           <div className="h-9 bg-gray-200 rounded animate-pulse"></div>
-        </div>
+      </div>
         <div className="h-4 bg-gray-200 rounded w-3/4 animate-pulse"></div>
-        
-        <div className="border rounded-lg overflow-hidden">
+
+      <div className="border rounded-lg overflow-hidden">
           <div className="hidden sm:block">
             <div className="bg-gray-50 p-3">
               <div className="grid grid-cols-4 gap-4">
@@ -125,67 +125,67 @@ const TeamSection: React.FC = () => {
 
       <div className="border rounded-lg overflow-hidden">
         <div className="hidden sm:block">
-          <table className="w-full text-sm">
-            <thead className="bg-gray-50">
-              <tr>
-                <th className="text-left p-3">Email</th>
-                <th className="text-left p-3">Status</th>
-                <th className="text-left p-3">Last switched</th>
-                <th className="text-right p-3">Action</th>
-              </tr>
-            </thead>
-            <tbody>
-              {members.length === 0 ? (
+        <table className="w-full text-sm">
+          <thead className="bg-gray-50">
+            <tr>
+              <th className="text-left p-3">Email</th>
+              <th className="text-left p-3">Status</th>
+              <th className="text-left p-3">Last switched</th>
+              <th className="text-right p-3">Action</th>
+            </tr>
+          </thead>
+          <tbody>
+            {members.length === 0 ? (
                 <tr><td className="p-3 text-gray-500" colSpan={4}>No members yet</td></tr>
-              ) : members.map((m) => (
-                <tr key={m.email}>
-                  <td className="p-3">{m.email}</td>
-                  <td className="p-3">
-                    <div className="flex items-center gap-2">
-                      <span className={`capitalize px-2 py-1 rounded text-xs ${
-                        m.status === 'active' ? 'bg-green-100 text-green-800' :
-                        m.status === 'invited' ? 'bg-yellow-100 text-yellow-800' :
-                        'bg-gray-100 text-gray-800'
-                      }`}>
-                        {m.status}
+            ) : members.map((m) => (
+              <tr key={m.email}>
+                <td className="p-3">{m.email}</td>
+                <td className="p-3">
+                  <div className="flex items-center gap-2">
+                    <span className={`capitalize px-2 py-1 rounded text-xs ${
+                      m.status === 'active' ? 'bg-green-100 text-green-800' :
+                      m.status === 'invited' ? 'bg-yellow-100 text-yellow-800' :
+                      'bg-gray-100 text-gray-800'
+                    }`}>
+                      {m.status}
+                    </span>
+                    {inviteStatus[m.email] && (
+                      <span className="text-xs text-blue-600">
+                        ({inviteStatus[m.email]})
                       </span>
-                      {inviteStatus[m.email] && (
-                        <span className="text-xs text-blue-600">
-                          ({inviteStatus[m.email]})
-                        </span>
-                      )}
-                    </div>
-                  </td>
-                  <td className="p-3">{m.lastSwitchAt ? new Date(m.lastSwitchAt).toLocaleString() : '-'}</td>
-                  <td className="p-3 text-right">
-                    {m.status === 'invited' ? (
-                      <Button variant="outline" size="sm" disabled={loading} onClick={async ()=>{ 
-                        try { 
-                          setLoading(true); 
-                          await fetch(`${API_BASE}/team/invite?email=${encodeURIComponent(m.email)}`, { method: 'DELETE', headers: authHeader() }); 
-                          toast({ title: 'Invite cancelled' }); 
-                          setInviteStatus(prev => ({ ...prev, [m.email]: 'cancelled' }));
-                          await fetchMembers(); 
-                        } finally { setLoading(false); } 
-                      }}>Cancel invite</Button>
-                    ) : (
-                      <div className="flex items-center gap-2 justify-end">
-                        <span className="text-green-600">Member</span>
-                        <Button variant="destructive" size="sm" disabled={loading} onClick={async ()=>{
-                          try {
-                            setLoading(true);
-                            await fetch(`${API_BASE}/team/member?email=${encodeURIComponent(m.email)}`, { method: 'DELETE', headers: authHeader() });
-                            toast({ title: 'Member removed' });
-                            await fetchMembers();
-                          } finally { setLoading(false); }
-                        }}>Remove</Button>
-                      </div>
                     )}
-                  </td>
-                </tr>
-              ))}
-            </tbody>
-          </table>
+                  </div>
+                </td>
+                <td className="p-3">{m.lastSwitchAt ? new Date(m.lastSwitchAt).toLocaleString() : '-'}</td>
+                <td className="p-3 text-right">
+                  {m.status === 'invited' ? (
+                    <Button variant="outline" size="sm" disabled={loading} onClick={async ()=>{ 
+                      try { 
+                        setLoading(true); 
+                        await fetch(`${API_BASE}/team/invite?email=${encodeURIComponent(m.email)}`, { method: 'DELETE', headers: authHeader() }); 
+                        toast({ title: 'Invite cancelled' }); 
+                        setInviteStatus(prev => ({ ...prev, [m.email]: 'cancelled' }));
+                        await fetchMembers(); 
+                      } finally { setLoading(false); } 
+                    }}>Cancel invite</Button>
+                  ) : (
+                    <div className="flex items-center gap-2 justify-end">
+                      <span className="text-green-600">Member</span>
+                      <Button variant="destructive" size="sm" disabled={loading} onClick={async ()=>{
+                        try {
+                          setLoading(true);
+                          await fetch(`${API_BASE}/team/member?email=${encodeURIComponent(m.email)}`, { method: 'DELETE', headers: authHeader() });
+                          toast({ title: 'Member removed' });
+                          await fetchMembers();
+                        } finally { setLoading(false); }
+                      }}>Remove</Button>
+                    </div>
+                  )}
+                </td>
+              </tr>
+            ))}
+          </tbody>
+        </table>
         </div>
         
         {/* Mobile view */}
@@ -429,57 +429,57 @@ const WorkspaceSection: React.FC = () => {
       <div className="text-xs sm:text-sm text-muted-foreground">Select your active workspace. Invites you accept will appear here after joining.</div>
       <div className="border rounded-lg overflow-hidden">
         <div className="hidden sm:block">
-          <table className="w-full text-sm">
-            <thead className="bg-gray-50">
-              <tr>
-                <th className="text-left p-3">Name</th>
-                <th className="text-left p-3">Owner</th>
-                <th className="text-right p-3">Action</th>
-              </tr>
-            </thead>
-            <tbody>
-              {teams.length === 0 ? (
-                <tr><td className="p-3 text-gray-500" colSpan={3}>No workspaces yet</td></tr>
-              ) : teams.map((t: any) => (
-                <tr key={t._id}>
-                  <td className="p-3">
-                    {editingTeam === t._id ? (
-                      <div className="flex items-center gap-2">
-                        <Input
-                          value={editName}
-                          onChange={(e) => setEditName(e.target.value)}
-                          className="max-w-xs"
-                          placeholder="Workspace name"
-                        />
-                        <Button size="sm" onClick={saveEdit} disabled={loading}>
-                          Save
+        <table className="w-full text-sm">
+          <thead className="bg-gray-50">
+            <tr>
+              <th className="text-left p-3">Name</th>
+              <th className="text-left p-3">Owner</th>
+              <th className="text-right p-3">Action</th>
+            </tr>
+          </thead>
+          <tbody>
+            {teams.length === 0 ? (
+              <tr><td className="p-3 text-gray-500" colSpan={3}>No workspaces yet</td></tr>
+            ) : teams.map((t: any) => (
+              <tr key={t._id}>
+                <td className="p-3">
+                  {editingTeam === t._id ? (
+                    <div className="flex items-center gap-2">
+                      <Input
+                        value={editName}
+                        onChange={(e) => setEditName(e.target.value)}
+                        className="max-w-xs"
+                        placeholder="Workspace name"
+                      />
+                      <Button size="sm" onClick={saveEdit} disabled={loading}>
+                        Save
+                      </Button>
+                      <Button size="sm" variant="outline" onClick={cancelEdit}>
+                        Cancel
+                      </Button>
+                    </div>
+                  ) : (
+                    <div className="flex items-center gap-2">
+                      <span>{t.name || 'Workspace'}</span>
+                      {t.ownerId === uid && (
+                        <Button
+                          variant="ghost"
+                          size="sm"
+                          onClick={() => startEdit(t)}
+                          disabled={loading}
+                          className="h-6 px-2 text-xs"
+                        >
+                          Rename
                         </Button>
-                        <Button size="sm" variant="outline" onClick={cancelEdit}>
-                          Cancel
-                        </Button>
-                      </div>
-                    ) : (
-                      <div className="flex items-center gap-2">
-                        <span>{t.name || 'Workspace'}</span>
-                        {t.ownerId === uid && (
-                          <Button
-                            variant="ghost"
-                            size="sm"
-                            onClick={() => startEdit(t)}
-                            disabled={loading}
-                            className="h-6 px-2 text-xs"
-                          >
-                            Rename
-                          </Button>
-                        )}
-                      </div>
-                    )}
-                  </td>
-                  <td className="p-3">{t.ownerId?.slice(-6)}</td>
-                  <td className="p-3 text-right">
-                    {t.ownerId === uid ? (
-                      <div className="flex items-center gap-2 justify-end">
-                        <span className="text-gray-500">Owner</span>
+                      )}
+                    </div>
+                  )}
+                </td>
+                <td className="p-3">{t.ownerId?.slice(-6)}</td>
+                <td className="p-3 text-right">
+                  {t.ownerId === uid ? (
+                    <div className="flex items-center gap-2 justify-end">
+                      <span className="text-gray-500">Owner</span>
                         <Button
                           variant="outline"
                           size="sm"
@@ -500,18 +500,18 @@ const WorkspaceSection: React.FC = () => {
                         </Button>
                         {activeId === String(t._id) && (
                           <span className="text-green-600 text-xs">Active</span>
-                        )}
-                      </div>
-                    ) : activeId === String(t._id) ? (
-                      <span className="text-green-600">Active</span>
-                    ) : (
-                      <Button size="sm" disabled={loading} onClick={()=>setActive(String(t._id))}>Set active</Button>
-                    )}
-                  </td>
-                </tr>
-              ))}
-            </tbody>
-          </table>
+                      )}
+                    </div>
+                  ) : activeId === String(t._id) ? (
+                    <span className="text-green-600">Active</span>
+                  ) : (
+                    <Button size="sm" disabled={loading} onClick={()=>setActive(String(t._id))}>Set active</Button>
+                  )}
+                </td>
+              </tr>
+            ))}
+          </tbody>
+        </table>
         </div>
         
         {/* Mobile view */}
@@ -665,10 +665,10 @@ const WorkspaceSection: React.FC = () => {
                           {log.type.replace('_', ' ')}
                         </div>
                         <div className="text-xs sm:text-sm text-gray-600 mt-1">
-                          {log.actorEmail && `by ${log.actorEmail}`}
-                          {log.meta?.name && ` to "${log.meta.name}"`}
-                        </div>
+                        {log.actorEmail && `by ${log.actorEmail}`}
+                        {log.meta?.name && ` to "${log.meta.name}"`}
                       </div>
+                    </div>
                       <div className="text-xs text-gray-500 ml-2 flex-shrink-0">
                         {new Date(log.at).toLocaleDateString()}
                       </div>
@@ -731,10 +731,6 @@ const Profile = () => {
   const [avatarPreviewUrl, setAvatarPreviewUrl] = React.useState<string | null>(null);
   const normalizedAvatar = user?.avatar ? String(user.avatar).replace(/\\/g, "/") : undefined;
 
-  // Debug: Log user data
-  React.useEffect(() => {
-    console.log('Profile component - User data:', user);
-  }, [user]);
 
   const defaultValues: FormValues = {
     firstName: user?.firstName || "",
@@ -825,7 +821,7 @@ const Profile = () => {
             <TabsTrigger value="team" className="text-xs sm:text-sm px-2 sm:px-3 py-2 whitespace-nowrap">Team</TabsTrigger>
             <TabsTrigger value="workspaces" className="text-xs sm:text-sm px-2 sm:px-3 py-2 whitespace-nowrap">Workspaces</TabsTrigger>
             <TabsTrigger value="fraud" className="text-xs sm:text-sm px-2 sm:px-3 py-2 whitespace-nowrap">Fraud</TabsTrigger>
-          </TabsList>
+        </TabsList>
         </div>
 
         <TabsContent value="profile" className="space-y-4 sm:space-y-6">
@@ -1256,8 +1252,8 @@ const FraudSettingsSection: React.FC = () => {
   };
 
   if (initialLoading) {
-    return (
-      <div className="grid gap-4">
+  return (
+    <div className="grid gap-4">
         <div className="h-4 bg-gray-200 rounded w-20 animate-pulse"></div>
         <div className="grid grid-cols-1 lg:grid-cols-2 gap-4 max-w-3xl">
           <div className="flex items-center justify-between border rounded-lg p-3 sm:p-4">
@@ -1367,15 +1363,15 @@ const FraudSummarySection: React.FC = () => {
   React.useEffect(() => { void load(); }, []);
 
   if (initialLoading) {
-    return (
-      <div className="grid gap-4">
+  return (
+    <div className="grid gap-4">
         <div className="h-4 bg-gray-200 rounded w-20 animate-pulse"></div>
         <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-3 sm:gap-4">
           {Array.from({ length: 3 }).map((_, i) => (
             <div key={i} className="border rounded-lg p-3 sm:p-4">
               <div className="h-3 bg-gray-200 rounded w-20 mb-2 animate-pulse"></div>
               <div className="h-6 sm:h-8 bg-gray-200 rounded w-16 animate-pulse"></div>
-            </div>
+        </div>
           ))}
         </div>
         <div className="border rounded-lg overflow-hidden">
@@ -1431,24 +1427,24 @@ const FraudSummarySection: React.FC = () => {
       </div>
       <div className="border rounded-lg overflow-hidden">
         <div className="hidden sm:block">
-          <table className="w-full text-sm">
-            <thead className="bg-gray-50">
-              <tr>
-                <th className="text-left p-3">Top risk factors</th>
-                <th className="text-right p-3">Count</th>
+        <table className="w-full text-sm">
+          <thead className="bg-gray-50">
+            <tr>
+              <th className="text-left p-3">Top risk factors</th>
+              <th className="text-right p-3">Count</th>
+            </tr>
+          </thead>
+          <tbody>
+            {factors.length === 0 ? (
+              <tr><td className="p-3 text-gray-500" colSpan={2}>No data</td></tr>
+            ) : factors.map((f)=> (
+              <tr key={f._id}>
+                <td className="p-3">{f._id}</td>
+                <td className="p-3 text-right">{f.count}</td>
               </tr>
-            </thead>
-            <tbody>
-              {factors.length === 0 ? (
-                <tr><td className="p-3 text-gray-500" colSpan={2}>No data</td></tr>
-              ) : factors.map((f)=> (
-                <tr key={f._id}>
-                  <td className="p-3">{f._id}</td>
-                  <td className="p-3 text-right">{f.count}</td>
-                </tr>
-              ))}
-            </tbody>
-          </table>
+            ))}
+          </tbody>
+        </table>
         </div>
         
         {/* Mobile view */}
@@ -1509,10 +1505,10 @@ const FraudReviewSection: React.FC = () => {
   };
 
   if (initialLoading) {
-    return (
-      <div className="grid gap-4">
+  return (
+    <div className="grid gap-4">
         <div className="h-4 bg-gray-200 rounded w-24 animate-pulse"></div>
-        <div className="border rounded-lg overflow-hidden">
+      <div className="border rounded-lg overflow-hidden">
           <div className="hidden sm:block">
             <div className="space-y-4 p-6">
               {Array.from({ length: 2 }).map((_, i) => (
@@ -1578,13 +1574,13 @@ const FraudReviewSection: React.FC = () => {
       <div className="font-medium text-sm sm:text-base">Review queue</div>
       <div className="border rounded-lg overflow-hidden">
         <div className="hidden sm:block">
-          {items.length === 0 ? (
+            {items.length === 0 ? (
             <div className="p-8 text-center text-gray-500">
               <div className="w-16 h-16 mx-auto mb-4 rounded-full bg-gray-100 flex items-center justify-center">
                 <svg className="w-8 h-8 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                   <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z" />
                 </svg>
-              </div>
+                  </div>
               <p className="font-medium text-lg">No pending reviews</p>
               <p className="text-sm mt-1">All transactions have been reviewed</p>
             </div>
