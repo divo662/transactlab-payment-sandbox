@@ -4,6 +4,7 @@ import { logger } from '../../utils/helpers/logger';
 export interface CacheOptions {
   ttl?: number; // Time to live in seconds
   prefix?: string; // Key prefix for namespacing
+  suffix?: string; // Key suffix for additional namespacing
   serialize?: boolean; // Whether to JSON serialize/deserialize
 }
 
@@ -340,6 +341,13 @@ export class CacheService {
     } catch (error) {
       logger.error('Cache warm-up error:', error);
     }
+  }
+
+  /**
+   * Check if Redis is available
+   */
+  static isAvailable(): boolean {
+    return redisClient.isAvailable();
   }
 
   // Convenience methods for specific data types

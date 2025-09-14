@@ -3,15 +3,23 @@ import { SandboxController } from '../../controllers/sandbox/sandboxController';
 import { sandboxFlexibleAuth } from '../../middleware/auth/sandboxFlexibleAuth';
 import { applyWorkspaceScope } from '../../middleware/auth/applyWorkspaceScope';
 import { getFraudSummary, getRecentFraudDecisions, listFraudReviews, approveFraudReview, denyFraudReview } from '../../controllers/analytics/reportController';
+import cacheMiddleware, { cacheKeyGenerators } from '../../middleware/cache/cacheMiddleware';
 
 const router = Router();
 
 // Apply flexible authentication: Bearer JWT or x-sandbox-secret
 router.use(sandboxFlexibleAuth, applyWorkspaceScope);
 
-// Core sandbox data and overview
-router.get('/data', SandboxController.getSandboxData);
-router.get('/stats', SandboxController.getSandboxStats);
+// Core sandbox data and overview (with caching)
+router.get('/data', cacheMiddleware({ 
+  ttl: 300, // 5 minutes
+  keyGenerator: cacheKeyGenerators.userRoute 
+}), SandboxController.getSandboxData);
+
+router.get('/stats', cacheMiddleware({ 
+  ttl: 180, // 3 minutes
+  keyGenerator: cacheKeyGenerators.userRoute 
+}), SandboxController.getSandboxStats);
 
 // API Key management (Stripe-style single permanent key)
 router.get('/api-key', SandboxController.getApiKey);
@@ -53,9 +61,12 @@ router.post('/webhooks/:webhookId/test', SandboxController.testWebhook);
 // Transaction history
 router.get('/transactions', SandboxController.getRecentTransactions);
 
-// Customers
+// Customers (with caching for GET requests)
 router.post('/customers', SandboxController.createCustomer);
-router.get('/customers', SandboxController.getCustomers);
+router.get('/customers', cacheMiddleware({ 
+  ttl: 300, // 5 minutes
+  keyGenerator: cacheKeyGenerators.userRoute 
+}), SandboxController.getCustomers);
 router.put('/customers/:customerId', SandboxController.updateCustomer);
 router.delete('/customers/:customerId', SandboxController.deleteCustomer);
 router.get('/customers/:customerId/export', SandboxController.exportCustomer);

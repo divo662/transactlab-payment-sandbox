@@ -6,20 +6,30 @@ import {
   getCustomerAnalytics,
   exportAnalytics
 } from '../../controllers/analytics/analyticsController';
+import cacheMiddleware, { cacheKeyGenerators } from '../../middleware/cache/cacheMiddleware';
 
 const router = express.Router();
 
 // Apply authentication middleware to all routes
 router.use(authenticateToken);
 
-// Get analytics overview
-router.get('/overview', getAnalyticsOverview);
+// Get analytics overview (with caching)
+router.get('/overview', cacheMiddleware({ 
+  ttl: 300, // 5 minutes
+  keyGenerator: cacheKeyGenerators.analytics 
+}), getAnalyticsOverview);
 
-// Get transaction analytics
-router.get('/transactions', getTransactionAnalytics);
+// Get transaction analytics (with caching)
+router.get('/transactions', cacheMiddleware({ 
+  ttl: 300, // 5 minutes
+  keyGenerator: cacheKeyGenerators.analytics 
+}), getTransactionAnalytics);
 
-// Get customer analytics
-router.get('/customers', getCustomerAnalytics);
+// Get customer analytics (with caching)
+router.get('/customers', cacheMiddleware({ 
+  ttl: 300, // 5 minutes
+  keyGenerator: cacheKeyGenerators.analytics 
+}), getCustomerAnalytics);
 
 // Export analytics data
 router.get('/export', exportAnalytics);
