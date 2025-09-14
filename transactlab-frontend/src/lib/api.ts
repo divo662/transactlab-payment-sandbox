@@ -543,7 +543,8 @@ class ApiService {
     return this.request('/feedback/stats');
   }
 
-  async voteFeedback(feedbackId: string, helpful: boolean) {
+  async voteFeedback(feedbackId: string, voteType: 'helpful' | 'notHelpful') {
+    const helpful = voteType === 'helpful';
     return this.request(`/feedback/${feedbackId}/vote`, {
       method: 'POST',
       body: JSON.stringify({ helpful }),

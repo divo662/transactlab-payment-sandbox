@@ -13,7 +13,7 @@ export class SecurityController {
    */
   static async setupTotp(req: Request, res: Response): Promise<void> {
     try {
-      const userId = (req as any).user.id;
+      const userId = (req as any).user?._id?.toString();
       
       const user = await User.findById(userId);
       if (!user) {
@@ -59,7 +59,7 @@ export class SecurityController {
    */
   static async verifyTotpSetup(req: Request, res: Response): Promise<void> {
     try {
-      const userId = (req as any).user.id;
+      const userId = (req as any).user?._id?.toString();
       const { code } = req.body;
 
       if (!code) {
@@ -108,7 +108,7 @@ export class SecurityController {
    */
   static async disableTotp(req: Request, res: Response): Promise<void> {
     try {
-      const userId = (req as any).user.id;
+      const userId = (req as any).user?._id?.toString();
       const { password } = req.body;
 
       if (!password) {
@@ -160,7 +160,7 @@ export class SecurityController {
    */
   static async getTrustedDevices(req: Request, res: Response): Promise<void> {
     try {
-      const userId = (req as any).user.id;
+      const userId = (req as any).user?._id?.toString();
       
       const devices = await SecurityService.getTrustedDevices(userId);
 
@@ -187,7 +187,7 @@ export class SecurityController {
    */
   static async removeTrustedDevice(req: Request, res: Response): Promise<void> {
     try {
-      const userId = (req as any).user.id;
+      const userId = (req as any).user?._id?.toString();
       const { deviceId } = req.params;
 
       if (!deviceId) {
@@ -220,7 +220,7 @@ export class SecurityController {
    */
   static async updateSecuritySettings(req: Request, res: Response): Promise<void> {
     try {
-      const userId = (req as any).user.id;
+      const userId = (req as any).user?._id?.toString();
       const {
         requireEmailVerification,
         allowNewDeviceLogin,
@@ -229,6 +229,14 @@ export class SecurityController {
         sessionTimeout,
         maxConcurrentSessions
       } = req.body;
+
+      if (!userId) {
+        res.status(401).json({
+          success: false,
+          message: 'User not authenticated'
+        });
+        return;
+      }
 
       const user = await User.findById(userId);
       if (!user) {
@@ -284,8 +292,16 @@ export class SecurityController {
    */
   static async getSecuritySettings(req: Request, res: Response): Promise<void> {
     try {
-      const userId = (req as any).user.id;
+      const userId = (req as any).user?._id?.toString();
       
+      if (!userId) {
+        res.status(401).json({
+          success: false,
+          message: 'User not authenticated'
+        });
+        return;
+      }
+
       const user = await User.findById(userId);
       if (!user) {
         res.status(404).json({
@@ -320,7 +336,7 @@ export class SecurityController {
    */
   static async generateBackupCodes(req: Request, res: Response): Promise<void> {
     try {
-      const userId = (req as any).user.id;
+      const userId = (req as any).user?._id?.toString();
       const { password } = req.body;
 
       if (!password) {

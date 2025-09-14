@@ -129,6 +129,11 @@ const Feedback: React.FC = () => {
     }
   };
 
+  // Check if feedback belongs to current user
+  const isOwnFeedback = (feedbackEmail: string) => {
+    return user?.email === feedbackEmail;
+  };
+
   const handleVote = async (feedbackId: string, voteType: 'helpful' | 'notHelpful') => {
     if (!user) {
       toast({
@@ -162,11 +167,20 @@ const Feedback: React.FC = () => {
           description: `Your ${voteType === 'helpful' ? 'positive' : 'negative'} vote has been recorded.`,
         });
       }
-    } catch (error) {
+    } catch (error: any) {
       console.error('Error voting:', error);
+      
+      // Extract specific error message from backend
+      let errorMessage = 'Failed to record your vote. Please try again.';
+      if (error?.response?.data?.message) {
+        errorMessage = error.response.data.message;
+      } else if (error?.message) {
+        errorMessage = error.message;
+      }
+      
       toast({
         title: 'Error',
-        description: 'Failed to record your vote. Please try again.',
+        description: errorMessage,
         variant: 'destructive'
       });
     } finally {
@@ -569,28 +583,52 @@ const Feedback: React.FC = () => {
                   {/* Voting Section */}
                   <div className="flex items-center justify-between pt-4 border-t">
                     <div className="flex items-center gap-4">
-                      <div className="flex items-center gap-2">
-                        <Button
-                          variant="outline"
-                          size="sm"
-                          onClick={() => handleVote(item._id, 'helpful')}
-                          disabled={voting === item._id}
-                          className="text-green-600 hover:text-green-700 hover:bg-green-50"
-                        >
-                          <ThumbsUp className="h-4 w-4 mr-1" />
-                          Helpful ({item.helpful})
-                        </Button>
-                        <Button
-                          variant="outline"
-                          size="sm"
-                          onClick={() => handleVote(item._id, 'notHelpful')}
-                          disabled={voting === item._id}
-                          className="text-red-600 hover:text-red-700 hover:bg-red-50"
-                        >
-                          <ThumbsDown className="h-4 w-4 mr-1" />
-                          Not Helpful ({item.notHelpful})
-                        </Button>
-                      </div>
+                      {isOwnFeedback(item.userEmail) ? (
+                        <div className="flex items-center gap-2">
+                          <Button
+                            variant="outline"
+                            size="sm"
+                            disabled
+                            className="text-gray-400 bg-gray-50 cursor-not-allowed"
+                          >
+                            <ThumbsUp className="h-4 w-4 mr-1" />
+                            Helpful ({item.helpful})
+                          </Button>
+                          <Button
+                            variant="outline"
+                            size="sm"
+                            disabled
+                            className="text-gray-400 bg-gray-50 cursor-not-allowed"
+                          >
+                            <ThumbsDown className="h-4 w-4 mr-1" />
+                            Not Helpful ({item.notHelpful})
+                          </Button>
+                          <span className="text-xs text-gray-500 ml-2">Your feedback</span>
+                        </div>
+                      ) : (
+                        <div className="flex items-center gap-2">
+                          <Button
+                            variant="outline"
+                            size="sm"
+                            onClick={() => handleVote(item._id, 'helpful')}
+                            disabled={voting === item._id}
+                            className="text-green-600 hover:text-green-700 hover:bg-green-50"
+                          >
+                            <ThumbsUp className="h-4 w-4 mr-1" />
+                            Helpful ({item.helpful})
+                          </Button>
+                          <Button
+                            variant="outline"
+                            size="sm"
+                            onClick={() => handleVote(item._id, 'notHelpful')}
+                            disabled={voting === item._id}
+                            className="text-red-600 hover:text-red-700 hover:bg-red-50"
+                          >
+                            <ThumbsDown className="h-4 w-4 mr-1" />
+                            Not Helpful ({item.notHelpful})
+                          </Button>
+                        </div>
+                      )}
                       <div className="text-sm text-gray-600">
                         {item.totalVotes} total votes • {item.helpfulPercentage}% helpful
                       </div>
