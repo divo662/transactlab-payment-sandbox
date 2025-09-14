@@ -8,6 +8,7 @@ const router = Router();
 router.use(authMiddleware);
 
 // TOTP (Google Authenticator) routes
+router.get('/totp/status', SecurityController.getTotpStatus);
 router.post('/totp/setup', SecurityController.setupTotp);
 router.post('/totp/verify', SecurityController.verifyTotpSetup);
 router.delete('/totp', SecurityController.disableTotp);

@@ -279,7 +279,26 @@ export class SecurityService {
   static async verifyTotpSetup(userId: string, code: string): Promise<boolean> {
     try {
       const user = await User.findById(userId);
-      if (!user || !(user as any).totpSecret) throw new Error('User or TOTP secret not found');
+      if (!user) {
+        logger.error('User not found for TOTP verification', { userId });
+        throw new Error('User not found');
+      }
+
+      if (!(user as any).totpSecret) {
+        logger.error('TOTP secret not found for user', { 
+          userId, 
+          hasTotpSecret: !!(user as any).totpSecret,
+          totpEnabled: (user as any).totpEnabled 
+        });
+        throw new Error('TOTP secret not found. Please complete TOTP setup first.');
+      }
+
+      logger.info('Verifying TOTP code', { 
+        userId, 
+        code, 
+        secretLength: (user as any).totpSecret?.length,
+        totpEnabled: (user as any).totpEnabled 
+      });
 
       const verified = speakeasy.totp.verify({
         secret: (user as any).totpSecret,
@@ -287,6 +306,8 @@ export class SecurityService {
         token: code,
         window: 2
       });
+
+      logger.info('TOTP verification result', { userId, verified });
 
       if (verified) {
         (user as any).totpEnabled = true;
@@ -297,6 +318,19 @@ export class SecurityService {
       return verified;
     } catch (error) {
       logger.error('Error verifying TOTP setup:', error);
+      return false;
+    }
+  }
+
+  /**
+   * Check if user has TOTP setup ready for verification
+   */
+  static async isTotpSetupReady(userId: string): Promise<boolean> {
+    try {
+      const user = await User.findById(userId);
+      return !!(user && (user as any).totpSecret && !(user as any).totpEnabled);
+    } catch (error) {
+      logger.error('Error checking TOTP setup status:', error);
       return false;
     }
   }

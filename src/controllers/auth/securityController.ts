@@ -8,10 +8,50 @@ import QRCode from 'qrcode';
 
 export class SecurityController {
   /**
+   * Get TOTP status for user
+   * GET /api/v1/auth/security/totp/status
+   */
+  static async getTotpStatus(req: Request, res: Response): Promise<void> {
+    try {
+      const userId = (req as any).user?._id?.toString();
+      
+      const user = await User.findById(userId);
+      if (!user) {
+        res.status(404).json({
+          success: false,
+          message: 'User not found'
+        });
+        return;
+      }
+
+      const hasSecret = !!(user as any).totpSecret;
+      const isEnabled = !!(user as any).totpEnabled;
+      const isSetupReady = hasSecret && !isEnabled;
+
+      res.status(200).json({
+        success: true,
+        data: {
+          hasSecret,
+          isEnabled,
+          isSetupReady,
+          status: isEnabled ? 'enabled' : isSetupReady ? 'setup_ready' : 'not_setup'
+        }
+      });
+    } catch (error) {
+      logger.error('Error getting TOTP status:', error);
+      res.status(500).json({
+        success: false,
+        message: 'Failed to get TOTP status',
+        error: error instanceof Error ? error.message : 'Unknown error'
+      });
+    }
+  }
+
+  /**
    * Setup TOTP (Google Authenticator) for user
    * POST /api/v1/auth/security/totp/setup
    */
-  static async setupTotp(req: Request, res: Response): Promise<void> {
+static async setupTotp(req: Request, res: Response): Promise<void> {
     try {
       const userId = (req as any).user?._id?.toString();
       
@@ -70,6 +110,17 @@ export class SecurityController {
         return;
       }
 
+      // Check if user has completed TOTP setup
+      const isSetupReady = await SecurityService.isTotpSetupReady(userId);
+      if (!isSetupReady) {
+        res.status(400).json({
+          success: false,
+          message: 'Please complete TOTP setup first. Generate a QR code in Security settings before verifying.',
+          requiresSetup: true
+        });
+        return;
+      }
+
       const verified = await SecurityService.verifyTotpSetup(userId, code);
 
       if (verified) {
@@ -94,9 +145,26 @@ export class SecurityController {
       }
     } catch (error) {
       logger.error('Error verifying TOTP setup:', error);
-      res.status(500).json({
+      
+      // Provide specific error messages
+      let errorMessage = 'Failed to verify TOTP setup';
+      let statusCode = 500;
+      
+      if (error instanceof Error) {
+        if (error.message.includes('TOTP secret not found')) {
+          errorMessage = 'Please complete TOTP setup first. Go to Security settings and generate a new QR code.';
+          statusCode = 400;
+        } else if (error.message.includes('User not found')) {
+          errorMessage = 'User not found';
+          statusCode = 404;
+        } else {
+          errorMessage = error.message;
+        }
+      }
+      
+      res.status(statusCode).json({
         success: false,
-        message: 'Failed to verify TOTP setup',
+        message: errorMessage,
         error: error instanceof Error ? error.message : 'Unknown error'
       });
     }

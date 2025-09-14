@@ -61,6 +61,9 @@ router.post('/webhooks/:webhookId/test', SandboxController.testWebhook);
 // Transaction history
 router.get('/transactions', SandboxController.getRecentTransactions);
 
+// Debug endpoints
+router.get('/debug/plan-product-relationships', SandboxController.debugPlanProductRelationships);
+
 // Customers (with caching for GET requests)
 router.post('/customers', SandboxController.createCustomer);
 router.get('/customers', cacheMiddleware({ 

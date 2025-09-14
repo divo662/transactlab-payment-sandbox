@@ -2418,7 +2418,24 @@ export class SandboxController {
       if (!userId) return res.status(401).json({ success: false, message: 'Unauthorized' });
       const { productId, amount, currency, interval, trialDays } = req.body as any;
       if (!productId || amount === undefined || !currency || !interval) return res.status(400).json({ success: false, message: 'Missing required fields' });
+      
+      logger.info('Creating plan', {
+        userId: userId.toString(),
+        productId,
+        amount,
+        currency,
+        interval,
+        trialDays
+      });
+      
       const plan = await SandboxPlan.create({ userId: userId.toString(), productId, amount, currency, interval, trialDays });
+      
+      logger.info('Plan created successfully', {
+        planId: plan._id,
+        planPlanId: plan.planId,
+        productId: plan.productId
+      });
+      
       return res.json({ success: true, data: plan });
     } catch (error) {
       logger.error('Error creating plan:', error);
@@ -2438,6 +2455,62 @@ export class SandboxController {
     } catch (error) {
       logger.error('Error getting plans:', error);
       return res.status(500).json({ success: false, message: 'Failed to get plans' });
+    }
+  }
+
+  /**
+   * Debug endpoint to check plan-product relationships
+   * GET /api/v1/sandbox/debug/plan-product-relationships
+   */
+  static async debugPlanProductRelationships(req: Request, res: Response) {
+    try {
+      const userId = req.user?._id;
+      if (!userId) return res.status(401).json({ success: false, message: 'Unauthorized' });
+
+      // Get all plans for the user
+      const plans = await SandboxPlan.find({ userId: userId.toString() }).lean();
+      
+      // Get all products for the user
+      const products = await SandboxProduct.find({ userId: userId.toString() }).lean();
+      
+      // Check relationships
+      const relationships = plans.map(plan => {
+        const product = products.find(p => p.productId === plan.productId);
+        return {
+          plan: {
+            _id: plan._id,
+            planId: plan.planId,
+            productId: plan.productId,
+            amount: plan.amount,
+            interval: plan.interval
+          },
+          product: product ? {
+            _id: product._id,
+            productId: product.productId,
+            name: product.name,
+            hasImage: !!product.image
+          } : null,
+          relationshipValid: !!product
+        };
+      });
+
+      return res.json({
+        success: true,
+        data: {
+          plansCount: plans.length,
+          productsCount: products.length,
+          relationships,
+          summary: {
+            totalPlans: plans.length,
+            totalProducts: products.length,
+            validRelationships: relationships.filter(r => r.relationshipValid).length,
+            invalidRelationships: relationships.filter(r => !r.relationshipValid).length
+          }
+        }
+      });
+    } catch (error) {
+      logger.error('Error debugging plan-product relationships:', error);
+      return res.status(500).json({ success: false, message: 'Failed to debug relationships' });
     }
   }
 
@@ -2539,7 +2612,56 @@ export class SandboxController {
       let session: any = null;
       if (chargeNow) {
         // Fetch product details to include image in checkout session
-        const product = await SandboxProduct.findOne({ productId: plan.productId, userId: userId.toString() }).lean();
+        logger.info('Fetching product for subscription checkout', {
+          userId: userId.toString(),
+          planProductId: plan.productId,
+          planId: plan._id
+        });
+        
+        // Try to find the product with multiple strategies
+        let product = await SandboxProduct.findOne({ productId: plan.productId, userId: userId.toString() }).lean();
+        
+        // If not found, try alternative lookup strategies
+        if (!product) {
+          logger.warn('Product not found with exact productId match, trying alternative lookups', {
+            planProductId: plan.productId,
+            userId: userId.toString()
+          });
+          
+          // Try to find by MongoDB _id if plan.productId is actually a MongoDB ObjectId
+          try {
+            product = await SandboxProduct.findById(plan.productId).lean();
+            if (product) {
+              logger.info('Found product using MongoDB _id lookup', {
+                productId: product.productId,
+                productName: product.name
+              });
+            }
+          } catch (idError) {
+            // Not a valid ObjectId, continue
+          }
+          
+          // If still not found, try to find any product for this user (fallback)
+          if (!product) {
+            const userProducts = await SandboxProduct.find({ userId: userId.toString(), active: true }).lean();
+            if (userProducts.length > 0) {
+              product = userProducts[0]; // Use the first active product as fallback
+              logger.warn('Using fallback product for checkout session', {
+                fallbackProductId: product.productId,
+                fallbackProductName: product.name,
+                originalPlanProductId: plan.productId
+              });
+            }
+          }
+        }
+        
+        logger.info('Product lookup result', {
+          found: !!product,
+          productId: product?._id,
+          productName: product?.name,
+          productImage: product?.image ? 'present' : 'missing',
+          planProductId: plan.productId
+        });
         
         session = await SandboxSession.create({
           userId: userId.toString(),
@@ -2550,7 +2672,12 @@ export class SandboxController {
           customerEmail,
           productImage: product?.image || null,
           productName: product?.name || null,
-          metadata: { subscriptionId: subscription.subscriptionId, productId: plan.productId, planId: plan._id },
+          metadata: { 
+            source: 'sandbox-subscription',
+            subscriptionId: subscription.subscriptionId, 
+            productId: plan.productId, 
+            planId: plan._id 
+          },
           paymentConfig: { allowedPaymentMethods: ['card'], requireCustomerEmail: false, requireCustomerName: false, autoCapture: true },
           status: 'pending',
           webhookDelivered: false,
@@ -2558,6 +2685,12 @@ export class SandboxController {
           sessionId: `sess_${Math.random().toString(36).slice(2, 10)}`,
           expiresAt: new Date(Date.now() + 60 * 60 * 1000)
         } as any);
+        
+        logger.info('Checkout session created', {
+          sessionId: session.sessionId,
+          productName: session.productName,
+          productImage: session.productImage ? 'present' : 'missing'
+        });
       }
 
       return res.json({ success: true, data: { subscription, sessionId: session?.sessionId } });
