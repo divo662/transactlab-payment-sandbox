@@ -841,42 +841,6 @@ const ApiKeyManagement: React.FC = () => {
           </div>
         </div>
       )}
-
-      {/* Documentation CTA */}
-      <Card className="border-blue-200 bg-gradient-to-r from-blue-50 to-indigo-50">
-        <CardContent className="p-6 sm:p-8 text-center">
-          <div className="max-w-2xl mx-auto">
-            <div className="flex justify-center mb-4">
-              <div className="p-3 bg-blue-100 rounded-full">
-                <ExternalLink className="w-6 h-6 text-blue-600" />
-              </div>
-            </div>
-            <h3 className="text-xl sm:text-2xl font-bold text-gray-900 mb-2">
-              Ready to Get Started?
-            </h3>
-            <p className="text-sm sm:text-base text-gray-600 mb-6">
-              Explore our comprehensive documentation to learn how to integrate TransactLab 
-              into your applications with detailed guides, API references, and code examples.
-            </p>
-            <div className="flex flex-col sm:flex-row gap-3 justify-center">
-              <Button
-                onClick={() => window.open('https://transactlab-payment-sandbox.vercel.app/transactlab-docs', '_blank')}
-                className="bg-blue-600 hover:bg-blue-700 text-white px-6 py-3"
-              >
-                <ExternalLink className="w-4 h-4 mr-2" />
-                Read Our Documentation
-              </Button>
-              <Button
-                variant="outline"
-                onClick={() => window.open('https://transactlab-payment-sandbox.vercel.app/transactlab-docs', '_blank')}
-                className="border-blue-200 text-blue-700 hover:bg-blue-50 px-6 py-3"
-              >
-                View API Reference
-              </Button>
-            </div>
-          </div>
-        </CardContent>
-      </Card>
     </div>
   );
 };

@@ -73,12 +73,6 @@ interface AnalyticsData {
   };
 }
 
-interface ApiResponse<T> {
-  success: boolean;
-  data?: T;
-  message?: string;
-}
-
 const Analytics: React.FC = () => {
   const [data, setData] = useState<AnalyticsData | null>(null);
   const [loading, setLoading] = useState(true);
@@ -94,12 +88,12 @@ const Analytics: React.FC = () => {
   const fetchAnalytics = async () => {
     try {
       setLoading(true);
-      const response = await apiService.getAnalyticsOverview(timeRange) as ApiResponse<AnalyticsData>;
+      const response = await apiService.getAnalyticsOverview(timeRange);
       
-      if (response.success && response.data) {
-        setData(response.data);
+      if ((response as any).success) {
+        setData((response as any).data);
       } else {
-        throw new Error(response.message || 'Failed to fetch analytics data');
+        throw new Error((response as any).message || 'Failed to fetch analytics data');
       }
     } catch (error) {
       console.error('Error fetching analytics:', error);
@@ -125,11 +119,11 @@ const Analytics: React.FC = () => {
 
   const handleExport = async (type: string) => {
     try {
-      const response = await apiService.exportAnalytics(type, 'json', timeRange) as ApiResponse<any>;
+      const response = await apiService.exportAnalytics(type, 'json', timeRange);
       
-      if (response.success && response.data) {
+      if ((response as any).success) {
         // Create and download the file
-        const dataStr = JSON.stringify(response.data, null, 2);
+        const dataStr = JSON.stringify((response as any).data, null, 2);
         const dataBlob = new Blob([dataStr], { type: 'application/json' });
         const url = URL.createObjectURL(dataBlob);
         const link = document.createElement('a');
@@ -145,7 +139,7 @@ const Analytics: React.FC = () => {
           description: `${type} data has been downloaded successfully.`,
         });
       } else {
-        throw new Error(response.message || 'Export failed');
+        throw new Error((response as any).message || 'Export failed');
       }
     } catch (error) {
       console.error('Error exporting data:', error);
@@ -191,130 +185,9 @@ const Analytics: React.FC = () => {
 
   if (loading) {
     return (
-      <div className="container mx-auto px-4 py-8 max-w-7xl">
-        {/* Header Skeleton */}
-        <div className="mb-8">
-          <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
-            <div>
-              <div className="h-8 bg-gray-200 rounded w-64 mb-2 animate-pulse"></div>
-              <div className="h-4 bg-gray-200 rounded w-96 animate-pulse"></div>
-            </div>
-            <div className="flex items-center gap-3">
-              <div className="h-10 bg-gray-200 rounded w-32 animate-pulse"></div>
-              <div className="h-10 bg-gray-200 rounded w-24 animate-pulse"></div>
-            </div>
-          </div>
-        </div>
-
-        {/* Key Metrics Skeleton */}
-        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6 mb-8">
-          {[1, 2, 3, 4].map((i) => (
-            <Card key={i}>
-              <CardContent className="p-6">
-                <div className="flex items-center justify-between">
-                  <div className="flex-1">
-                    <div className="h-4 bg-gray-200 rounded w-24 mb-2 animate-pulse"></div>
-                    <div className="h-8 bg-gray-200 rounded w-32 mb-2 animate-pulse"></div>
-                    <div className="h-3 bg-gray-200 rounded w-20 animate-pulse"></div>
-                  </div>
-                  <div className="w-12 h-12 bg-gray-200 rounded-full animate-pulse"></div>
-                </div>
-              </CardContent>
-            </Card>
-          ))}
-        </div>
-
-        {/* Charts Skeleton */}
-        <div className="grid grid-cols-1 lg:grid-cols-2 gap-6 mb-8">
-          {[1, 2].map((i) => (
-            <Card key={i}>
-              <CardHeader>
-                <div className="h-6 bg-gray-200 rounded w-48 animate-pulse"></div>
-              </CardHeader>
-              <CardContent>
-                <div className="space-y-4">
-                  <div className="grid grid-cols-2 gap-4">
-                    <div className="h-20 bg-gray-200 rounded-lg animate-pulse"></div>
-                    <div className="h-20 bg-gray-200 rounded-lg animate-pulse"></div>
-                  </div>
-                  <div className="h-2 bg-gray-200 rounded animate-pulse"></div>
-                  <div className="h-16 bg-gray-200 rounded animate-pulse"></div>
-                </div>
-              </CardContent>
-            </Card>
-          ))}
-        </div>
-
-        {/* API Usage and Webhooks Skeleton */}
-        <div className="grid grid-cols-1 lg:grid-cols-2 gap-6 mb-8">
-          {[1, 2].map((i) => (
-            <Card key={i}>
-              <CardHeader>
-                <div className="h-6 bg-gray-200 rounded w-32 animate-pulse"></div>
-              </CardHeader>
-              <CardContent>
-                <div className="space-y-4">
-                  <div className="grid grid-cols-2 gap-4">
-                    <div className="h-20 bg-gray-200 rounded-lg animate-pulse"></div>
-                    <div className="h-20 bg-gray-200 rounded-lg animate-pulse"></div>
-                  </div>
-                  <div className="h-2 bg-gray-200 rounded animate-pulse"></div>
-                  <div className="space-y-2">
-                    {[1, 2, 3].map((j) => (
-                      <div key={j} className="h-8 bg-gray-200 rounded animate-pulse"></div>
-                    ))}
-                  </div>
-                </div>
-              </CardContent>
-            </Card>
-          ))}
-        </div>
-
-        {/* Top Customers Skeleton */}
-        <Card className="mb-8">
-          <CardHeader>
-            <div className="h-6 bg-gray-200 rounded w-32 animate-pulse"></div>
-          </CardHeader>
-          <CardContent>
-            <div className="space-y-4">
-              {[1, 2, 3, 4, 5].map((i) => (
-                <div key={i} className="flex items-center justify-between p-4 border rounded-lg">
-                  <div className="flex items-center gap-3">
-                    <div className="w-8 h-8 bg-gray-200 rounded-full animate-pulse"></div>
-                    <div>
-                      <div className="h-4 bg-gray-200 rounded w-32 mb-1 animate-pulse"></div>
-                      <div className="h-3 bg-gray-200 rounded w-24 animate-pulse"></div>
-                    </div>
-                  </div>
-                  <div className="text-right">
-                    <div className="h-4 bg-gray-200 rounded w-20 mb-1 animate-pulse"></div>
-                    <div className="h-3 bg-gray-200 rounded w-16 animate-pulse"></div>
-                  </div>
-                </div>
-              ))}
-            </div>
-          </CardContent>
-        </Card>
-
-        {/* Export Actions Skeleton */}
-        <Card>
-          <CardHeader>
-            <div className="h-6 bg-gray-200 rounded w-32 animate-pulse"></div>
-          </CardHeader>
-          <CardContent>
-            <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
-              {[1, 2, 3, 4].map((i) => (
-                <div key={i} className="h-10 bg-gray-200 rounded animate-pulse"></div>
-              ))}
-            </div>
-          </CardContent>
-        </Card>
-
-        {/* Loading Message */}
-        <div className="text-center py-8 mt-8">
-          <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-[#0a164d] mx-auto mb-4"></div>
-          <p className="text-gray-600 font-medium">Loading analytics data...</p>
-          <p className="text-sm text-gray-500 mt-1">This may take a few moments</p>
+      <div className="container mx-auto px-4 py-8">
+        <div className="flex items-center justify-center h-64">
+          <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-[#0a164d]"></div>
         </div>
       </div>
     );

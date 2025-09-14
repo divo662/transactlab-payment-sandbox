@@ -25,7 +25,6 @@ import refundRoutes from './routes/api/v1/refundRoutes';
 import webhookRoutes from './routes/api/v1/webhookRoutes';
 import subscriptionRoutes from './routes/api/v1/subscriptionRoutes';
 import magicSdkRoutes from './routes/api/v1/magicSdkRoutes';
-import apiV1AnalyticsRoutes from './routes/api/v1/analyticsRoutes';
 import merchantRoutes from './routes/merchant/merchantRoutes';
 import apiKeyRoutes from './routes/merchant/apiKeyRoutes';
 import webhookConfigRoutes from './routes/merchant/webhookConfigRoutes';

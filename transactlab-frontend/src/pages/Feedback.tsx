@@ -51,7 +51,6 @@ interface PublicFeedback {
 const Feedback: React.FC = () => {
   const [feedback, setFeedback] = useState<PublicFeedback[]>([]);
   const [loading, setLoading] = useState(true);
-  const [initialLoading, setInitialLoading] = useState(true);
   const [voting, setVoting] = useState<string | null>(null);
   const [filter, setFilter] = useState('all');
   const [sortBy, setSortBy] = useState('newest');
@@ -119,7 +118,6 @@ const Feedback: React.FC = () => {
       });
     } finally {
       setLoading(false);
-      setInitialLoading(false);
     }
   };
 
@@ -283,98 +281,11 @@ const Feedback: React.FC = () => {
     });
   };
 
-  if (initialLoading) {
+  if (loading) {
     return (
-      <div className="container mx-auto px-4 py-8 max-w-6xl">
-        {/* Header Skeleton */}
-        <div className="mb-8">
-          <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
-            <div>
-              <div className="h-8 bg-gray-200 rounded w-80 mb-2 animate-pulse"></div>
-              <div className="h-4 bg-gray-200 rounded w-96 animate-pulse"></div>
-            </div>
-            <div className="h-10 bg-gray-200 rounded w-40 animate-pulse"></div>
-          </div>
-        </div>
-
-        {/* Filters and Search Skeleton */}
-        <div className="mb-6 space-y-4 sm:space-y-0 sm:flex sm:items-center sm:justify-between sm:gap-4">
-          <div className="flex flex-col sm:flex-row gap-3 sm:gap-4">
-            <div className="h-10 bg-gray-200 rounded flex-1 max-w-md animate-pulse"></div>
-            <div className="h-10 bg-gray-200 rounded w-full sm:w-48 animate-pulse"></div>
-            <div className="h-10 bg-gray-200 rounded w-full sm:w-48 animate-pulse"></div>
-          </div>
-        </div>
-
-        {/* Feedback Cards Skeleton */}
-        <div className="space-y-4">
-          {[1, 2, 3, 4, 5].map((i) => (
-            <Card key={i} className="hover:shadow-md transition-shadow">
-              <CardHeader className="pb-3">
-                <div className="flex items-start justify-between">
-                  <div className="flex-1">
-                    {/* Badges Skeleton */}
-                    <div className="flex items-center gap-2 mb-2">
-                      <div className="w-4 h-4 bg-gray-200 rounded animate-pulse"></div>
-                      <div className="h-6 bg-gray-200 rounded w-16 animate-pulse"></div>
-                      <div className="h-6 bg-gray-200 rounded w-12 animate-pulse"></div>
-                      <div className="h-6 bg-gray-200 rounded w-14 animate-pulse"></div>
-                    </div>
-                    
-                    {/* Title Skeleton */}
-                    <div className="h-6 bg-gray-200 rounded w-3/4 mb-2 animate-pulse"></div>
-                    
-                    {/* Meta Info Skeleton */}
-                    <div className="flex items-center gap-4 text-sm">
-                      <div className="flex items-center gap-1">
-                        <div className="w-4 h-4 bg-gray-200 rounded animate-pulse"></div>
-                        <div className="h-4 bg-gray-200 rounded w-24 animate-pulse"></div>
-                      </div>
-                      <div className="flex items-center gap-1">
-                        <div className="w-4 h-4 bg-gray-200 rounded animate-pulse"></div>
-                        <div className="h-4 bg-gray-200 rounded w-20 animate-pulse"></div>
-                      </div>
-                      <div className="flex items-center gap-1">
-                        <div className="flex gap-1">
-                          {[1, 2, 3, 4, 5].map((star) => (
-                            <div key={star} className="w-4 h-4 bg-gray-200 rounded animate-pulse"></div>
-                          ))}
-                        </div>
-                        <div className="h-4 bg-gray-200 rounded w-8 animate-pulse"></div>
-                      </div>
-                    </div>
-                  </div>
-                </div>
-              </CardHeader>
-
-              <CardContent className="pt-0">
-                {/* Message Skeleton */}
-                <div className="space-y-2 mb-4">
-                  <div className="h-4 bg-gray-200 rounded w-full animate-pulse"></div>
-                  <div className="h-4 bg-gray-200 rounded w-5/6 animate-pulse"></div>
-                  <div className="h-4 bg-gray-200 rounded w-4/6 animate-pulse"></div>
-                </div>
-
-                {/* Voting Section Skeleton */}
-                <div className="flex items-center justify-between pt-4 border-t">
-                  <div className="flex items-center gap-4">
-                    <div className="flex items-center gap-2">
-                      <div className="h-8 bg-gray-200 rounded w-20 animate-pulse"></div>
-                      <div className="h-8 bg-gray-200 rounded w-24 animate-pulse"></div>
-                    </div>
-                    <div className="h-4 bg-gray-200 rounded w-32 animate-pulse"></div>
-                  </div>
-                </div>
-              </CardContent>
-            </Card>
-          ))}
-        </div>
-
-        {/* Loading Message */}
-        <div className="text-center py-8 mt-8">
-          <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-[#0a164d] mx-auto mb-4"></div>
-          <p className="text-gray-600 font-medium">Loading community feedback...</p>
-          <p className="text-sm text-gray-500 mt-1">This may take a few moments</p>
+      <div className="container mx-auto px-4 py-8">
+        <div className="flex items-center justify-center h-64">
+          <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-[#0a164d]"></div>
         </div>
       </div>
     );
@@ -393,7 +304,6 @@ const Feedback: React.FC = () => {
           </div>
           <Button
             onClick={() => setShowCreateForm(!showCreateForm)}
-            disabled={loading}
             className="bg-[#0a164d] hover:bg-[#0a164d]/90 text-white"
           >
             <Plus className="h-4 w-4 mr-2" />
@@ -413,12 +323,11 @@ const Feedback: React.FC = () => {
               value={searchTerm}
               onChange={(e) => setSearchTerm(e.target.value)}
               className="pl-10"
-              disabled={loading}
             />
           </div>
 
           {/* Category Filter */}
-          <Select value={filter} onValueChange={setFilter} disabled={loading}>
+          <Select value={filter} onValueChange={setFilter}>
             <SelectTrigger className="w-full sm:w-48">
               <Filter className="h-4 w-4 mr-2" />
               <SelectValue />
@@ -434,7 +343,7 @@ const Feedback: React.FC = () => {
           </Select>
 
           {/* Sort */}
-          <Select value={sortBy} onValueChange={setSortBy} disabled={loading}>
+          <Select value={sortBy} onValueChange={setSortBy}>
             <SelectTrigger className="w-full sm:w-48">
               <SelectValue />
             </SelectTrigger>
@@ -660,12 +569,8 @@ const Feedback: React.FC = () => {
                           disabled={voting === item._id}
                           className="text-green-600 hover:text-green-700 hover:bg-green-50"
                         >
-                          {voting === item._id ? (
-                            <div className="animate-spin rounded-full h-4 w-4 border-b-2 border-green-600 mr-1"></div>
-                          ) : (
-                            <ThumbsUp className="h-4 w-4 mr-1" />
-                          )}
-                          {voting === item._id ? 'Voting...' : `Helpful (${item.helpful})`}
+                          <ThumbsUp className="h-4 w-4 mr-1" />
+                          Helpful ({item.helpful})
                         </Button>
                         <Button
                           variant="outline"
@@ -674,12 +579,8 @@ const Feedback: React.FC = () => {
                           disabled={voting === item._id}
                           className="text-red-600 hover:text-red-700 hover:bg-red-50"
                         >
-                          {voting === item._id ? (
-                            <div className="animate-spin rounded-full h-4 w-4 border-b-2 border-red-600 mr-1"></div>
-                          ) : (
-                            <ThumbsDown className="h-4 w-4 mr-1" />
-                          )}
-                          {voting === item._id ? 'Voting...' : `Not Helpful (${item.notHelpful})`}
+                          <ThumbsDown className="h-4 w-4 mr-1" />
+                          Not Helpful ({item.notHelpful})
                         </Button>
                       </div>
                       <div className="text-sm text-gray-600">

@@ -1318,16 +1318,13 @@ export class SandboxController {
         try {
           const amountMajor = (session.amount || 0) / 100;
           const customerEmail = session.customerEmail || 'noreply@transactlab.com';
-          // Get the stored payment method from session metadata
-          const storedPaymentMethod = session.getPaymentMethod();
-          
           await EmailService.sendPaymentReceipt(customerEmail, {
             customerName: session.customerName || (session.customerEmail ? session.customerEmail.split('@')[0] : 'Customer'),
             amount: amountMajor,
             currency: session.currency,
             reference: session.sessionId,
             date: new Date().toLocaleString(),
-            paymentMethod: storedPaymentMethod
+            paymentMethod: paymentMethod || 'card'
           });
 
           // Owner alert
@@ -1339,7 +1336,7 @@ export class SandboxController {
               currency: session.currency,
               reference: session.sessionId,
               date: new Date().toLocaleString(),
-              paymentMethod: storedPaymentMethod
+              paymentMethod: paymentMethod || 'card'
             });
           }
 
@@ -1350,7 +1347,7 @@ export class SandboxController {
             currency: session.currency,
             reference: session.sessionId,
             date: new Date().toLocaleString(),
-            paymentMethod: storedPaymentMethod,
+            paymentMethod: paymentMethod || 'card',
             businessName: 'TransactLab Sandbox'
           });
         } catch (e) {
@@ -1929,25 +1926,13 @@ export class SandboxController {
   }
 
   /**
-   * Update a sandbox customer
+   * Update a sandbox customer (name only for now)
    */
   static async updateCustomer(req: Request, res: Response) {
     try {
       const userId = req.user?._id;
       const { customerId } = req.params;
-      const { name, phone, address, description } = req.body as { 
-        name?: string; 
-        phone?: string; 
-        address?: {
-          line1?: string;
-          line2?: string;
-          city?: string;
-          state?: string;
-          postalCode?: string;
-          country: string;
-        }; 
-        description?: string; 
-      };
+      const { name } = req.body as { name?: string };
 
       if (!userId) {
         return res.status(401).json({ success: false, error: 'Unauthorized', message: 'User not authenticated' });
@@ -1956,25 +1941,9 @@ export class SandboxController {
         return res.status(400).json({ success: false, message: 'Customer id is required' });
       }
 
-      // Build update object with only provided fields
-      const updateData: any = {};
-      if (name !== undefined) updateData.name = name;
-      if (phone !== undefined) updateData.phone = phone;
-      if (description !== undefined) updateData.description = description;
-      if (address !== undefined) {
-        updateData.address = {
-          line1: address.line1 || '',
-          line2: address.line2 || '',
-          city: address.city || '',
-          state: address.state || '',
-          postalCode: address.postalCode || '',
-          country: address.country || 'NG'
-        };
-      }
-
       const customer = await SandboxCustomer.findOneAndUpdate(
         { _id: customerId, userId: userId.toString() },
-        { $set: updateData },
+        { $set: { ...(name ? { name } : {}) } },
         { new: true }
       ).lean();
 
@@ -2479,14 +2448,7 @@ export class SandboxController {
         currency: plan.currency,
         description: isTrialToActive ? 'Subscription first charge after trial' : 'Subscription renewal charge',
         customerEmail: s.customerEmail,
-        metadata: { 
-          subscriptionId: s.subscriptionId, 
-          productId: s.productId, 
-          planId: s.planId,
-          customFields: {
-            paymentMethodUsed: 'card' // Default for auto-renewals
-          }
-        },
+        metadata: { subscriptionId: s.subscriptionId, productId: s.productId, planId: s.planId },
         paymentConfig: { allowedPaymentMethods: ['card'], requireCustomerEmail: false, requireCustomerName: false, autoCapture: true },
         status: 'completed',
         webhookDelivered: false,

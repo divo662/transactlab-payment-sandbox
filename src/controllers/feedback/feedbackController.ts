@@ -1,12 +1,12 @@
 import { Request, Response } from 'express';
 import Feedback, { IFeedback } from '../../models/Feedback';
-import { AuthenticatedRequest } from '../../middleware/auth/authMiddleware';
+import { AuthenticatedRequest } from '../../utils/types/express';
 
 // Create new feedback
 export const createFeedback = async (req: AuthenticatedRequest, res: Response) => {
   try {
     const { rating, title, message, category, priority, tags, isPublic } = req.body;
-    const userId = req.user?.userId;
+    const userId = req.user?._id;
 
     if (!userId) {
       return res.status(401).json({
@@ -63,7 +63,7 @@ export const createFeedback = async (req: AuthenticatedRequest, res: Response) =
 // Get user's feedback
 export const getUserFeedback = async (req: AuthenticatedRequest, res: Response) => {
   try {
-    const userId = req.user?.userId;
+    const userId = req.user?._id;
     const { page = 1, limit = 10, status, category } = req.query;
 
     if (!userId) {
@@ -132,7 +132,7 @@ export const getPublicFeedback = async (req: Request, res: Response) => {
     }
 
     const skip = (Number(page) - 1) * Number(limit);
-    const sortOrder = sortBy === 'helpful' ? { helpful: -1, createdAt: -1 } : { createdAt: -1 };
+    const sortOrder = sortBy === 'helpful' ? { helpful: -1 as const, createdAt: -1 as const } : { createdAt: -1 as const };
     
     const [feedback, total] = await Promise.all([
       Feedback.find(query)
@@ -170,7 +170,7 @@ export const getPublicFeedback = async (req: Request, res: Response) => {
 export const getFeedbackById = async (req: AuthenticatedRequest, res: Response) => {
   try {
     const { id } = req.params;
-    const userId = req.user?.userId;
+    const userId = req.user?._id;
 
     const feedback = await Feedback.findById(id).populate('respondedBy', 'firstName lastName email');
 
@@ -182,7 +182,7 @@ export const getFeedbackById = async (req: AuthenticatedRequest, res: Response) 
     }
 
     // Check if user can view this feedback (owner or admin)
-    if (feedback.userId.toString() !== userId && req.user?.role !== 'admin') {
+    if (feedback.userId.toString() !== userId.toString() && req.user?.role !== 'admin') {
       return res.status(403).json({
         success: false,
         message: 'Access denied'
@@ -207,7 +207,7 @@ export const getFeedbackById = async (req: AuthenticatedRequest, res: Response) 
 export const updateFeedback = async (req: AuthenticatedRequest, res: Response) => {
   try {
     const { id } = req.params;
-    const userId = req.user?.userId;
+    const userId = req.user?._id;
     const { title, message, category, isPublic } = req.body;
 
     const feedback = await Feedback.findById(id);
@@ -220,7 +220,7 @@ export const updateFeedback = async (req: AuthenticatedRequest, res: Response) =
     }
 
     // Check if user owns this feedback
-    if (feedback.userId.toString() !== userId) {
+    if (feedback.userId.toString() !== userId.toString()) {
       return res.status(403).json({
         success: false,
         message: 'You can only update your own feedback'
@@ -267,7 +267,7 @@ export const voteFeedback = async (req: AuthenticatedRequest, res: Response) => 
   try {
     const { id } = req.params;
     const { helpful } = req.body; // true for helpful, false for not helpful
-    const userId = req.user?.userId;
+    const userId = req.user?._id;
 
     if (typeof helpful !== 'boolean') {
       return res.status(400).json({
@@ -286,7 +286,7 @@ export const voteFeedback = async (req: AuthenticatedRequest, res: Response) => 
     }
 
     // Check if user can vote (not the author)
-    if (feedback.userId.toString() === userId) {
+    if (feedback.userId.toString() === userId.toString()) {
       return res.status(400).json({
         success: false,
         message: 'You cannot vote on your own feedback'
@@ -309,8 +309,8 @@ export const voteFeedback = async (req: AuthenticatedRequest, res: Response) => 
       data: {
         helpful: feedback.helpful,
         notHelpful: feedback.notHelpful,
-        totalVotes: feedback.totalVotes,
-        helpfulPercentage: feedback.helpfulPercentage
+        totalVotes: (feedback as any).totalVotes,
+        helpfulPercentage: (feedback as any).helpfulPercentage
       }
     });
   } catch (error: any) {
@@ -382,7 +382,7 @@ export const adminUpdateFeedback = async (req: AuthenticatedRequest, res: Respon
   try {
     const { id } = req.params;
     const { status, priority, adminNotes, response } = req.body;
-    const adminId = req.user?.userId;
+    const adminId = req.user?._id;
 
     if (req.user?.role !== 'admin') {
       return res.status(403).json({
