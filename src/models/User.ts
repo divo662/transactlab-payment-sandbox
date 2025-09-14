@@ -55,6 +55,18 @@ export interface IUser extends Document {
   twoFactorSecret?: string;
   twoFactorEnabled: boolean;
   
+  // Trusted devices
+  trustedDevices: Array<{
+    deviceId: string;
+    deviceName: string;
+    deviceType: string;
+    userAgent: string;
+    ipAddress: string;
+    location?: string;
+    trustedAt: Date;
+    lastUsed: Date;
+  }>;
+  
   // Preferences
   preferences: {
     notifications: {
@@ -79,6 +91,15 @@ export interface IUser extends Document {
   incrementLoginAttempts(): Promise<void>;
   resetLoginAttempts(): Promise<void>;
   unlockAccount(): Promise<void>;
+  isDeviceTrusted(deviceId: string): boolean;
+  addTrustedDevice(deviceData: {
+    deviceId: string;
+    deviceName: string;
+    deviceType: string;
+    userAgent: string;
+    ipAddress: string;
+    location?: string;
+  }): Promise<void>;
   getFullBusinessName(): string;
   isIndividualDeveloper(): boolean;
   isBusinessEntity(): boolean;
@@ -212,6 +233,40 @@ const userSchema = new Schema<IUser>(
       type: Boolean,
       default: false
     },
+    trustedDevices: [{
+      deviceId: {
+        type: String,
+        required: true
+      },
+      deviceName: {
+        type: String,
+        required: true
+      },
+      deviceType: {
+        type: String,
+        required: true,
+        enum: ['desktop', 'mobile', 'tablet', 'unknown']
+      },
+      userAgent: {
+        type: String,
+        required: true
+      },
+      ipAddress: {
+        type: String,
+        required: true
+      },
+      location: {
+        type: String
+      },
+      trustedAt: {
+        type: Date,
+        default: Date.now
+      },
+      lastUsed: {
+        type: Date,
+        default: Date.now
+      }
+    }],
     preferences: {
       notifications: {
         email: {
@@ -385,6 +440,46 @@ userSchema.methods.unlockAccount = async function (): Promise<void> {
   return await this.updateOne({
     $unset: { loginAttempts: 1, lockUntil: 1 }
   });
+};
+
+// Instance method to check if device is trusted
+userSchema.methods.isDeviceTrusted = function (deviceId: string): boolean {
+  if (!this.trustedDevices || this.trustedDevices.length === 0) {
+    return false;
+  }
+  
+  return this.trustedDevices.some((device: any) => device.deviceId === deviceId);
+};
+
+// Instance method to add trusted device
+userSchema.methods.addTrustedDevice = async function (deviceData: {
+  deviceId: string;
+  deviceName: string;
+  deviceType: string;
+  userAgent: string;
+  ipAddress: string;
+  location?: string;
+}): Promise<void> {
+  const now = new Date();
+  
+  // Check if device already exists
+  const existingDeviceIndex = this.trustedDevices.findIndex(
+    (device: any) => device.deviceId === deviceData.deviceId
+  );
+  
+  if (existingDeviceIndex >= 0) {
+    // Update existing device
+    this.trustedDevices[existingDeviceIndex].lastUsed = now;
+  } else {
+    // Add new trusted device
+    this.trustedDevices.push({
+      ...deviceData,
+      trustedAt: now,
+      lastUsed: now
+    });
+  }
+  
+  await this.save();
 };
 
 // Instance method to get full business name
