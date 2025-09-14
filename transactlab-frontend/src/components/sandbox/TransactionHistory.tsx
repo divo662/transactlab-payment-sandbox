@@ -220,6 +220,30 @@ const TransactionHistory: React.FC = () => {
            transaction.description?.toLowerCase().includes('recurring');
   };
 
+  // Get formatted payment method
+  const getFormattedPaymentMethod = (transaction: any) => {
+    const paymentMethod = transaction.metadata?.customFields?.paymentMethodUsed;
+    
+    if (!paymentMethod) {
+      return 'Credit/Debit Card';
+    }
+
+    switch (paymentMethod.toLowerCase()) {
+      case 'card':
+        return 'Credit/Debit Card';
+      case 'bank_transfer':
+        return 'Bank Transfer';
+      case 'mobile_money':
+        return 'Mobile Money';
+      case 'wallet':
+        return 'Digital Wallet';
+      case 'bank_account':
+        return 'Bank Account';
+      default:
+        return 'Credit/Debit Card';
+    }
+  };
+
   // Get payment type icon and label
   const getPaymentTypeInfo = (transaction: any) => {
     if (isSubscriptionPayment(transaction)) {
@@ -344,9 +368,7 @@ const TransactionHistory: React.FC = () => {
         description: selectedTransaction.description || 'Payment',
         createdAt: selectedTransaction.createdAt,
         status: selectedTransaction.status,
-        paymentMethod: selectedTransaction.metadata?.customFields?.paymentMethodUsed === 'bank_transfer' ? 'Bank Transfer' :
-                      selectedTransaction.metadata?.customFields?.paymentMethodUsed === 'mobile_money' ? 'Mobile Money' :
-                      selectedTransaction.metadata?.customFields?.paymentMethodUsed === 'card' ? 'Credit/Debit Card' : 'Credit/Debit Card'
+        paymentMethod: getFormattedPaymentMethod(selectedTransaction)
       });
       toast({ title: 'Success', description: 'Receipt downloaded successfully' });
     } catch (err) {
@@ -935,10 +957,7 @@ const TransactionHistory: React.FC = () => {
                     <div className="min-w-0 flex-1">
                       <p className="text-xs sm:text-sm font-medium text-gray-500">Payment Method</p>
                       <p className="text-xs sm:text-sm text-gray-900">
-                        {selectedTransaction.metadata?.customFields?.paymentMethodUsed === 'bank_transfer' && 'Bank Transfer'}
-                        {selectedTransaction.metadata?.customFields?.paymentMethodUsed === 'mobile_money' && 'Mobile Money'}
-                        {selectedTransaction.metadata?.customFields?.paymentMethodUsed === 'card' && 'Credit/Debit Card'}
-                        {!selectedTransaction.metadata?.customFields?.paymentMethodUsed && 'Credit/Debit Card'}
+                        {getFormattedPaymentMethod(selectedTransaction)}
                       </p>
                     </div>
                   </div>
