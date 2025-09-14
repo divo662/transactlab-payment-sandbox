@@ -7,10 +7,12 @@ import { useAuth } from "@/contexts/AuthContext";
 import apiService from "@/lib/api";
 import { useWorkspaceInvites } from "@/contexts/WorkspaceInviteContext";
 import WorkspaceInviteNotification from "@/components/WorkspaceInviteNotification";
-import { Search, Command } from "lucide-react";
+import SupportModal from "@/components/ui/support-modal";
+import { Search, Command, HelpCircle } from "lucide-react";
 
 const Header = () => {
   const [isSearchOpen, setIsSearchOpen] = useState(false);
+  const [isSupportOpen, setIsSupportOpen] = useState(false);
   const { user } = useAuth();
   const [avatarError, setAvatarError] = useState(false);
   const avatarPath = user?.avatar ? String(user.avatar).replace(/\\/g, "/") : undefined;
@@ -58,8 +60,8 @@ const Header = () => {
             </button>
           </div>
           
-          {/* Mobile Search Button */}
-          <div className="md:hidden">
+          {/* Mobile Search and Support Buttons */}
+          <div className="md:hidden flex items-center gap-2">
             <button
               onClick={() => setIsSearchOpen(true)}
               className="p-2 text-gray-500 hover:text-gray-700 hover:bg-gray-100 rounded-lg transition-colors"
@@ -67,9 +69,26 @@ const Header = () => {
             >
               <Search className="h-5 w-5" />
             </button>
+            <button
+              onClick={() => setIsSupportOpen(true)}
+              className="p-2 text-gray-500 hover:text-gray-700 hover:bg-gray-100 rounded-lg transition-colors"
+              aria-label="Get support"
+            >
+              <HelpCircle className="h-5 w-5" />
+            </button>
           </div>
           
           <div className="flex items-center gap-2 sm:gap-3">
+            {/* Support Button - Hidden on mobile, shown on tablet+ */}
+            <button
+              onClick={() => setIsSupportOpen(true)}
+              className="hidden sm:flex items-center gap-2 px-3 py-2 text-gray-600 hover:text-[#0a164d] hover:bg-gray-100 rounded-lg transition-colors"
+              aria-label="Get support"
+            >
+              <HelpCircle className="h-4 w-4" />
+              <span className="text-sm font-medium hidden md:inline">Support</span>
+            </button>
+            
             {/* Workspace badge - Hidden on mobile, shown on tablet+ */}
             <div className={`hidden sm:block px-2 py-1 rounded text-xs border ${isPersonal ? 'bg-gray-50 text-gray-600' : 'bg-[#0a164d]/10 text-[#0a164d] border-[#0a164d]/30'}`} title={isPersonal ? 'Personal workspace' : `Workspace: ${activeTeamName || 'Team'}`}>
               {isPersonal ? 'Personal' : (activeTeamName || 'Team')}
@@ -95,6 +114,11 @@ const Header = () => {
       <SearchModal 
         isOpen={isSearchOpen} 
         onClose={() => setIsSearchOpen(false)} 
+      />
+      
+      <SupportModal 
+        isOpen={isSupportOpen} 
+        onClose={() => setIsSupportOpen(false)} 
       />
     </>
   );

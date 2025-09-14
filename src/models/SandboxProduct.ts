@@ -5,6 +5,7 @@ export interface ISandboxProduct extends Document {
   userId: string;
   name: string;
   description?: string;
+  image?: string; // URL or base64 image data
   active: boolean;
 }
 
@@ -14,6 +15,7 @@ const SandboxProductSchema = new Schema<ISandboxProduct>(
     userId: { type: String, required: true, index: true },
     name: { type: String, required: true },
     description: { type: String },
+    image: { type: String }, // URL or base64 image data
     active: { type: Boolean, default: true },
   },
   { timestamps: true }

@@ -18,7 +18,7 @@ import EmailVerification from "./pages/auth/EmailVerification";
 import KycCallback from "./pages/auth/KycCallback";
 import Dashboard from "./pages/Dashboard";
 import Profile from "./pages/settings/Profile";
-import Security from "./pages/settings/Security";
+import Security from "./pages/Security";
 import NotFound from "./pages/NotFound";
 import SandboxDashboard from "./components/sandbox/SandboxDashboard";
 import ApiKeyManagement from "./components/sandbox/ApiKeyManagement";
@@ -41,6 +41,8 @@ import TeamAccept from "./pages/TeamAccept";
 import CheckoutTemplates from "./pages/sandbox/CheckoutTemplates";
 import PaymentLinkNew from "./pages/sandbox/PaymentLinkNew";
 import SDKSetup from "./pages/sandbox/SDKSetup";
+import Feedback from "./pages/Feedback";
+import Analytics from "./pages/Analytics";
 
 const queryClient = new QueryClient();
 
@@ -74,9 +76,11 @@ const App = () => (
               {/* App routes with layout */}
               <Route element={<AppLayout />}>
                 <Route path="/dashboard" element={<Dashboard />} />
+                <Route path="/analytics" element={<Analytics />} />
                 <Route path="/docs" element={<Docs />} />
                 <Route path="/settings/profile" element={<Profile />} />
                 <Route path="/settings/security" element={<Security />} />
+                <Route path="/feedback" element={<Feedback />} />
 
                 {/* Sandbox Routes */}
                 <Route path="/sandbox" element={<SandboxDashboard />} />

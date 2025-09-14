@@ -36,7 +36,7 @@ export interface EmailTemplate {
  * Handles email notifications and templating using SMTP
  */
 export class EmailService {
-  private static readonly DEFAULT_FROM = process.env.EMAIL_FROM || 'noreply@transactlab.com';
+  private static readonly DEFAULT_FROM = process.env.EMAIL_FROM || 'support@portlybuilder.com';
   private static transporter: nodemailer.Transporter | null = null;
 
   /**
@@ -49,12 +49,12 @@ export class EmailService {
 
     try {
       this.transporter = nodemailer.createTransport({
-        host: process.env.SMTP_HOST || 'smtp.gmail.com',
+        host: process.env.SMTP_HOST || 'smtp.mailgun.org',
         port: parseInt(process.env.SMTP_PORT || '587'),
         secure: false, // true for 465, false for other ports
         auth: {
-          user: process.env.SMTP_USER,
-          pass: process.env.SMTP_PASS
+          user: process.env.SMTP_USER || 'support@portlybuilder.com',
+          pass: process.env.SMTP_PASS || 'Sendemail135790!'
         },
         tls: {
           rejectUnauthorized: false
@@ -88,7 +88,7 @@ export class EmailService {
             <p style="font-size: 15px; color: #333;">Hi <strong>{{customerName}}</strong>, your subscription is now active.</p>
             <div style="background: #f8f9fa; padding: 16px; border-radius: 8px; margin: 16px 0;">
               <p style="margin: 0; font-size: 14px; color: #333;"><strong>Plan:</strong> {{planName}}</p>
-              <p style="margin: 8px 0 0 0; font-size: 14px; color: #333;"><strong>Amount:</strong> {{amount}} {{currency}} / {{interval}}</p>
+              <p style="margin: 8px 0 0 0; font-size: 14px; color: #333;"><strong>Amount:</strong> {{amount}} / {{interval}}</p>
               <p style="margin: 8px 0 0 0; font-size: 14px; color: #333;"><strong>Subscription ID:</strong> {{subscriptionId}}</p>
               <p style="margin: 8px 0 0 0; font-size: 14px; color: #333;"><strong>Next billing:</strong> {{nextBillingDate}}</p>
             </div>
@@ -101,7 +101,7 @@ export class EmailService {
         Subscription Activated
         Hi {{customerName}}, your subscription is now active.
         Plan: {{planName}}
-        Amount: {{amount}} {{currency}} / {{interval}}
+        Amount: {{amount}} / {{interval}}
         Subscription ID: {{subscriptionId}}
         Next billing: {{nextBillingDate}}
       `
@@ -119,7 +119,7 @@ export class EmailService {
             <p style="font-size: 15px; color: #333;">Hi <strong>{{customerName}}</strong>, this is a reminder that your subscription will renew soon.</p>
             <div style="background: #f8f9fa; padding: 16px; border-radius: 8px; margin: 16px 0;">
               <p style="margin: 0; font-size: 14px; color: #333;"><strong>Plan:</strong> {{planName}}</p>
-              <p style="margin: 8px 0 0 0; font-size: 14px; color: #333;"><strong>Amount:</strong> {{amount}} {{currency}} / {{interval}}</p>
+              <p style="margin: 8px 0 0 0; font-size: 14px; color: #333;"><strong>Amount:</strong> {{amount}} / {{interval}}</p>
               <p style="margin: 8px 0 0 0; font-size: 14px; color: #333;"><strong>Next billing:</strong> {{nextBillingDate}}</p>
             </div>
             <p style="font-size: 14px; color: #666;">No action is required. If you need to update your billing details or cancel, visit your account dashboard.</p>
@@ -130,7 +130,7 @@ export class EmailService {
       text: `
         Upcoming Billing Reminder
         Plan: {{planName}}
-        Amount: {{amount}} {{currency}} / {{interval}}
+        Amount: {{amount}} / {{interval}}
         Next billing: {{nextBillingDate}}
       `
     },
@@ -251,13 +251,13 @@ export class EmailService {
           <div style="background: white; padding: 30px; border-radius: 0 0 10px 10px; box-shadow: 0 4px 6px rgba(0,0,0,0.1);">
             <p style="font-size: 16px; color: #333; margin-bottom: 20px;">Hi <strong>{{customerName}}</strong>,</p>
             <p style="font-size: 16px; color: #555; line-height: 1.6; margin-bottom: 20px;">
-              Your payment of <strong>{{amount}} {{currency}}</strong> has been processed successfully.
+              Your payment of <strong>{{amount}}</strong> has been processed successfully.
             </p>
             <div style="background: #f8f9fa; padding: 20px; border-radius: 8px; margin: 20px 0;">
               <h3 style="color: #333; margin-top: 0;">Transaction Details:</h3>
               <ul style="color: #555; line-height: 1.6; list-style: none; padding: 0;">
                 <li style="margin-bottom: 10px;"><strong>Reference:</strong> {{reference}}</li>
-                <li style="margin-bottom: 10px;"><strong>Amount:</strong> {{amount}} {{currency}}</li>
+                <li style="margin-bottom: 10px;"><strong>Amount:</strong> {{amount}}</li>
                 <li style="margin-bottom: 10px;"><strong>Date:</strong> {{date}}</li>
                 <li style="margin-bottom: 10px;"><strong>Payment Method:</strong> {{paymentMethod}}</li>
               </ul>
@@ -276,11 +276,11 @@ export class EmailService {
         
         Hi {{customerName}},
         
-        Your payment of {{amount}} {{currency}} has been processed successfully.
+        Your payment of {{amount}} has been processed successfully.
         
         Transaction Details:
         - Reference: {{reference}}
-        - Amount: {{amount}} {{currency}}
+        - Amount: {{amount}}
         - Date: {{date}}
         - Payment Method: {{paymentMethod}}
         
@@ -301,7 +301,7 @@ export class EmailService {
           </div>
           <div style="background: white; padding: 24px; border-radius: 0 0 10px 10px; box-shadow: 0 4px 6px rgba(0,0,0,0.08);">
             <p style="font-size: 15px; color: #333;">Hi <strong>{{customerName}}</strong>,</p>
-            <p style="font-size: 15px; color: #555; line-height: 1.6;">We’re confirming your payment of <strong>{{amount}} {{currency}}</strong>. Below are the details of your transaction.</p>
+            <p style="font-size: 15px; color: #555; line-height: 1.6;">We're confirming your payment of <strong>{{amount}}</strong>. Below are the details of your transaction.</p>
             <div style="background: #f8f9fa; padding: 16px; border-radius: 8px; margin: 16px 0;">
               <p style="margin: 0; font-size: 14px; color: #333;"><strong>Reference:</strong> {{reference}}</p>
               <p style="margin: 8px 0 0 0; font-size: 14px; color: #333;"><strong>Date:</strong> {{date}}</p>
@@ -315,7 +315,7 @@ export class EmailService {
       text: `
         Payment Receipt\n\n
         Hi {{customerName}},\n
-        We’re confirming your payment of {{amount}} {{currency}}.\n
+        We're confirming your payment of {{amount}}.\n
         Reference: {{reference}}\n
         Date: {{date}}\n
         Payment Method: {{paymentMethod}}\n\n
@@ -335,7 +335,7 @@ export class EmailService {
             <ul style="list-style: none; padding: 0; font-size: 14px; color: #555; line-height: 1.6;">
               <li><strong>Reference:</strong> {{reference}}</li>
               <li><strong>Customer:</strong> {{customerEmail}}</li>
-              <li><strong>Amount:</strong> {{amount}} {{currency}}</li>
+              <li><strong>Amount:</strong> {{amount}}</li>
               <li><strong>Date:</strong> {{date}}</li>
               <li><strong>Method:</strong> {{paymentMethod}}</li>
             </ul>
@@ -347,7 +347,7 @@ export class EmailService {
         New Sandbox Transaction\n\n
         Reference: {{reference}}\n
         Customer: {{customerEmail}}\n
-        Amount: {{amount}} {{currency}}\n
+        Amount: {{amount}}\n
         Date: {{date}}\n
         Method: {{paymentMethod}}\n
       `
@@ -458,6 +458,136 @@ export class EmailService {
         
         Best regards,
         The TransactLab Team
+      `
+    },
+    'new_device_alert': {
+      name: 'new_device_alert',
+      subject: 'New Device Login Alert - TransactLab',
+      html: `
+        <div style="font-family: Arial, sans-serif; max-width: 600px; margin: 0 auto; padding: 20px;">
+          <div style="background: #dc2626; color: white; padding: 30px; text-align: center; border-radius: 10px 10px 0 0;">
+            <h1 style="margin: 0; font-size: 28px;">New Device Login Alert</h1>
+            <p style="margin: 10px 0 0 0; opacity: 0.9;">Security notification from TransactLab</p>
+          </div>
+          <div style="background: white; padding: 30px; border-radius: 0 0 10px 10px; box-shadow: 0 4px 6px rgba(0,0,0,0.1);">
+            <p style="font-size: 16px; color: #333; margin-bottom: 20px;">Hello <strong>{{customerName}}</strong>,</p>
+            <p style="font-size: 16px; color: #555; line-height: 1.6; margin-bottom: 20px;">
+              We detected a login attempt from a new device on your TransactLab account. If this was you, no action is needed. If this wasn't you, please secure your account immediately.
+            </p>
+            
+            <div style="background: #f8f9fa; padding: 20px; border-radius: 8px; margin: 20px 0;">
+              <h3 style="color: #333; margin-top: 0;">Login Details:</h3>
+              <ul style="color: #555; line-height: 1.6; list-style: none; padding: 0;">
+                <li style="margin-bottom: 10px;"><strong> Date & Time:</strong> {{timestamp}}</li>
+                <li style="margin-bottom: 10px;"><strong> Device:</strong> {{deviceName}}</li>
+                <li style="margin-bottom: 10px;"><strong> IP Address:</strong> {{ipAddress}}</li>
+                <li style="margin-bottom: 10px;"><strong> Location:</strong> {{location}}</li>
+                <li style="margin-bottom: 10px;"><strong> User Agent:</strong> {{userAgent}}</li>
+              </ul>
+            </div>
+            
+            <div style="background: #fff3cd; border: 1px solid #ffeaa7; padding: 15px; border-radius: 5px; margin: 20px 0;">
+              <p style="margin: 0; color: #856404; font-size: 14px;">
+                <strong>Security Tip:</strong> If you don't recognize this device, please change your password immediately and enable two-factor authentication for added security.
+              </p>
+            </div>
+            
+            <div style="text-align: center; margin-top: 30px;">
+              <a href="{{securityUrl}}" style="background: #0a164d; color: white; padding: 15px 30px; text-decoration: none; border-radius: 25px; display: inline-block; font-weight: bold; margin-right: 10px;">
+                View Security Settings
+              </a>
+              <a href="{{dashboardUrl}}" style="background: #6b7280; color: white; padding: 15px 30px; text-decoration: none; border-radius: 25px; display: inline-block; font-weight: bold;">
+                Go to Dashboard
+              </a>
+            </div>
+            
+            <p style="font-size: 14px; color: #888; text-align: center; margin-top: 30px;">
+              Best regards,<br>The TransactLab Security Team
+            </p>
+          </div>
+        </div>
+      `,
+      text: `
+        New Device Login Alert - TransactLab
+        
+        Hello {{customerName}},
+        
+        We detected a login attempt from a new device on your TransactLab account.
+        
+        Login Details:
+        - Date & Time: {{timestamp}}
+        - Device: {{deviceName}}
+        - IP Address: {{ipAddress}}
+        - Location: {{location}}
+        
+        If you don't recognize this device, please change your password immediately.
+        
+        Security Settings: {{securityUrl}}
+        
+        Best regards,
+        The TransactLab Security Team
+      `
+    },
+    'totp_setup': {
+      name: 'totp_setup',
+      subject: 'Two-Factor Authentication Setup - TransactLab',
+      html: `
+        <div style="font-family: Arial, sans-serif; max-width: 600px; margin: 0 auto; padding: 20px;">
+          <div style="background: #0a164d; color: white; padding: 30px; text-align: center; border-radius: 10px 10px 0 0;">
+            <h1 style="margin: 0; font-size: 28px;">2FA Setup Complete</h1>
+            <p style="margin: 10px 0 0 0; opacity: 0.9;">Your account is now more secure</p>
+          </div>
+          <div style="background: white; padding: 30px; border-radius: 0 0 10px 10px; box-shadow: 0 4px 6px rgba(0,0,0,0.1);">
+            <p style="font-size: 16px; color: #333; margin-bottom: 20px;">Hello <strong>{{customerName}}</strong>,</p>
+            <p style="font-size: 16px; color: #555; line-height: 1.6; margin-bottom: 20px;">
+              Great news! You've successfully enabled Two-Factor Authentication (2FA) on your TransactLab account. Your account is now protected with an additional layer of security.
+            </p>
+            
+            <div style="background: #f0f9ff; border: 1px solid #0ea5e9; padding: 20px; border-radius: 8px; margin: 20px 0;">
+              <h3 style="color: #0c4a6e; margin-top: 0;">What's Next?</h3>
+              <ul style="color: #0c4a6e; line-height: 1.6;">
+                <li>Use your authenticator app to generate codes when logging in</li>
+                <li>Keep your backup codes safe - store them in a secure location</li>
+                <li>Never share your authenticator app or backup codes with anyone</li>
+              </ul>
+            </div>
+            
+            <div style="background: #fff3cd; border: 1px solid #ffeaa7; padding: 15px; border-radius: 5px; margin: 20px 0;">
+              <p style="margin: 0; color: #856404; font-size: 14px;">
+                <strong>Important:</strong> Your backup codes are shown only once. Make sure to save them in a secure location. If you lose your authenticator device and backup codes, you may be locked out of your account.
+              </p>
+            </div>
+            
+            <div style="text-align: center; margin-top: 30px;">
+              <a href="{{dashboardUrl}}" style="background: #0a164d; color: white; padding: 15px 30px; text-decoration: none; border-radius: 25px; display: inline-block; font-weight: bold;">
+                Go to Dashboard
+              </a>
+            </div>
+            
+            <p style="font-size: 14px; color: #888; text-align: center; margin-top: 30px;">
+              Best regards,<br>The TransactLab Security Team
+            </p>
+          </div>
+        </div>
+      `,
+      text: `
+        2FA Setup Complete - TransactLab
+        
+        Hello {{customerName}},
+        
+        Great news! You've successfully enabled Two-Factor Authentication (2FA) on your TransactLab account.
+        
+        What's Next?
+        - Use your authenticator app to generate codes when logging in
+        - Keep your backup codes safe - store them in a secure location
+        - Never share your authenticator app or backup codes with anyone
+        
+        Important: Your backup codes are shown only once. Make sure to save them in a secure location.
+        
+        Dashboard: {{dashboardUrl}}
+        
+        Best regards,
+        The TransactLab Security Team
       `
     }
   };
@@ -887,12 +1017,196 @@ export class EmailService {
   }
 
   /**
+   * Format amount and currency for display
+   */
+  static formatAmount(amount: number, currency: string): string {
+    try {
+      // Convert to number if it's a string
+      const numAmount = typeof amount === 'string' ? parseFloat(amount) : amount;
+      
+      if (isNaN(numAmount)) {
+        return `${amount} ${currency}`;
+      }
+
+      // Format based on currency
+      const currencySymbols: Record<string, string> = {
+        'USD': '$',
+        'EUR': '€',
+        'GBP': '£',
+        'JPY': '¥',
+        'CAD': 'C$',
+        'AUD': 'A$',
+        'CHF': 'CHF',
+        'CNY': '¥',
+        'SEK': 'kr',
+        'NOK': 'kr',
+        'DKK': 'kr',
+        'PLN': 'zł',
+        'CZK': 'Kč',
+        'HUF': 'Ft',
+        'RUB': '₽',
+        'BRL': 'R$',
+        'MXN': '$',
+        'INR': '₹',
+        'KRW': '₩',
+        'SGD': 'S$',
+        'HKD': 'HK$',
+        'NZD': 'NZ$',
+        'ZAR': 'R',
+        'TRY': '₺',
+        'ILS': '₪',
+        'AED': 'د.إ',
+        'SAR': 'ر.س',
+        'QAR': 'ر.ق',
+        'KWD': 'د.ك',
+        'BHD': 'د.ب',
+        'OMR': 'ر.ع.',
+        'JOD': 'د.أ',
+        'LBP': 'ل.ل',
+        'EGP': 'ج.م',
+        'MAD': 'د.م.',
+        'TND': 'د.ت',
+        'DZD': 'د.ج',
+        'LYD': 'ل.د',
+        'SDG': 'ج.س.',
+        'ETB': 'Br',
+        'KES': 'KSh',
+        'UGX': 'USh',
+        'TZS': 'TSh',
+        'ZMW': 'ZK',
+        'BWP': 'P',
+        'SZL': 'L',
+        'LSL': 'L',
+        'NAD': 'N$',
+        'MUR': '₨',
+        'SCR': '₨',
+        'MVR': 'ރ',
+        'LKR': '₨',
+        'BDT': '৳',
+        'NPR': '₨',
+        'PKR': '₨',
+        'AFN': '؋',
+        'IRR': '﷼',
+        'IQD': 'ع.د',
+        'SYP': 'ل.س',
+        'YER': '﷼',
+        'JMD': 'J$',
+        'BBD': 'Bds$',
+        'BZD': 'BZ$',
+        'TTD': 'TT$',
+        'XCD': 'EC$',
+        'AWG': 'ƒ',
+        'BMD': 'BD$',
+        'KYD': 'CI$',
+        'FJD': 'FJ$',
+        'PGK': 'K',
+        'SBD': 'SI$',
+        'TOP': 'T$',
+        'VUV': 'Vt',
+        'WST': 'WS$',
+        'NIO': 'C$',
+        'PAB': 'B/.',
+        'CRC': '₡',
+        'GTQ': 'Q',
+        'HNL': 'L',
+        'SVC': '₡',
+        'DOP': 'RD$',
+        'HTG': 'G',
+        'CUP': '$',
+        'UYU': '$U',
+        'ARS': '$',
+        'BOB': 'Bs',
+        'CLP': '$',
+        'COP': '$',
+        'PEN': 'S/.',
+        'VES': 'Bs.S',
+        'GYD': 'G$',
+        'SRD': '$',
+        'UYI': 'UYI',
+        'PYG': '₲',
+        'BIF': 'FBu',
+        'CDF': 'FC',
+        'DJF': 'Fdj',
+        'ERN': 'Nfk',
+        'KMF': 'CF',
+        'RWF': 'RF',
+        'SOS': 'S',
+        'XAF': 'FCFA',
+        'XOF': 'CFA',
+        'XPF': '₣',
+        'AOA': 'Kz',
+        'MGA': 'Ar',
+        'MZN': 'MT',
+        'ZWL': 'Z$',
+        'AMD': '֏',
+        'AZN': '₼',
+        'BYN': 'Br',
+        'GEL': '₾',
+        'KZT': '₸',
+        'KGS': 'с',
+        'MDL': 'L',
+        'TJS': 'SM',
+        'TMT': 'T',
+        'UAH': '₴',
+        'UZS': 'сўм',
+        'BGN': 'лв',
+        'HRK': 'kn',
+        'EEK': 'kr',
+        'ISK': 'kr',
+        'LVL': 'Ls',
+        'LTL': 'Lt',
+        'MKD': 'ден',
+        'RON': 'lei',
+        'RSD': 'дин',
+        'SKK': 'Sk',
+        'ALL': 'L',
+        'BAM': 'КМ',
+        'MNT': '₮',
+        'BTN': 'Nu.'
+      };
+
+      const symbol = currencySymbols[currency.toUpperCase()] || currency;
+      
+      // Format number with proper decimal places
+      let formattedAmount: string;
+      
+      if (currency.toUpperCase() === 'JPY' || currency.toUpperCase() === 'KRW') {
+        // No decimal places for JPY and KRW
+        formattedAmount = Math.round(numAmount).toLocaleString('en-US');
+      } else {
+        // 2 decimal places for most currencies
+        formattedAmount = numAmount.toLocaleString('en-US', {
+          minimumFractionDigits: 2,
+          maximumFractionDigits: 2
+        });
+      }
+
+      // Return formatted amount with currency symbol
+      return `${symbol}${formattedAmount}`;
+    } catch (error) {
+      logger.error('Failed to format amount', {
+        error: error instanceof Error ? error.message : 'Unknown error',
+        amount,
+        currency
+      });
+      return `${amount} ${currency}`;
+    }
+  }
+
+  /**
    * Replace template variables
    */
   static replaceTemplateVariables(template: string, data: Record<string, any>): string {
     try {
       return template.replace(/\{\{(\w+)\}\}/g, (match, key) => {
-        return data[key] !== undefined ? String(data[key]) : match;
+        if (data[key] !== undefined) {
+          // Special formatting for amount and currency combinations
+          if (key === 'amount' && data.currency) {
+            return this.formatAmount(data[key], data.currency);
+          }
+          return String(data[key]);
+        }
+        return match;
       });
     } catch (error) {
       logger.error('Failed to replace template variables', {
@@ -932,6 +1246,29 @@ export class EmailService {
       });
       return false;
     }
+  }
+
+  /**
+   * Test amount formatting
+   */
+  static testAmountFormatting(): void {
+    const testCases = [
+      { amount: 100, currency: 'USD', expected: '$100.00' },
+      { amount: 25.50, currency: 'EUR', expected: '€25.50' },
+      { amount: 1000, currency: 'JPY', expected: '¥1,000' },
+      { amount: 1500.75, currency: 'GBP', expected: '£1,500.75' },
+      { amount: 99.99, currency: 'CAD', expected: 'C$99.99' },
+      { amount: 50000, currency: 'KRW', expected: '₩50,000' },
+      { amount: 2500, currency: 'INR', expected: '₹2,500.00' },
+      { amount: 100, currency: 'UNKNOWN', expected: 'UNKNOWN100.00' }
+    ];
+
+    console.log('Testing amount formatting:');
+    testCases.forEach(({ amount, currency, expected }) => {
+      const result = this.formatAmount(amount, currency);
+      const status = result === expected ? '✓' : '✗';
+      console.log(`${status} ${amount} ${currency} -> ${result} (expected: ${expected})`);
+    });
   }
 }
 

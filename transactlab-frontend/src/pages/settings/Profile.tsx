@@ -696,8 +696,6 @@ const schema = z.object({
   firstName: z.string().min(2, "First name is required"),
   lastName: z.string().min(2, "Last name is required"),
   phone: z.string().optional(),
-  language: z.string(),
-  timezone: z.string(),
   currency: z.string(),
   notifyEmail: z.boolean().optional().default(true),
   notifySms: z.boolean().optional().default(false),
@@ -715,12 +713,6 @@ const currencies = [
   { code: "GHS", name: "Ghanaian Cedi" },
 ];
 
-const languages = [
-  { code: "en", name: "English" },
-  { code: "fr", name: "French" },
-];
-
-const timezones = ["UTC", "Africa/Lagos", "Africa/Nairobi", "Europe/London", "America/New_York"];
 
 
 const Profile = () => {
@@ -736,8 +728,6 @@ const Profile = () => {
     firstName: user?.firstName || "",
     lastName: user?.lastName || "",
     phone: (user as any)?.phone || "",
-    language: (user as any)?.preferences?.language || "en",
-    timezone: (user as any)?.preferences?.timezone || "UTC",
     currency: (user as any)?.preferences?.currency || "NGN",
     notifyEmail: (user as any)?.preferences?.notifications?.email ?? true,
     notifySms: (user as any)?.preferences?.notifications?.sms ?? false,
@@ -760,8 +750,6 @@ const Profile = () => {
       firstName: user?.firstName || "",
       lastName: user?.lastName || "",
       phone: (user as any)?.phone || "",
-      language: (user as any)?.preferences?.language || "en",
-      timezone: (user as any)?.preferences?.timezone || "UTC",
       currency: (user as any)?.preferences?.currency || "NGN",
       notifyEmail: (user as any)?.preferences?.notifications?.email ?? true,
       notifySms: (user as any)?.preferences?.notifications?.sms ?? false,
@@ -779,8 +767,6 @@ const Profile = () => {
         phone: values.phone,
         preferences: {
           notifications: { email: !!values.notifyEmail, sms: !!values.notifySms, push: !!values.notifyPush },
-          language: values.language,
-          timezone: values.timezone,
           currency: values.currency,
         },
       };
@@ -916,24 +902,6 @@ const Profile = () => {
               <Card>
                 <CardHeader><CardTitle className="text-sm sm:text-base">Preferences</CardTitle></CardHeader>
                 <CardContent className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-3 sm:gap-4">
-                  <div className="grid gap-2">
-                    <Label className="text-sm sm:text-base">Language</Label>
-                    <Select value={watch("language")} onValueChange={(v)=>setValue("language", v)}>
-                      <SelectTrigger className="text-sm sm:text-base"><SelectValue /></SelectTrigger>
-                      <SelectContent>
-                        {languages.map(l=> (<SelectItem key={l.code} value={l.code}>{l.name}</SelectItem>))}
-                      </SelectContent>
-                    </Select>
-                  </div>
-                  <div className="grid gap-2">
-                    <Label className="text-sm sm:text-base">Timezone</Label>
-                    <Select value={watch("timezone")} onValueChange={(v)=>setValue("timezone", v)}>
-                      <SelectTrigger className="text-sm sm:text-base"><SelectValue /></SelectTrigger>
-                      <SelectContent>
-                        {timezones.map(t=> (<SelectItem key={t} value={t}>{t}</SelectItem>))}
-                      </SelectContent>
-                    </Select>
-                  </div>
                   <div className="grid gap-2 sm:col-span-2 lg:col-span-1">
                     <Label className="text-sm sm:text-base">Default currency</Label>
                     <Select value={watch("currency")} onValueChange={(v)=>setValue("currency", v)}>

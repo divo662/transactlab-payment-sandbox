@@ -9,6 +9,7 @@ interface ISandboxSessionMethods {
   getCheckoutUrl(): string;
   getTimeUntilExpiry(): number;
   getFormattedAmount(): string;
+  getPaymentMethod(): string;
 }
 
 // Define the interface for static methods
@@ -251,6 +252,10 @@ SandboxSessionSchema.methods.getFormattedAmount = function(this: any): string {
     style: 'currency',
     currency: this.currency
   }).format(this.amount / 100);
+};
+
+SandboxSessionSchema.methods.getPaymentMethod = function(this: any): string {
+  return (this.metadata as any)?.customFields?.paymentMethodUsed || 'card';
 };
 
 // Static methods

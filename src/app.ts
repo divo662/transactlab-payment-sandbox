@@ -25,7 +25,7 @@ import refundRoutes from './routes/api/v1/refundRoutes';
 import webhookRoutes from './routes/api/v1/webhookRoutes';
 import subscriptionRoutes from './routes/api/v1/subscriptionRoutes';
 import magicSdkRoutes from './routes/api/v1/magicSdkRoutes';
-import analyticsRoutes from './routes/api/v1/analyticsRoutes';
+import apiV1AnalyticsRoutes from './routes/api/v1/analyticsRoutes';
 import merchantRoutes from './routes/merchant/merchantRoutes';
 import apiKeyRoutes from './routes/merchant/apiKeyRoutes';
 import webhookConfigRoutes from './routes/merchant/webhookConfigRoutes';
@@ -37,6 +37,8 @@ import reportRoutes from './routes/analytics/reportRoutes';
 import adminRoutes from './routes/admin/adminRoutes';
 import systemRoutes from './routes/admin/systemRoutes';
 import checkoutTemplateRoutes from './routes/checkout/checkoutTemplateRoutes';
+import feedbackRoutes from './routes/feedback/feedbackRoutes';
+import analyticsRoutes from './routes/analytics/analyticsRoutes';
 
 /**
  * Express Application Setup
@@ -180,6 +182,10 @@ app.use('/api/v1/checkout', checkoutTemplateRoutes);
 app.use('/api/v1/sandbox', sandboxRoutes);
 app.use('/api/v1', internalRoutes);
 
+// Feedback routes
+app.use('/api/v1/feedback', feedbackRoutes);
+app.use('/api/v1/analytics', analyticsRoutes);
+
 // Public checkout route (workspace-bound, no auth required for customers)
 app.get('/checkout/:sessionId', async (req, res) => {
   try {
@@ -205,6 +211,25 @@ app.get('/checkout/:sessionId', async (req, res) => {
       });
     }
 
+    // Check if this is a subscription session and fetch product details
+    let productImage = null;
+    let productName = null;
+    
+    const metadata = session.metadata as any;
+    if (metadata?.productId || metadata?.subscriptionId) {
+      try {
+        const SandboxProduct = (await import('./models/SandboxProduct')).default;
+        const product = await SandboxProduct.findById(metadata.productId || metadata.subscriptionId);
+        if (product) {
+          productImage = product.image;
+          productName = product.name;
+        }
+      } catch (error) {
+        // If product fetch fails, continue without product info
+        console.warn('Failed to fetch product details for checkout session:', error);
+      }
+    }
+
     // Return JSON only; frontend handles UI and bridge processing
     const checkoutUrl = `${req.protocol}://${req.get('host')}/checkout/${sessionId}`;
     res.json({
@@ -220,7 +245,9 @@ app.get('/checkout/:sessionId', async (req, res) => {
         successUrl: session.successUrl,
         cancelUrl: session.cancelUrl,
         status: session.status,
-        expiresAt: session.expiresAt
+        expiresAt: session.expiresAt,
+        productImage,
+        productName
       }
     });
   } catch (error) {

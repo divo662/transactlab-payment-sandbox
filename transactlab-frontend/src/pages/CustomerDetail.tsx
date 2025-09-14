@@ -192,17 +192,31 @@ const CustomerDetail: React.FC = () => {
         console.log('Sessions API response:', sessionsData);
         const customerSessions = sessionsData.data?.sessions || [];
         // Convert sessions to transaction format for display
-        const sessionTransactions = customerSessions.map((s: any) => ({
-          transactionId: s.sessionId,
-          sessionId: s.sessionId,
-          amount: s.amount,
-          currency: s.currency,
-          description: s.description,
-          customerEmail: s.customerEmail,
-          status: s.status,
-          createdAt: s.completedAt || s.createdAt,
-          paymentMethod: 'card' // Default for sandbox
-        }));
+        const sessionTransactions = customerSessions.map((s: any) => {
+          // Get payment method from session metadata
+          const paymentMethodUsed = s.metadata?.customFields?.paymentMethodUsed;
+          let paymentMethod = 'Credit/Debit Card'; // Default
+          
+          if (paymentMethodUsed === 'bank_transfer') {
+            paymentMethod = 'Bank Transfer';
+          } else if (paymentMethodUsed === 'mobile_money') {
+            paymentMethod = 'Mobile Money';
+          } else if (paymentMethodUsed === 'card') {
+            paymentMethod = 'Credit/Debit Card';
+          }
+          
+          return {
+            transactionId: s.sessionId,
+            sessionId: s.sessionId,
+            amount: s.amount,
+            currency: s.currency,
+            description: s.description,
+            customerEmail: s.customerEmail,
+            status: s.status,
+            createdAt: s.completedAt || s.createdAt,
+            paymentMethod: paymentMethod
+          };
+        });
         setTransactions(sessionTransactions);
         
         // Update pagination info

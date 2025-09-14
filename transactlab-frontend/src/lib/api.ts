@@ -443,6 +443,88 @@ class ApiService {
     }
     return await resp.blob();
   }
+
+  // Feedback API methods
+  async createFeedback(data: {
+    rating: number;
+    title: string;
+    message: string;
+    category: 'bug' | 'feature' | 'improvement' | 'general' | 'other';
+    priority?: 'low' | 'medium' | 'high' | 'urgent';
+    tags?: string[];
+    isPublic?: boolean;
+  }) {
+    return this.request('/feedback', {
+      method: 'POST',
+      body: JSON.stringify(data),
+    });
+  }
+
+  async getUserFeedback(params?: {
+    page?: number;
+    limit?: number;
+    status?: string;
+    category?: string;
+  }) {
+    const queryParams = new URLSearchParams();
+    if (params?.page) queryParams.append('page', params.page.toString());
+    if (params?.limit) queryParams.append('limit', params.limit.toString());
+    if (params?.status) queryParams.append('status', params.status);
+    if (params?.category) queryParams.append('category', params.category);
+    
+    const queryString = queryParams.toString();
+    const endpoint = queryString ? `/feedback/my?${queryString}` : '/feedback/my';
+    
+    return this.request(endpoint);
+  }
+
+  async getPublicFeedback(params?: {
+    page?: number;
+    limit?: number;
+    category?: string;
+    rating?: number;
+    sortBy?: 'createdAt' | 'helpful';
+  }) {
+    const queryParams = new URLSearchParams();
+    if (params?.page) queryParams.append('page', params.page.toString());
+    if (params?.limit) queryParams.append('limit', params.limit.toString());
+    if (params?.category) queryParams.append('category', params.category);
+    if (params?.rating) queryParams.append('rating', params.rating.toString());
+    if (params?.sortBy) queryParams.append('sortBy', params.sortBy);
+    
+    const queryString = queryParams.toString();
+    const endpoint = queryString ? `/feedback/public?${queryString}` : '/feedback/public';
+    
+    return this.request(endpoint);
+  }
+
+  async getFeedbackStats() {
+    return this.request('/feedback/stats');
+  }
+
+  async voteFeedback(feedbackId: string, helpful: boolean) {
+    return this.request(`/feedback/${feedbackId}/vote`, {
+      method: 'POST',
+      body: JSON.stringify({ helpful }),
+    });
+  }
+
+  // Analytics API methods
+  async getAnalyticsOverview(timeRange: string = '30d') {
+    return this.request(`/analytics/overview?timeRange=${timeRange}`);
+  }
+
+  async getTransactionAnalytics(timeRange: string = '30d') {
+    return this.request(`/analytics/transactions?timeRange=${timeRange}`);
+  }
+
+  async getCustomerAnalytics(timeRange: string = '30d') {
+    return this.request(`/analytics/customers?timeRange=${timeRange}`);
+  }
+
+  async exportAnalytics(type: string, format: string = 'json', timeRange: string = '30d') {
+    return this.request(`/analytics/export?type=${type}&format=${format}&timeRange=${timeRange}`);
+  }
 }
 
 export const apiService = new ApiService();

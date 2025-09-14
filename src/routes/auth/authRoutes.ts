@@ -4,6 +4,7 @@ import KycController from '../../controllers/auth/kycController';
 import { rateLimiters } from '../../config/rateLimit';
 import { authenticateToken, requireRole } from '../../middleware/auth';
 import { upload, handleUploadError } from '../../middleware/upload';
+import securityRoutes from './security';
 
 const router = Router();
 
@@ -103,5 +104,8 @@ router.post('/kyc/start', authenticateToken, KycController.startKyc);
 router.get('/kyc/status/:sessionId', authenticateToken, KycController.getKycStatus);
 router.post('/kyc/complete/:sessionId', authenticateToken, KycController.completeKyc);
 router.post('/webhooks/kyc', KycController.webhook);
+
+// Security routes
+router.use('/security', securityRoutes);
 
 export default router; 

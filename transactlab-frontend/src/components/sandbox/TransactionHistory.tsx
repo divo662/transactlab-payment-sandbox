@@ -344,7 +344,9 @@ const TransactionHistory: React.FC = () => {
         description: selectedTransaction.description || 'Payment',
         createdAt: selectedTransaction.createdAt,
         status: selectedTransaction.status,
-        paymentMethod: 'card'
+        paymentMethod: selectedTransaction.metadata?.customFields?.paymentMethodUsed === 'bank_transfer' ? 'Bank Transfer' :
+                      selectedTransaction.metadata?.customFields?.paymentMethodUsed === 'mobile_money' ? 'Mobile Money' :
+                      selectedTransaction.metadata?.customFields?.paymentMethodUsed === 'card' ? 'Credit/Debit Card' : 'Credit/Debit Card'
       });
       toast({ title: 'Success', description: 'Receipt downloaded successfully' });
     } catch (err) {
@@ -935,8 +937,8 @@ const TransactionHistory: React.FC = () => {
                       <p className="text-xs sm:text-sm text-gray-900">
                         {selectedTransaction.metadata?.customFields?.paymentMethodUsed === 'bank_transfer' && 'Bank Transfer'}
                         {selectedTransaction.metadata?.customFields?.paymentMethodUsed === 'mobile_money' && 'Mobile Money'}
-                        {!selectedTransaction.metadata?.customFields?.paymentMethodUsed && 'Credit/Debit Card'}
                         {selectedTransaction.metadata?.customFields?.paymentMethodUsed === 'card' && 'Credit/Debit Card'}
+                        {!selectedTransaction.metadata?.customFields?.paymentMethodUsed && 'Credit/Debit Card'}
                       </p>
                     </div>
                   </div>

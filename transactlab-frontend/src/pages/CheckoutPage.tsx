@@ -31,6 +31,9 @@ interface CheckoutSession {
   paymentConfig?: {
     allowedPaymentMethods?: string[];
   };
+  // Product information for subscription-based sessions
+  productImage?: string;
+  productName?: string;
   // Deprecated: template UI config (not used)
 }
 
@@ -662,11 +665,21 @@ const CheckoutPage: React.FC = () => {
               {/* Transaction Item */}
               <div className="space-y-4 mb-4 sm:mb-6">
                 <div className="flex items-center space-x-3 sm:space-x-4 p-2 sm:p-3 bg-gray-50 rounded-lg">
-                  <div className="w-8 h-8 sm:w-10 sm:h-10 bg-[#0a164d] rounded-lg flex items-center justify-center flex-shrink-0">
-                    <CreditCard className="w-4 h-4 sm:w-5 sm:h-5 text-white" />
-                  </div>
+                  {session.productImage ? (
+                    <img 
+                      src={session.productImage} 
+                      alt={session.productName || session.description}
+                      className="w-8 h-8 sm:w-10 sm:h-10 rounded-lg object-cover border flex-shrink-0"
+                    />
+                  ) : (
+                    <div className="w-8 h-8 sm:w-10 sm:h-10 bg-[#0a164d] rounded-lg flex items-center justify-center flex-shrink-0">
+                      <CreditCard className="w-4 h-4 sm:w-5 sm:h-5 text-white" />
+                    </div>
+                  )}
                   <div className="flex-1 min-w-0">
-                    <h4 className="font-semibold text-gray-900 text-xs sm:text-sm break-words leading-snug">{session.description}</h4>
+                    <h4 className="font-semibold text-gray-900 text-xs sm:text-sm break-words leading-snug">
+                      {session.productName || session.description}
+                    </h4>
                     <p className="text-[10px] sm:text-xs text-gray-600">Payment Session</p>
                     <p className="text-[10px] sm:text-xs text-gray-600">Quantity: 1</p>
                   </div>

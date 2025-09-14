@@ -25,7 +25,7 @@ interface SandboxContextType {
   createWebhook: (data: CreateWebhookData) => Promise<any>;
   getWebhooks: () => Promise<any>;
   testWebhook: (webhookId: string, data: WebhookTestData) => Promise<any>;
-  getRecentTransactions: () => Promise<any>;
+  getRecentTransactions: (page?: number, limit?: number) => Promise<any>;
   createCustomerWithSession: (data: CreateCustomerWithSessionData) => Promise<any>;
   
   // Legacy functions for backward compatibility
@@ -540,7 +540,7 @@ export const SandboxProvider: React.FC<SandboxProviderProps> = ({ children }) =>
   const getSandboxTransactions = async (page?: number, limit?: number, status?: string) => {
     // Legacy method - now uses the new transactions endpoint
     try {
-      const result = await getRecentTransactions();
+      const result = await getRecentTransactions(page, limit);
       // Apply pagination and filtering if needed
       let transactions = result.data.transactions || [];
       

@@ -5,6 +5,7 @@ import { generateTokenPair, verifyAccessToken, logout as logoutToken } from '../
 import { logger } from '../../utils/helpers/logger';
 import { redisClient } from '../../config/redis';
 import { ENV } from '../../config/environment';
+import { SecurityService } from '../../services/auth/securityService';
 
 // Request interfaces
 interface RegisterRequest {
@@ -27,6 +28,8 @@ interface LoginRequest {
   password: string;
   securityAnswer: string;
   rememberMe?: boolean;
+  totpCode?: string;
+  deviceId?: string;
 }
 
 interface ProfileUpdateRequest {
@@ -148,10 +151,10 @@ export class AuthController {
    */
   static async login(req: Request, res: Response): Promise<void> {
     try {
-      const { email, password, securityAnswer, rememberMe = false }: LoginRequest = req.body;
+      const { email, password, securityAnswer, rememberMe = false, totpCode, deviceId }: LoginRequest = req.body;
 
       // Find user by email - explicitly select password and security question fields
-      const user = await User.findOne({ email: email.toLowerCase() }).select('+password +securityQuestion.answer');
+      const user = await User.findOne({ email: email.toLowerCase() }).select('+password +securityQuestion.answer +totpEnabled +securitySettings');
       
       // Debug: Log the user object to see what we're getting
       console.log('🔍 User Object Debug:');
@@ -216,6 +219,58 @@ export class AuthController {
           }
         });
         return;
+      }
+
+      // Extract device information
+      const deviceInfo = SecurityService.extractDeviceInfo(req);
+      
+      // Check if device is trusted
+      const isDeviceTrusted = await SecurityService.isDeviceTrusted(user._id.toString(), deviceInfo.deviceId);
+      
+      // If TOTP is enabled, verify TOTP code
+      if ((user as any).totpEnabled) {
+        if (!totpCode) {
+          res.status(400).json({
+            success: false,
+            error: 'TOTP code required',
+            message: 'Two-Factor Authentication is enabled. Please provide your TOTP code.',
+            data: {
+              requiresTotp: true
+            }
+          });
+          return;
+        }
+
+        const isTotpValid = await SecurityService.verifyTotpLogin(user._id.toString(), totpCode);
+        if (!isTotpValid) {
+          res.status(401).json({
+            success: false,
+            error: 'Invalid TOTP code',
+            message: 'Invalid TOTP code. Please try again.'
+          });
+          return;
+        }
+      }
+
+      // Check if this is a new device and send alert if configured
+      if (!isDeviceTrusted && (user as any).securitySettings?.notifyOnNewDevice) {
+        try {
+          await SecurityService.sendNewDeviceAlert(user, deviceInfo, {
+            userId: user._id.toString(),
+            email: user.email,
+            deviceInfo,
+            success: true,
+            timestamp: new Date()
+          });
+        } catch (error) {
+          logger.error('Error sending new device alert:', error);
+          // Don't fail login if email sending fails
+        }
+      }
+
+      // Add device to trusted devices
+      if (!isDeviceTrusted) {
+        await SecurityService.addTrustedDevice(user._id.toString(), deviceInfo);
       }
 
       // Reset login attempts on successful login

@@ -530,6 +530,44 @@ export default function SDKSetup() {
           <li>`npm i` then `node transactlab-magic/samples/express-server.js`.</li>
         </ol>
       </div>
+
+      {/* Documentation CTA */}
+      <div className="mt-8 p-6 bg-gradient-to-r from-indigo-50 to-blue-50 border border-indigo-200 rounded-lg text-center">
+        <div className="max-w-2xl mx-auto">
+          <div className="flex justify-center mb-4">
+            <div className="p-3 bg-indigo-100 rounded-full">
+              <svg className="w-6 h-6 text-indigo-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M10 6H6a2 2 0 00-2 2v10a2 2 0 002 2h10a2 2 0 002-2v-4M14 4h6m0 0v6m0-6L10 14" />
+              </svg>
+            </div>
+          </div>
+          <h3 className="text-xl sm:text-2xl font-bold text-gray-900 mb-2">
+            Ready to Get Started?
+          </h3>
+          <p className="text-sm sm:text-base text-gray-600 mb-6">
+            Explore our comprehensive documentation to learn how to integrate TransactLab 
+            into your applications with detailed guides, API references, and code examples.
+          </p>
+          <div className="flex flex-col sm:flex-row gap-3 justify-center">
+            <Button
+              onClick={() => window.open('https://transactlab-payment-sandbox.vercel.app/transactlab-docs', '_blank')}
+              className="bg-indigo-600 hover:bg-indigo-700 text-white px-6 py-3"
+            >
+              <svg className="w-4 h-4 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M10 6H6a2 2 0 00-2 2v10a2 2 0 002 2h10a2 2 0 002-2v-4M14 4h6m0 0v6m0-6L10 14" />
+              </svg>
+              Read Our Documentation
+            </Button>
+            <Button
+              variant="outline"
+              onClick={() => window.open('https://transactlab-payment-sandbox.vercel.app/transactlab-docs', '_blank')}
+              className="border-indigo-200 text-indigo-700 hover:bg-indigo-50 px-6 py-3"
+            >
+              View API Reference
+            </Button>
+          </div>
+        </div>
+      </div>
     </div>
   );
 }

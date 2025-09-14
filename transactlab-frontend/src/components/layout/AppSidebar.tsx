@@ -15,7 +15,9 @@ import {
   Shield,
   BarChart3,
   Zap,
-  ChevronDown
+  ChevronDown,
+  MessageSquare,
+  TrendingUp
 } from "lucide-react";
 import {
   Sidebar,
@@ -35,7 +37,7 @@ import { useState } from "react";
 // Main navigation items
 const mainItems = [
   { title: "Dashboard", url: "/dashboard", icon: LayoutDashboard },
-  { title: "Settings", url: "/settings/profile", icon: Settings },
+  { title: "Analytics", url: "/analytics", icon: TrendingUp },
 ];
 
 // Payment processing section
@@ -62,6 +64,13 @@ const developerItems = [
 const toolsItems = [
   { title: "Products", url: "/sandbox/products", icon: Package },
   { title: "Documentation", url: "/transactlab-docs", icon: FileText },
+];
+
+// Settings section
+const settingsItems = [
+  { title: "Profile", url: "/settings/profile", icon: Settings },
+  { title: "Feedback", url: "/feedback", icon: MessageSquare },
+  { title: "Security", url: "/settings/security", icon: Shield },
 ];
 
 export function AppSidebar() {
@@ -198,6 +207,31 @@ export function AppSidebar() {
           <SidebarGroupContent>
             <SidebarMenu>
               {toolsItems.map((item) => (
+                <SidebarMenuItem key={item.title}>
+                  <SidebarMenuButton 
+                    asChild 
+                    isActive={isActive(item.url)}
+                    className="h-9 px-2 sm:px-3 rounded-lg hover:bg-gray-100 data-[active=true]:bg-[#0a164d] data-[active=true]:text-white"
+                  >
+                    <NavLink to={item.url} end>
+                      <item.icon className="mr-2 sm:mr-3 h-4 w-4" />
+                      <span className="group-data-[collapsible=icon]:hidden font-medium text-sm sm:text-base">{item.title}</span>
+                    </NavLink>
+                  </SidebarMenuButton>
+                </SidebarMenuItem>
+              ))}
+            </SidebarMenu>
+          </SidebarGroupContent>
+        </SidebarGroup>
+
+        {/* Settings */}
+        <SidebarGroup>
+          <SidebarGroupLabel className="text-xs font-semibold text-gray-500 uppercase tracking-wider mb-2 px-2">
+            Settings
+          </SidebarGroupLabel>
+          <SidebarGroupContent>
+            <SidebarMenu>
+              {settingsItems.map((item) => (
                 <SidebarMenuItem key={item.title}>
                   <SidebarMenuButton 
                     asChild 

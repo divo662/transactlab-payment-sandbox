@@ -1193,6 +1193,16 @@ const SessionManagement: React.FC = () => {
                   </div>
 
                   <div>
+                    <p className="text-xs sm:text-sm font-medium text-gray-500">Payment Method</p>
+                    <p className="text-xs sm:text-sm text-gray-900">
+                      {selectedSession.metadata?.customFields?.paymentMethodUsed === 'bank_transfer' && 'Bank Transfer'}
+                      {selectedSession.metadata?.customFields?.paymentMethodUsed === 'mobile_money' && 'Mobile Money'}
+                      {selectedSession.metadata?.customFields?.paymentMethodUsed === 'card' && 'Credit/Debit Card'}
+                      {!selectedSession.metadata?.customFields?.paymentMethodUsed && 'Not specified'}
+                    </p>
+                  </div>
+
+                  <div>
                     <p className="text-xs sm:text-sm font-medium text-gray-500">Created At</p>
                     <p className="text-xs sm:text-sm text-gray-900">
                       {selectedSession.createdAt ? new Date(selectedSession.createdAt).toLocaleString() : 'Unknown'}
@@ -1403,6 +1413,42 @@ const SessionManagement: React.FC = () => {
           </div>
         </div>
       )}
+
+      {/* Documentation CTA */}
+      <Card className="border-green-200 bg-gradient-to-r from-green-50 to-emerald-50">
+        <CardContent className="p-6 sm:p-8 text-center">
+          <div className="max-w-2xl mx-auto">
+            <div className="flex justify-center mb-4">
+              <div className="p-3 bg-green-100 rounded-full">
+                <ExternalLink className="w-6 h-6 text-green-600" />
+              </div>
+            </div>
+            <h3 className="text-xl sm:text-2xl font-bold text-gray-900 mb-2">
+              Ready to Get Started?
+            </h3>
+            <p className="text-sm sm:text-base text-gray-600 mb-6">
+              Explore our comprehensive documentation to learn how to integrate TransactLab 
+              into your applications with detailed guides, API references, and code examples.
+            </p>
+            <div className="flex flex-col sm:flex-row gap-3 justify-center">
+              <Button
+                onClick={() => window.open('https://transactlab-payment-sandbox.vercel.app/transactlab-docs', '_blank')}
+                className="bg-green-600 hover:bg-green-700 text-white px-6 py-3"
+              >
+                <ExternalLink className="w-4 h-4 mr-2" />
+                Read Our Documentation
+              </Button>
+              <Button
+                variant="outline"
+                onClick={() => window.open('https://transactlab-payment-sandbox.vercel.app/transactlab-docs', '_blank')}
+                className="border-green-200 text-green-700 hover:bg-green-50 px-6 py-3"
+              >
+                View API Reference
+              </Button>
+            </div>
+          </div>
+        </CardContent>
+      </Card>
     </div>
   );
 };

@@ -379,8 +379,24 @@ export class SandboxController {
       const now = new Date();
       const days = Number(req.query.days || 30);
       const freq = String(req.query.freq || 'daily'); // daily | weekly | monthly
-      const from = new Date(now.getTime() - days * 24 * 60 * 60 * 1000);
-      const prevFrom = new Date(from.getTime() - days * 24 * 60 * 60 * 1000);
+      
+      // Calculate proper date range
+      const to = new Date(now);
+      to.setHours(23, 59, 59, 999); // End of today
+      const from = new Date(to.getTime() - (days - 1) * 24 * 60 * 60 * 1000);
+      from.setHours(0, 0, 0, 0); // Start of the day
+      
+      const prevTo = new Date(from.getTime() - 1); // End of previous period
+      const prevFrom = new Date(prevTo.getTime() - (days - 1) * 24 * 60 * 60 * 1000);
+      prevFrom.setHours(0, 0, 0, 0); // Start of previous period
+
+      console.log('SandboxController: Date range filtering:', {
+        days,
+        from: from.toISOString(),
+        to: to.toISOString(),
+        prevFrom: prevFrom.toISOString(),
+        prevTo: prevTo.toISOString()
+      });
 
       // Pull user's preferred currency
       const user = await User.findById(userId).select('preferences.currency');
@@ -389,7 +405,7 @@ export class SandboxController {
 
       // Aggregate sessions as transactions source
       const sessions = await SandboxSession.aggregate([
-        { $match: { userId: userId.toString(), createdAt: { $gte: from } } },
+        { $match: { userId: userId.toString(), createdAt: { $gte: from, $lte: to } } },
         { $project: { 
             amount: { $divide: ['$amount', 100] }, // Convert from minor units (cents) to major units
             currency: 1, status: 1, createdAt: 1,
@@ -1302,13 +1318,16 @@ export class SandboxController {
         try {
           const amountMajor = (session.amount || 0) / 100;
           const customerEmail = session.customerEmail || 'noreply@transactlab.com';
+          // Get the stored payment method from session metadata
+          const storedPaymentMethod = session.getPaymentMethod();
+          
           await EmailService.sendPaymentReceipt(customerEmail, {
             customerName: session.customerName || (session.customerEmail ? session.customerEmail.split('@')[0] : 'Customer'),
             amount: amountMajor,
             currency: session.currency,
             reference: session.sessionId,
             date: new Date().toLocaleString(),
-            paymentMethod: paymentMethod || 'card'
+            paymentMethod: storedPaymentMethod
           });
 
           // Owner alert
@@ -1320,7 +1339,7 @@ export class SandboxController {
               currency: session.currency,
               reference: session.sessionId,
               date: new Date().toLocaleString(),
-              paymentMethod: paymentMethod || 'card'
+              paymentMethod: storedPaymentMethod
             });
           }
 
@@ -1331,7 +1350,7 @@ export class SandboxController {
             currency: session.currency,
             reference: session.sessionId,
             date: new Date().toLocaleString(),
-            paymentMethod: paymentMethod || 'card',
+            paymentMethod: storedPaymentMethod,
             businessName: 'TransactLab Sandbox'
           });
         } catch (e) {
@@ -1910,13 +1929,25 @@ export class SandboxController {
   }
 
   /**
-   * Update a sandbox customer (name only for now)
+   * Update a sandbox customer
    */
   static async updateCustomer(req: Request, res: Response) {
     try {
       const userId = req.user?._id;
       const { customerId } = req.params;
-      const { name } = req.body as { name?: string };
+      const { name, phone, address, description } = req.body as { 
+        name?: string; 
+        phone?: string; 
+        address?: {
+          line1?: string;
+          line2?: string;
+          city?: string;
+          state?: string;
+          postalCode?: string;
+          country: string;
+        }; 
+        description?: string; 
+      };
 
       if (!userId) {
         return res.status(401).json({ success: false, error: 'Unauthorized', message: 'User not authenticated' });
@@ -1925,9 +1956,25 @@ export class SandboxController {
         return res.status(400).json({ success: false, message: 'Customer id is required' });
       }
 
+      // Build update object with only provided fields
+      const updateData: any = {};
+      if (name !== undefined) updateData.name = name;
+      if (phone !== undefined) updateData.phone = phone;
+      if (description !== undefined) updateData.description = description;
+      if (address !== undefined) {
+        updateData.address = {
+          line1: address.line1 || '',
+          line2: address.line2 || '',
+          city: address.city || '',
+          state: address.state || '',
+          postalCode: address.postalCode || '',
+          country: address.country || 'NG'
+        };
+      }
+
       const customer = await SandboxCustomer.findOneAndUpdate(
         { _id: customerId, userId: userId.toString() },
-        { $set: { ...(name ? { name } : {}) } },
+        { $set: updateData },
         { new: true }
       ).lean();
 
@@ -2008,9 +2055,14 @@ export class SandboxController {
     try {
       const userId = req.user?._id;
       if (!userId) return res.status(401).json({ success: false, message: 'Unauthorized' });
-      const { name, description } = req.body as any;
+      const { name, description, image } = req.body as any;
       if (!name) return res.status(400).json({ success: false, message: 'Name required' });
-      const product = await SandboxProduct.create({ userId: userId.toString(), name, description });
+      const product = await SandboxProduct.create({ 
+        userId: userId.toString(), 
+        name, 
+        description,
+        image: image || undefined
+      });
       return res.json({ success: true, data: product });
     } catch (error) {
       logger.error('Error creating product:', error);
@@ -2034,11 +2086,17 @@ export class SandboxController {
     try {
       const userId = req.user?._id;
       const { productId } = req.params as any;
-      const { name, description, active } = req.body as any;
+      const { name, description, image, active } = req.body as any;
       if (!userId) return res.status(401).json({ success: false, message: 'Unauthorized' });
+      const updateData: any = {};
+      if (name !== undefined) updateData.name = name;
+      if (description !== undefined) updateData.description = description;
+      if (image !== undefined) updateData.image = image;
+      if (active !== undefined) updateData.active = active;
+      
       const product = await SandboxProduct.findOneAndUpdate(
         { _id: productId, userId: userId.toString() },
-        { $set: { ...(name ? { name } : {}), ...(description ? { description } : {}), ...(active !== undefined ? { active } : {}) } },
+        { $set: updateData },
         { new: true }
       ).lean();
       if (!product) return res.status(404).json({ success: false, message: 'Product not found' });
@@ -2269,6 +2327,7 @@ export class SandboxController {
           planInterval: plan?.interval || 'month',
           planName: product?.name || 'Subscription Plan',
           planDescription: product?.description || '',
+          productImage: product?.image || null,
           currency: plan?.currency || 'NGN'
         };
       });
@@ -2309,6 +2368,7 @@ export class SandboxController {
         planInterval: plan?.interval || 'month',
         planName: product?.name || 'Subscription Plan',
         planDescription: product?.description || '',
+        productImage: product?.image || null,
         currency: plan?.currency || 'NGN'
       };
       
@@ -2419,7 +2479,14 @@ export class SandboxController {
         currency: plan.currency,
         description: isTrialToActive ? 'Subscription first charge after trial' : 'Subscription renewal charge',
         customerEmail: s.customerEmail,
-        metadata: { subscriptionId: s.subscriptionId, productId: s.productId, planId: s.planId },
+        metadata: { 
+          subscriptionId: s.subscriptionId, 
+          productId: s.productId, 
+          planId: s.planId,
+          customFields: {
+            paymentMethodUsed: 'card' // Default for auto-renewals
+          }
+        },
         paymentConfig: { allowedPaymentMethods: ['card'], requireCustomerEmail: false, requireCustomerName: false, autoCapture: true },
         status: 'completed',
         webhookDelivered: false,
