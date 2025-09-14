@@ -247,6 +247,18 @@ export class SecurityController {
         return;
       }
 
+      // Initialize securitySettings if it doesn't exist
+      if (!(user as any).securitySettings) {
+        (user as any).securitySettings = {
+          requireEmailVerification: true,
+          allowNewDeviceLogin: true,
+          notifyOnNewDevice: true,
+          requireTwoFactor: false,
+          sessionTimeout: 60,
+          maxConcurrentSessions: 5
+        };
+      }
+
       // Update security settings
       if (requireEmailVerification !== undefined) {
         (user as any).securitySettings.requireEmailVerification = requireEmailVerification;
@@ -311,12 +323,22 @@ export class SecurityController {
         return;
       }
 
+      // Ensure securitySettings has default values if undefined
+      const defaultSecuritySettings = {
+        requireEmailVerification: true,
+        allowNewDeviceLogin: true,
+        notifyOnNewDevice: true,
+        requireTwoFactor: false,
+        sessionTimeout: 60,
+        maxConcurrentSessions: 5
+      };
+
       res.status(200).json({
         success: true,
         message: 'Security settings retrieved successfully',
         data: {
-          securitySettings: (user as any).securitySettings,
-          totpEnabled: (user as any).totpEnabled,
+          securitySettings: (user as any).securitySettings || defaultSecuritySettings,
+          totpEnabled: (user as any).totpEnabled || false,
           trustedDevicesCount: (user as any).trustedDevices?.length || 0
         }
       });

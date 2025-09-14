@@ -54,6 +54,18 @@ export interface IUser extends Document {
   lockUntil?: Date;
   twoFactorSecret?: string;
   twoFactorEnabled: boolean;
+  totpEnabled?: boolean;
+  totpBackupCodes?: string[];
+  
+  // Security settings
+  securitySettings?: {
+    requireEmailVerification: boolean;
+    allowNewDeviceLogin: boolean;
+    notifyOnNewDevice: boolean;
+    requireTwoFactor: boolean;
+    sessionTimeout: number;
+    maxConcurrentSessions: number;
+  };
   
   // Trusted devices
   trustedDevices: Array<{
@@ -103,6 +115,7 @@ export interface IUser extends Document {
   getFullBusinessName(): string;
   isIndividualDeveloper(): boolean;
   isBusinessEntity(): boolean;
+  generateTotpBackupCodes(): string[];
 }
 
 const userSchema = new Schema<IUser>(
@@ -232,6 +245,40 @@ const userSchema = new Schema<IUser>(
     twoFactorEnabled: {
       type: Boolean,
       default: false
+    },
+    totpEnabled: {
+      type: Boolean,
+      default: false
+    },
+    totpBackupCodes: [{
+      type: String,
+      select: false
+    }],
+    securitySettings: {
+      requireEmailVerification: {
+        type: Boolean,
+        default: true
+      },
+      allowNewDeviceLogin: {
+        type: Boolean,
+        default: true
+      },
+      notifyOnNewDevice: {
+        type: Boolean,
+        default: true
+      },
+      requireTwoFactor: {
+        type: Boolean,
+        default: false
+      },
+      sessionTimeout: {
+        type: Number,
+        default: 60
+      },
+      maxConcurrentSessions: {
+        type: Number,
+        default: 5
+      }
     },
     trustedDevices: [{
       deviceId: {
@@ -499,6 +546,23 @@ userSchema.methods.addTrustedDevice = async function (deviceData: {
 // userSchema.methods.isBusinessEntity = function (): boolean {
 //   return this.businessType !== 'individual';
 // };
+
+// Instance method to generate TOTP backup codes
+userSchema.methods.generateTotpBackupCodes = function (): string[] {
+  const codes: string[] = [];
+  for (let i = 0; i < 10; i++) {
+    // Generate 8-character alphanumeric codes
+    const code = Math.random().toString(36).substring(2, 10).toUpperCase();
+    codes.push(code);
+  }
+  
+  // Store backup codes in the user document (you might want to hash these)
+  if (!this.totpBackupCodes) {
+    this.totpBackupCodes = codes;
+  }
+  
+  return codes;
+};
 
 // Static method to find by email
 userSchema.statics.findByEmail = function (email: string) {

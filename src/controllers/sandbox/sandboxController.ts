@@ -9,6 +9,7 @@ import { logger } from '../../utils/helpers/logger';
 import EmailService from '../../services/notification/emailService';
 import SandboxTeam from '../../models/SandboxTeam';
 import { CloudinaryService } from '../../services/cloudinaryService';
+import { LocalUploadService } from '../../services/localUploadService';
 
 // Helper function to send sandbox webhooks
 async function sendSandboxWebhook(transactionId: string, status: string, userId: string) {
@@ -2138,19 +2139,45 @@ export class SandboxController {
       
       let imageUrl = undefined;
       
-      // Handle image upload to Cloudinary if provided
+      // Handle image upload with Cloudinary first, then fallback to local upload
       if (image) {
+        let uploadSuccess = false;
         
-        // Generate a temporary product ID for the folder structure
-        const tempProductId = `temp_${Date.now()}_${Math.random().toString(36).substr(2, 9)}`;
+        // Try Cloudinary first
+        try {
+          const tempProductId = `temp_${Date.now()}_${Math.random().toString(36).substr(2, 9)}`;
+          const cloudinaryResult = await CloudinaryService.uploadProductImage(image, tempProductId);
+          
+          if (cloudinaryResult.success && cloudinaryResult.url) {
+            imageUrl = cloudinaryResult.url;
+            uploadSuccess = true;
+            console.log('Image uploaded to Cloudinary successfully');
+          } else {
+            console.warn('Cloudinary upload failed:', cloudinaryResult.error);
+          }
+        } catch (error) {
+          console.error('Cloudinary upload error:', error);
+        }
         
-        const uploadResult = await CloudinaryService.uploadProductImage(image, tempProductId);
+        // Fallback to local upload if Cloudinary fails
+        if (!uploadSuccess) {
+          try {
+            const localResult = await LocalUploadService.uploadImage(image, 'products');
+            
+            if (localResult.success && localResult.url) {
+              imageUrl = localResult.url;
+              uploadSuccess = true;
+              console.log('Image uploaded to local storage successfully');
+            } else {
+              console.warn('Local upload failed:', localResult.error);
+            }
+          } catch (error) {
+            console.error('Local upload error:', error);
+          }
+        }
         
-        if (uploadResult.success && uploadResult.url) {
-          imageUrl = uploadResult.url;
-        } else {
-          console.warn('Failed to upload image to Cloudinary:', uploadResult.error);
-          // Continue without image rather than failing the entire request
+        if (!uploadSuccess) {
+          console.error('Both Cloudinary and local upload failed, continuing without image');
         }
       }
       
@@ -2229,25 +2256,68 @@ export class SandboxController {
           }
           updateData.image = null;
         } else if (image && image !== currentProduct.image) {
-          // Upload new image to Cloudinary
+          // Upload new image with Cloudinary first, then fallback to local upload
+          let uploadSuccess = false;
+          let newImageUrl = null;
+          
+          // Try Cloudinary first
           try {
-            const uploadResult = await CloudinaryService.uploadProductImage(image, currentProduct.productId);
+            const cloudinaryResult = await CloudinaryService.uploadProductImage(image, currentProduct.productId);
             
-            if (uploadResult.success && uploadResult.url) {
-              // Delete old image if it exists
-              if (currentProduct.image) {
-                const oldPublicId = CloudinaryService.extractPublicId(currentProduct.image);
-                if (oldPublicId) {
-                  await CloudinaryService.deleteImage(oldPublicId);
-                }
-              }
-              updateData.image = uploadResult.url;
+            if (cloudinaryResult.success && cloudinaryResult.url) {
+              newImageUrl = cloudinaryResult.url;
+              uploadSuccess = true;
+              console.log('New image uploaded to Cloudinary successfully');
             } else {
-              console.warn('Failed to upload new image to Cloudinary:', uploadResult.error);
-              // Keep the old image if upload fails
+              console.warn('Cloudinary upload failed:', cloudinaryResult.error);
             }
           } catch (error) {
-            console.warn('Failed to upload image to Cloudinary:', error);
+            console.error('Cloudinary upload error:', error);
+          }
+          
+          // Fallback to local upload if Cloudinary fails
+          if (!uploadSuccess) {
+            try {
+              const localResult = await LocalUploadService.uploadImage(image, 'products');
+              
+              if (localResult.success && localResult.url) {
+                newImageUrl = localResult.url;
+                uploadSuccess = true;
+                console.log('New image uploaded to local storage successfully');
+              } else {
+                console.warn('Local upload failed:', localResult.error);
+              }
+            } catch (error) {
+              console.error('Local upload error:', error);
+            }
+          }
+          
+          if (uploadSuccess && newImageUrl) {
+            // Delete old image if it exists
+            if (currentProduct.image) {
+              try {
+                // Try to delete from Cloudinary first
+                if (currentProduct.image.includes('cloudinary.com')) {
+                  const oldPublicId = CloudinaryService.extractPublicId(currentProduct.image);
+                  if (oldPublicId) {
+                    await CloudinaryService.deleteImage(oldPublicId);
+                  }
+                }
+                // Try to delete from local storage
+                else if (currentProduct.image.includes('/uploads/')) {
+                  const oldFileName = LocalUploadService.extractFileName(currentProduct.image);
+                  if (oldFileName) {
+                    await LocalUploadService.deleteFile(oldFileName);
+                  }
+                }
+              } catch (error) {
+                console.warn('Failed to delete old image:', error);
+              }
+            }
+            updateData.image = newImageUrl;
+          } else {
+            console.error('Both Cloudinary and local upload failed, keeping old image');
+            // Keep the old image if upload fails
           }
         }
       }
@@ -2284,15 +2354,27 @@ export class SandboxController {
         });
       }
 
-      // Delete image from Cloudinary if it exists
+      // Delete image from storage if it exists
       if (product.image) {
         try {
-          const publicId = CloudinaryService.extractPublicId(product.image);
-          if (publicId) {
-            await CloudinaryService.deleteImage(publicId);
+          // Try to delete from Cloudinary first
+          if (product.image.includes('cloudinary.com')) {
+            const publicId = CloudinaryService.extractPublicId(product.image);
+            if (publicId) {
+              await CloudinaryService.deleteImage(publicId);
+              console.log('Image deleted from Cloudinary');
+            }
+          }
+          // Try to delete from local storage
+          else if (product.image.includes('/uploads/')) {
+            const fileName = LocalUploadService.extractFileName(product.image);
+            if (fileName) {
+              await LocalUploadService.deleteFile(fileName);
+              console.log('Image deleted from local storage');
+            }
           }
         } catch (error) {
-          console.warn('Failed to delete image from Cloudinary:', error);
+          console.warn('Failed to delete image from storage:', error);
         }
       }
 

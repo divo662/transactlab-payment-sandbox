@@ -23,6 +23,15 @@ export class CloudinaryService {
     } = {}
   ): Promise<CloudinaryUploadResult> {
     try {
+      // Check if Cloudinary is configured
+      if (!process.env.CLOUDINARY_CLOUD_NAME || !process.env.CLOUDINARY_API_KEY || !process.env.CLOUDINARY_API_SECRET) {
+        console.warn('Cloudinary environment variables not configured');
+        return {
+          success: false,
+          error: 'Cloudinary not configured'
+        };
+      }
+
       const uploadOptions = {
         folder,
         resource_type: 'image' as const,
@@ -37,6 +46,7 @@ export class CloudinaryService {
         ]
       };
 
+      console.log('Attempting Cloudinary upload to folder:', folder);
       let uploadResult: UploadApiResponse;
       
       if (Buffer.isBuffer(file)) {
@@ -45,15 +55,23 @@ export class CloudinaryService {
           cloudinary.uploader.upload_stream(
             uploadOptions,
             (error: UploadApiErrorResponse | undefined, result: UploadApiResponse | undefined) => {
-              if (error) reject(error);
-              else if (result) resolve(result);
-              else reject(new Error('Upload failed'));
+              if (error) {
+                console.error('Cloudinary upload stream error:', error);
+                reject(error);
+              } else if (result) {
+                console.log('Cloudinary upload stream success:', result.secure_url);
+                resolve(result);
+              } else {
+                reject(new Error('Upload failed'));
+              }
             }
           ).end(file);
         });
       } else {
         // Upload from base64 string
+        console.log('Uploading base64 string, length:', file.length);
         uploadResult = await cloudinary.uploader.upload(file, uploadOptions);
+        console.log('Cloudinary base64 upload success:', uploadResult.secure_url);
       }
 
       return {

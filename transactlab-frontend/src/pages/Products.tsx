@@ -39,6 +39,16 @@ const Products: React.FC = () => {
   const fileInputRef = useRef<HTMLInputElement>(null);
   const editFileInputRef = useRef<HTMLInputElement>(null);
 
+  // Helper function to check if image is from Cloudinary
+  const isCloudinaryImage = (imageUrl: string): boolean => {
+    return imageUrl && imageUrl.includes('cloudinary.com');
+  };
+
+  // Helper function to check if image is from local uploads
+  const isLocalImage = (imageUrl: string): boolean => {
+    return imageUrl && imageUrl.includes('/uploads/');
+  };
+
   // Image upload helpers
   const validateImageFile = (file: File): boolean => {
     const maxSize = 5 * 1024 * 1024; // 5MB
@@ -70,7 +80,12 @@ const Products: React.FC = () => {
       const reader = new FileReader();
       reader.onload = (e) => {
         const result = e.target?.result as string;
-        resolve(result);
+        // Ensure we have a proper base64 data URL
+        if (result && result.startsWith('data:image/')) {
+          resolve(result);
+        } else {
+          reject(new Error('Invalid image format'));
+        }
       };
       reader.onerror = reject;
       reader.readAsDataURL(file);
@@ -90,13 +105,14 @@ const Products: React.FC = () => {
         setForm(prev => ({ ...prev, image: imageData }));
       }
       toast({
-        title: 'Success',
-        description: 'Image uploaded successfully'
+        title: 'Image ready',
+        description: 'Image processed and ready to upload'
       });
     } catch (error) {
+      console.error('Image processing error:', error);
       toast({ 
         title: 'Error', 
-        description: 'Failed to process image', 
+        description: 'Failed to process image file', 
         variant: 'destructive' 
       });
     }
@@ -170,14 +186,41 @@ const Products: React.FC = () => {
     e.preventDefault();
     try {
       setCreating(true);
-      await apiCall('/products', { method: 'POST', body: JSON.stringify(form) });
-      setForm({ name: '', description: '', image: '' });
-      setShowCreate(false);
-      await load();
-      toast({ title: 'Product created' });
+      
+      // Prepare the data to send
+      const productData = {
+        name: form.name,
+        description: form.description,
+        image: form.image || null // Send null if no image
+      };
+      
+      const response = await apiCall('/products', { 
+        method: 'POST', 
+        body: JSON.stringify(productData) 
+      });
+      
+      if (response.success) {
+        setForm({ name: '', description: '', image: '' });
+        setShowCreate(false);
+        await load();
+        toast({ 
+          title: 'Product created', 
+          description: 'Product created successfully with image uploaded' 
+        });
+      } else {
+        throw new Error(response.message || 'Failed to create product');
+      }
     } catch (e) {
-      toast({ title: 'Error', description: 'Failed to create product', variant: 'destructive' });
-    } finally { setCreating(false); }
+      console.error('Product creation error:', e);
+      const errorMessage = e instanceof Error ? e.message : 'Failed to create product';
+      toast({ 
+        title: 'Error', 
+        description: errorMessage, 
+        variant: 'destructive' 
+      });
+    } finally { 
+      setCreating(false); 
+    }
   };
 
   const handleEditProduct = (product: any) => {
@@ -197,16 +240,38 @@ const Products: React.FC = () => {
     
     try {
       setUpdating(true);
-      await apiCall(`/products/${editingProduct._id}`, { 
+      
+      // Prepare the data to send
+      const updateData = {
+        name: editForm.name,
+        description: editForm.description,
+        image: editForm.image || null // Send null if no image (will delete existing)
+      };
+      
+      const response = await apiCall(`/products/${editingProduct._id}`, { 
         method: 'PUT', 
-        body: JSON.stringify(editForm) 
+        body: JSON.stringify(updateData) 
       });
-      setShowEditModal(false);
-      setEditingProduct(null);
-      await load();
-      toast({ title: 'Product updated' });
+      
+      if (response.success) {
+        setShowEditModal(false);
+        setEditingProduct(null);
+        await load();
+        toast({ 
+          title: 'Product updated', 
+          description: 'Product updated successfully with image changes applied' 
+        });
+      } else {
+        throw new Error(response.message || 'Failed to update product');
+      }
     } catch (e) {
-      toast({ title: 'Error', description: 'Failed to update product', variant: 'destructive' });
+      console.error('Product update error:', e);
+      const errorMessage = e instanceof Error ? e.message : 'Failed to update product';
+      toast({ 
+        title: 'Error', 
+        description: errorMessage, 
+        variant: 'destructive' 
+      });
     } finally { 
       setUpdating(false); 
     }
@@ -442,7 +507,13 @@ const Products: React.FC = () => {
                         type="button"
                         variant="destructive"
                         size="sm"
-                        onClick={() => setForm({ ...form, image: '' })}
+                        onClick={() => {
+                          setForm({ ...form, image: '' });
+                          toast({
+                            title: 'Image removed',
+                            description: 'Image will be removed from the product'
+                          });
+                        }}
                         className="absolute -top-2 -right-2 h-6 w-6 rounded-full p-0"
                       >
                         <X className="h-3 w-3" />
@@ -502,11 +573,21 @@ const Products: React.FC = () => {
                 <div className="cursor-pointer mb-2 md:mb-0" onClick={()=> navigate(`/sandbox/products/${p._id}`)}>
                   <div className="flex items-center gap-2">
                     {p.image && (
-                      <img 
-                        src={p.image} 
-                        alt={p.name} 
-                        className="w-8 h-8 object-cover rounded border"
-                      />
+                      <div className="relative">
+                        <img 
+                          src={p.image} 
+                          alt={p.name} 
+                          className="w-8 h-8 object-cover rounded border"
+                        />
+                        {isCloudinaryImage(p.image) && (
+                          <div className="absolute -bottom-1 -right-1 w-3 h-3 bg-green-500 rounded-full border border-white" 
+                               title="Image stored in Cloudinary" />
+                        )}
+                        {isLocalImage(p.image) && (
+                          <div className="absolute -bottom-1 -right-1 w-3 h-3 bg-blue-500 rounded-full border border-white" 
+                               title="Image stored locally" />
+                        )}
+                      </div>
                     )}
                     <div>
                       <div className="font-medium text-sm sm:text-base break-words">{p.name}</div>
@@ -685,11 +766,25 @@ const Products: React.FC = () => {
                           alt="Preview" 
                           className="w-20 h-20 object-cover rounded-lg border-2 border-gray-200 shadow-sm"
                         />
+                        {isCloudinaryImage(editForm.image) && (
+                          <div className="absolute top-1 left-1 w-2 h-2 bg-green-500 rounded-full border border-white" 
+                               title="Currently stored in Cloudinary" />
+                        )}
+                        {isLocalImage(editForm.image) && (
+                          <div className="absolute top-1 left-1 w-2 h-2 bg-blue-500 rounded-full border border-white" 
+                               title="Currently stored locally" />
+                        )}
                         <Button
                           type="button"
                           variant="destructive"
                           size="sm"
-                          onClick={() => setEditForm({ ...editForm, image: '' })}
+                          onClick={() => {
+                            setEditForm({ ...editForm, image: '' });
+                            toast({
+                              title: 'Image removed',
+                              description: 'Image will be removed when you save'
+                            });
+                          }}
                           className="absolute -top-2 -right-2 h-6 w-6 rounded-full p-0 shadow-lg"
                         >
                           <X className="h-3 w-3" />

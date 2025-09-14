@@ -44,6 +44,16 @@ const ProductDetail: React.FC = () => {
   const [dragActive, setDragActive] = useState(false);
   const fileInputRef = useRef<HTMLInputElement>(null);
 
+  // Helper function to check if image is from Cloudinary
+  const isCloudinaryImage = (imageUrl: string): boolean => {
+    return imageUrl && imageUrl.includes('cloudinary.com');
+  };
+
+  // Helper function to check if image is from local uploads
+  const isLocalImage = (imageUrl: string): boolean => {
+    return imageUrl && imageUrl.includes('/uploads/');
+  };
+
   // Image upload helpers
   const validateImageFile = (file: File): boolean => {
     const maxSize = 5 * 1024 * 1024; // 5MB
@@ -207,15 +217,37 @@ const ProductDetail: React.FC = () => {
     
     try {
       setUpdatingProduct(true);
-      await fetchJSON(`${API_BASE}/products/${product._id}`, { 
+      
+      // Prepare the data to send
+      const updateData = {
+        name: editProductForm.name,
+        description: editProductForm.description,
+        image: editProductForm.image || null // Send null if no image (will delete existing)
+      };
+      
+      const response = await fetchJSON(`${API_BASE}/products/${product._id}`, { 
         method: 'PUT', 
-        body: JSON.stringify(editProductForm) 
+        body: JSON.stringify(updateData) 
       });
-      setShowEditProductModal(false);
-      await load();
-      toast({ title: 'Product updated' });
+      
+      if (response.success) {
+        setShowEditProductModal(false);
+        await load();
+        toast({ 
+          title: 'Product updated', 
+          description: 'Product updated successfully with image changes applied' 
+        });
+      } else {
+        throw new Error(response.message || 'Failed to update product');
+      }
     } catch (e) {
-      toast({ title: 'Error', description: 'Failed to update product', variant: 'destructive' });
+      console.error('Product update error:', e);
+      const errorMessage = e instanceof Error ? e.message : 'Failed to update product';
+      toast({ 
+        title: 'Error', 
+        description: errorMessage, 
+        variant: 'destructive' 
+      });
     } finally { 
       setUpdatingProduct(false); 
     }
@@ -379,11 +411,21 @@ const ProductDetail: React.FC = () => {
             <div className="flex flex-col sm:flex-row sm:items-center gap-2 sm:gap-3">
               <div className="flex items-center gap-3">
                 {product?.image && (
-                  <img 
-                    src={product.image} 
-                    alt={product.name} 
-                    className="w-12 h-12 sm:w-16 sm:h-16 object-cover rounded-lg border"
-                  />
+                  <div className="relative">
+                    <img 
+                      src={product.image} 
+                      alt={product.name} 
+                      className="w-12 h-12 sm:w-16 sm:h-16 object-cover rounded-lg border"
+                    />
+                    {isCloudinaryImage(product.image) && (
+                      <div className="absolute -bottom-1 -right-1 w-3 h-3 bg-green-500 rounded-full border border-white" 
+                           title="Image stored in Cloudinary" />
+                    )}
+                    {isLocalImage(product.image) && (
+                      <div className="absolute -bottom-1 -right-1 w-3 h-3 bg-blue-500 rounded-full border border-white" 
+                           title="Image stored locally" />
+                    )}
+                  </div>
                 )}
                 <div>
                   <h1 className="text-xl sm:text-2xl lg:text-3xl font-bold break-words">{product?.name || 'Product'}</h1>
@@ -848,11 +890,25 @@ const ProductDetail: React.FC = () => {
                           alt="Preview" 
                           className="w-20 h-20 object-cover rounded-lg border-2 border-gray-200 shadow-sm"
                         />
+                        {isCloudinaryImage(editProductForm.image) && (
+                          <div className="absolute top-1 left-1 w-2 h-2 bg-green-500 rounded-full border border-white" 
+                               title="Currently stored in Cloudinary" />
+                        )}
+                        {isLocalImage(editProductForm.image) && (
+                          <div className="absolute top-1 left-1 w-2 h-2 bg-blue-500 rounded-full border border-white" 
+                               title="Currently stored locally" />
+                        )}
                         <Button
                           type="button"
                           variant="destructive"
                           size="sm"
-                          onClick={() => setEditProductForm({ ...editProductForm, image: '' })}
+                          onClick={() => {
+                            setEditProductForm({ ...editProductForm, image: '' });
+                            toast({
+                              title: 'Image removed',
+                              description: 'Image will be removed when you save'
+                            });
+                          }}
                           className="absolute -top-2 -right-2 h-6 w-6 rounded-full p-0 shadow-lg"
                         >
                           <X className="h-3 w-3" />

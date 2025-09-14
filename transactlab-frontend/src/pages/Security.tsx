@@ -95,19 +95,38 @@ const Security: React.FC = () => {
       
       // Load security settings
       const settingsData = await apiService.getSecuritySettings();
-      if (settingsData.success) {
-        setSecuritySettings(settingsData.data.securitySettings);
-        setTotpEnabled(settingsData.data.totpEnabled);
+      if (settingsData && settingsData.success && settingsData.data) {
+        // Safely access securitySettings with fallback to default values
+        const receivedSettings = settingsData.data.securitySettings;
+        if (receivedSettings) {
+          setSecuritySettings({
+            requireEmailVerification: receivedSettings.requireEmailVerification ?? true,
+            allowNewDeviceLogin: receivedSettings.allowNewDeviceLogin ?? true,
+            notifyOnNewDevice: receivedSettings.notifyOnNewDevice ?? true,
+            requireTwoFactor: receivedSettings.requireTwoFactor ?? false,
+            sessionTimeout: receivedSettings.sessionTimeout ?? 60,
+            maxConcurrentSessions: receivedSettings.maxConcurrentSessions ?? 5
+          });
+        }
+        setTotpEnabled(settingsData.data.totpEnabled ?? false);
+      } else {
+        // If API fails, keep default values
+        console.warn('Failed to load security settings, using defaults');
       }
 
       // Load trusted devices
       const devicesData = await apiService.getTrustedDevices();
-      if (devicesData.success) {
-        setDevices(devicesData.data.devices);
+      if (devicesData && devicesData.success && devicesData.data) {
+        setDevices(devicesData.data.devices || []);
+      } else {
+        // If API fails, keep empty array
+        setDevices([]);
       }
     } catch (error) {
       console.error('Error loading security data:', error);
       toast.error('Failed to load security data');
+      // Ensure we have fallback values even on error
+      setDevices([]);
     } finally {
       setLoading(false);
       setInitialLoading(false);
@@ -205,7 +224,7 @@ const Security: React.FC = () => {
       const data = await apiService.updateSecuritySettings(newSettings);
       
       if (data.success) {
-        setSecuritySettings({ ...securitySettings, ...newSettings });
+        setSecuritySettings(prev => ({ ...prev, ...newSettings }));
         toast.success('Security settings updated successfully');
       } else {
         toast.error(data.message || 'Failed to update settings');
@@ -249,38 +268,38 @@ const Security: React.FC = () => {
 
   if (initialLoading) {
     return (
-      <div className="container mx-auto px-4 py-8 max-w-6xl">
+      <div className="p-3 sm:p-6 max-w-6xl mx-auto">
         {/* Header Skeleton */}
-        <div className="mb-8">
-          <div className="h-8 bg-gray-200 rounded w-64 mb-2 animate-pulse"></div>
-          <div className="h-4 bg-gray-200 rounded w-96 animate-pulse"></div>
+        <div className="mb-6 sm:mb-8">
+          <div className="h-6 sm:h-8 bg-gray-200 rounded w-48 sm:w-64 mb-2 animate-pulse"></div>
+          <div className="h-3 sm:h-4 bg-gray-200 rounded w-72 sm:w-96 animate-pulse"></div>
         </div>
 
         {/* Tabs Skeleton */}
-        <div className="space-y-6">
-          <div className="grid grid-cols-4 gap-2">
+        <div className="space-y-4 sm:space-y-6">
+          <div className="grid grid-cols-2 sm:grid-cols-4 gap-1 sm:gap-2">
             {[1, 2, 3, 4].map((i) => (
-              <div key={i} className="h-10 bg-gray-200 rounded animate-pulse"></div>
+              <div key={i} className="h-8 sm:h-10 bg-gray-200 rounded animate-pulse"></div>
             ))}
           </div>
 
           {/* Overview Tab Skeleton */}
-          <div className="space-y-6">
+          <div className="space-y-4 sm:space-y-6">
             {/* Security Status Cards Skeleton */}
-            <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
+            <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4 sm:gap-6">
               {[1, 2, 3].map((i) => (
                 <Card key={i}>
-                  <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-                    <div className="h-4 bg-gray-200 rounded w-32 animate-pulse"></div>
-                    <div className="w-4 h-4 bg-gray-200 rounded animate-pulse"></div>
+                  <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2 px-3 sm:px-6 pt-3 sm:pt-6">
+                    <div className="h-3 sm:h-4 bg-gray-200 rounded w-24 sm:w-32 animate-pulse"></div>
+                    <div className="w-3 h-3 sm:w-4 sm:h-4 bg-gray-200 rounded animate-pulse"></div>
                   </CardHeader>
-                  <CardContent>
+                  <CardContent className="px-3 sm:px-6 pb-3 sm:pb-6">
                     <div className="space-y-2">
                       <div className="flex items-center space-x-2">
-                        <div className="w-5 h-5 bg-gray-200 rounded animate-pulse"></div>
-                        <div className="h-4 bg-gray-200 rounded w-20 animate-pulse"></div>
+                        <div className="w-4 h-4 sm:w-5 sm:h-5 bg-gray-200 rounded animate-pulse"></div>
+                        <div className="h-3 sm:h-4 bg-gray-200 rounded w-16 sm:w-20 animate-pulse"></div>
                       </div>
-                      <div className="h-3 bg-gray-200 rounded w-48 animate-pulse"></div>
+                      <div className="h-2 sm:h-3 bg-gray-200 rounded w-36 sm:w-48 animate-pulse"></div>
                     </div>
                   </CardContent>
                 </Card>
@@ -289,19 +308,19 @@ const Security: React.FC = () => {
 
             {/* Security Recommendations Skeleton */}
             <Card>
-              <CardHeader>
-                <div className="h-6 bg-gray-200 rounded w-48 animate-pulse"></div>
-                <div className="h-4 bg-gray-200 rounded w-80 animate-pulse"></div>
+              <CardHeader className="px-3 sm:px-6 pt-3 sm:pt-6 pb-3 sm:pb-6">
+                <div className="h-5 sm:h-6 bg-gray-200 rounded w-40 sm:w-48 animate-pulse"></div>
+                <div className="h-3 sm:h-4 bg-gray-200 rounded w-64 sm:w-80 animate-pulse"></div>
               </CardHeader>
-              <CardContent className="space-y-4">
+              <CardContent className="px-3 sm:px-6 pb-3 sm:pb-6 space-y-3 sm:space-y-4">
                 {[1, 2, 3].map((i) => (
-                  <div key={i} className="p-4 border rounded-lg">
-                    <div className="flex items-start space-x-3">
-                      <div className="w-4 h-4 bg-gray-200 rounded animate-pulse mt-1"></div>
+                  <div key={i} className="p-3 sm:p-4 border rounded-lg">
+                    <div className="flex items-start space-x-2 sm:space-x-3">
+                      <div className="w-3 h-3 sm:w-4 sm:h-4 bg-gray-200 rounded animate-pulse mt-1"></div>
                       <div className="flex-1 space-y-2">
-                        <div className="h-4 bg-gray-200 rounded w-64 animate-pulse"></div>
-                        <div className="h-4 bg-gray-200 rounded w-96 animate-pulse"></div>
-                        <div className="h-8 bg-gray-200 rounded w-24 animate-pulse"></div>
+                        <div className="h-3 sm:h-4 bg-gray-200 rounded w-48 sm:w-64 animate-pulse"></div>
+                        <div className="h-3 sm:h-4 bg-gray-200 rounded w-72 sm:w-96 animate-pulse"></div>
+                        <div className="h-7 sm:h-8 bg-gray-200 rounded w-20 sm:w-24 animate-pulse"></div>
                       </div>
                     </div>
                   </div>
@@ -312,50 +331,50 @@ const Security: React.FC = () => {
         </div>
 
         {/* Loading Message */}
-        <div className="text-center py-8 mt-8">
-          <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-[#0a164d] mx-auto mb-4"></div>
-          <p className="text-gray-600 font-medium">Loading security data...</p>
-          <p className="text-sm text-gray-500 mt-1">This may take a few moments</p>
+        <div className="text-center py-6 sm:py-8 mt-6 sm:mt-8">
+          <div className="animate-spin rounded-full h-6 w-6 sm:h-8 sm:w-8 border-b-2 border-[#0a164d] mx-auto mb-3 sm:mb-4"></div>
+          <p className="text-sm sm:text-base text-gray-600 font-medium">Loading security data...</p>
+          <p className="text-xs sm:text-sm text-gray-500 mt-1">This may take a few moments</p>
         </div>
       </div>
     );
   }
 
   return (
-    <div className="container mx-auto px-4 py-8 max-w-6xl">
-      <div className="mb-8">
-        <h1 className="text-3xl font-bold text-gray-900 mb-2">Security Center</h1>
-        <p className="text-gray-600">Manage your account security settings and monitor login activity</p>
+    <div className="p-3 sm:p-6 max-w-6xl mx-auto">
+      <div className="mb-6 sm:mb-8">
+        <h1 className="text-2xl sm:text-3xl font-bold text-gray-900 mb-2">Security Center</h1>
+        <p className="text-sm sm:text-base text-gray-600">Manage your account security settings and monitor login activity</p>
       </div>
 
-      <Tabs value={activeTab} onValueChange={setActiveTab} className="space-y-6">
-        <TabsList className="grid w-full grid-cols-4">
-          <TabsTrigger value="overview">Overview</TabsTrigger>
-          <TabsTrigger value="devices">Devices</TabsTrigger>
-          <TabsTrigger value="two-factor">Two-Factor</TabsTrigger>
-          <TabsTrigger value="settings">Settings</TabsTrigger>
+      <Tabs value={activeTab} onValueChange={setActiveTab} className="space-y-4 sm:space-y-6">
+        <TabsList className="grid w-full grid-cols-2 sm:grid-cols-4 h-auto">
+          <TabsTrigger value="overview" className="text-xs sm:text-sm py-2 sm:py-3">Overview</TabsTrigger>
+          <TabsTrigger value="devices" className="text-xs sm:text-sm py-2 sm:py-3">Devices</TabsTrigger>
+          <TabsTrigger value="two-factor" className="text-xs sm:text-sm py-2 sm:py-3">Two-Factor</TabsTrigger>
+          <TabsTrigger value="settings" className="text-xs sm:text-sm py-2 sm:py-3">Settings</TabsTrigger>
         </TabsList>
 
         {/* Overview Tab */}
-        <TabsContent value="overview" className="space-y-6">
-          <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
+        <TabsContent value="overview" className="space-y-4 sm:space-y-6">
+          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4 sm:gap-6">
             {/* Security Status Card */}
             <Card>
-              <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-                <CardTitle className="text-sm font-medium">Security Status</CardTitle>
-                <Shield className="h-4 w-4 text-muted-foreground" />
+              <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2 px-3 sm:px-6 pt-3 sm:pt-6">
+                <CardTitle className="text-xs sm:text-sm font-medium">Security Status</CardTitle>
+                <Shield className="h-3 w-3 sm:h-4 sm:w-4 text-muted-foreground" />
               </CardHeader>
-              <CardContent>
+              <CardContent className="px-3 sm:px-6 pb-3 sm:pb-6">
                 <div className="flex items-center space-x-2">
                   {totpEnabled ? (
                     <>
-                      <CheckCircle className="h-5 w-5 text-green-500" />
-                      <span className="text-sm font-medium text-green-700">Protected</span>
+                      <CheckCircle className="h-4 w-4 sm:h-5 sm:w-5 text-green-500" />
+                      <span className="text-xs sm:text-sm font-medium text-green-700">Protected</span>
                     </>
                   ) : (
                     <>
-                      <XCircle className="h-5 w-5 text-red-500" />
-                      <span className="text-sm font-medium text-red-700">At Risk</span>
+                      <XCircle className="h-4 w-4 sm:h-5 sm:w-5 text-red-500" />
+                      <span className="text-xs sm:text-sm font-medium text-red-700">At Risk</span>
                     </>
                   )}
                 </div>
@@ -367,12 +386,12 @@ const Security: React.FC = () => {
 
             {/* Trusted Devices Card */}
             <Card>
-              <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-                <CardTitle className="text-sm font-medium">Trusted Devices</CardTitle>
-                <Smartphone className="h-4 w-4 text-muted-foreground" />
+              <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2 px-3 sm:px-6 pt-3 sm:pt-6">
+                <CardTitle className="text-xs sm:text-sm font-medium">Trusted Devices</CardTitle>
+                <Smartphone className="h-3 w-3 sm:h-4 sm:w-4 text-muted-foreground" />
               </CardHeader>
-              <CardContent>
-                <div className="text-2xl font-bold">{devices.length}</div>
+              <CardContent className="px-3 sm:px-6 pb-3 sm:pb-6">
+                <div className="text-xl sm:text-2xl font-bold">{devices.length}</div>
                 <p className="text-xs text-muted-foreground">
                   {devices.length === 0 ? 'No trusted devices' : 'Devices with saved login'}
                 </p>
@@ -381,26 +400,26 @@ const Security: React.FC = () => {
 
             {/* Login Notifications Card */}
             <Card>
-              <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-                <CardTitle className="text-sm font-medium">Login Alerts</CardTitle>
-                <Bell className="h-4 w-4 text-muted-foreground" />
+              <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2 px-3 sm:px-6 pt-3 sm:pt-6">
+                <CardTitle className="text-xs sm:text-sm font-medium">Login Alerts</CardTitle>
+                <Bell className="h-3 w-3 sm:h-4 sm:w-4 text-muted-foreground" />
               </CardHeader>
-              <CardContent>
+              <CardContent className="px-3 sm:px-6 pb-3 sm:pb-6">
                 <div className="flex items-center space-x-2">
-                  {securitySettings.notifyOnNewDevice ? (
+                  {securitySettings?.notifyOnNewDevice ? (
                     <>
-                      <CheckCircle className="h-5 w-5 text-green-500" />
-                      <span className="text-sm font-medium text-green-700">Enabled</span>
+                      <CheckCircle className="h-4 w-4 sm:h-5 sm:w-5 text-green-500" />
+                      <span className="text-xs sm:text-sm font-medium text-green-700">Enabled</span>
                     </>
                   ) : (
                     <>
-                      <XCircle className="h-5 w-5 text-red-500" />
-                      <span className="text-sm font-medium text-red-700">Disabled</span>
+                      <XCircle className="h-4 w-4 sm:h-5 sm:w-5 text-red-500" />
+                      <span className="text-xs sm:text-sm font-medium text-red-700">Disabled</span>
                     </>
                   )}
                 </div>
                 <p className="text-xs text-muted-foreground mt-1">
-                  {securitySettings.notifyOnNewDevice ? 'You will be notified of new logins' : 'Enable to receive login alerts'}
+                  {securitySettings?.notifyOnNewDevice ? 'You will be notified of new logins' : 'Enable to receive login alerts'}
                 </p>
               </CardContent>
             </Card>
@@ -408,14 +427,14 @@ const Security: React.FC = () => {
 
           {/* Security Recommendations */}
           <Card>
-            <CardHeader>
-              <CardTitle className="flex items-center space-x-2">
-                <AlertTriangle className="h-5 w-5 text-yellow-500" />
+            <CardHeader className="px-3 sm:px-6 pt-3 sm:pt-6 pb-3 sm:pb-6">
+              <CardTitle className="flex items-center space-x-2 text-base sm:text-lg">
+                <AlertTriangle className="h-4 w-4 sm:h-5 sm:w-5 text-yellow-500" />
                 <span>Security Recommendations</span>
               </CardTitle>
-              <CardDescription>Improve your account security with these recommendations</CardDescription>
+              <CardDescription className="text-sm">Improve your account security with these recommendations</CardDescription>
             </CardHeader>
-            <CardContent className="space-y-4">
+            <CardContent className="px-3 sm:px-6 pb-3 sm:pb-6 space-y-3 sm:space-y-4">
               {!totpEnabled && (
                 <Alert>
                   <Shield className="h-4 w-4" />
@@ -424,7 +443,7 @@ const Security: React.FC = () => {
                     <Button 
                       variant="outline" 
                       size="sm" 
-                      className="ml-2"
+                      className="ml-2 text-xs sm:text-sm h-7 sm:h-8"
                       onClick={() => setActiveTab('two-factor')}
                     >
                       Enable 2FA
@@ -433,7 +452,7 @@ const Security: React.FC = () => {
                 </Alert>
               )}
               
-              {!securitySettings.notifyOnNewDevice && (
+              {!securitySettings?.notifyOnNewDevice && (
                 <Alert>
                   <Bell className="h-4 w-4" />
                   <AlertDescription>
@@ -441,7 +460,7 @@ const Security: React.FC = () => {
                     <Button 
                       variant="outline" 
                       size="sm" 
-                      className="ml-2"
+                      className="ml-2 text-xs sm:text-sm h-7 sm:h-8"
                       onClick={() => setActiveTab('settings')}
                     >
                       Enable Alerts
@@ -463,18 +482,18 @@ const Security: React.FC = () => {
         </TabsContent>
 
         {/* Devices Tab */}
-        <TabsContent value="devices" className="space-y-6">
+        <TabsContent value="devices" className="space-y-4 sm:space-y-6">
           <Card>
-            <CardHeader>
-              <CardTitle className="flex items-center space-x-2">
-                <Smartphone className="h-5 w-5" />
+            <CardHeader className="px-3 sm:px-6 pt-3 sm:pt-6 pb-3 sm:pb-6">
+              <CardTitle className="flex items-center space-x-2 text-base sm:text-lg">
+                <Smartphone className="h-4 w-4 sm:h-5 sm:w-5" />
                 <span>Trusted Devices</span>
               </CardTitle>
-              <CardDescription>
+              <CardDescription className="text-sm">
                 Manage devices that have access to your account. Remove any devices you don't recognize.
               </CardDescription>
             </CardHeader>
-            <CardContent>
+            <CardContent className="px-3 sm:px-6 pb-3 sm:pb-6">
               {devices.length === 0 ? (
                 <div className="text-center py-8">
                   <Smartphone className="h-12 w-12 text-gray-400 mx-auto mb-4" />
@@ -482,30 +501,30 @@ const Security: React.FC = () => {
                   <p className="text-gray-500">When you log in from a new device, it will appear here.</p>
                 </div>
               ) : (
-                <div className="space-y-4">
+                <div className="space-y-3 sm:space-y-4">
                   {devices.map((device) => (
-                    <div key={device.deviceId} className="flex items-center justify-between p-4 border rounded-lg">
-                      <div className="flex items-center space-x-4">
+                    <div key={device.deviceId} className="flex flex-col sm:flex-row sm:items-center justify-between p-3 sm:p-4 border rounded-lg space-y-3 sm:space-y-0">
+                      <div className="flex items-center space-x-3 sm:space-x-4">
                         <div className="p-2 bg-gray-100 rounded-lg">
                           {getDeviceIcon(device.deviceType)}
                         </div>
-                        <div>
-                          <h4 className="font-medium text-gray-900">{device.deviceName}</h4>
-                          <div className="flex items-center space-x-4 text-sm text-gray-500">
+                        <div className="flex-1 min-w-0">
+                          <h4 className="font-medium text-gray-900 text-sm sm:text-base truncate">{device.deviceName}</h4>
+                          <div className="flex flex-col sm:flex-row sm:items-center space-y-1 sm:space-y-0 sm:space-x-4 text-xs sm:text-sm text-gray-500">
                             <span className="flex items-center space-x-1">
-                              <MapPin className="h-3 w-3" />
-                              <span>{getLocationString(device.location)}</span>
+                              <MapPin className="h-3 w-3 flex-shrink-0" />
+                              <span className="truncate">{getLocationString(device.location)}</span>
                             </span>
                             <span className="flex items-center space-x-1">
-                              <Calendar className="h-3 w-3" />
-                              <span>Last used: {formatDate(device.lastUsed)}</span>
+                              <Calendar className="h-3 w-3 flex-shrink-0" />
+                              <span className="truncate">Last used: {formatDate(device.lastUsed)}</span>
                             </span>
                           </div>
                         </div>
                       </div>
-                      <div className="flex items-center space-x-2">
+                      <div className="flex items-center justify-between sm:justify-end space-x-2">
                         {device.isTrusted && (
-                          <Badge variant="secondary" className="bg-green-100 text-green-800">
+                          <Badge variant="secondary" className="bg-green-100 text-green-800 text-xs">
                             Trusted
                           </Badge>
                         )}
@@ -514,9 +533,9 @@ const Security: React.FC = () => {
                           size="sm"
                           onClick={() => handleRemoveDevice(device.deviceId)}
                           disabled={loading}
-                          className="text-red-600 hover:text-red-700"
+                          className="text-red-600 hover:text-red-700 h-8 w-8 p-0"
                         >
-                          <Trash2 className="h-4 w-4" />
+                          <Trash2 className="h-3 w-3 sm:h-4 sm:w-4" />
                         </Button>
                       </div>
                     </div>
@@ -528,55 +547,55 @@ const Security: React.FC = () => {
         </TabsContent>
 
         {/* Two-Factor Authentication Tab */}
-        <TabsContent value="two-factor" className="space-y-6">
+        <TabsContent value="two-factor" className="space-y-4 sm:space-y-6">
           <Card>
-            <CardHeader>
-              <CardTitle className="flex items-center space-x-2">
-                <Shield className="h-5 w-5" />
+            <CardHeader className="px-3 sm:px-6 pt-3 sm:pt-6 pb-3 sm:pb-6">
+              <CardTitle className="flex items-center space-x-2 text-base sm:text-lg">
+                <Shield className="h-4 w-4 sm:h-5 sm:w-5" />
                 <span>Two-Factor Authentication</span>
               </CardTitle>
-              <CardDescription>
+              <CardDescription className="text-sm">
                 Add an extra layer of security to your account with Google Authenticator.
               </CardDescription>
             </CardHeader>
-            <CardContent className="space-y-6">
+            <CardContent className="px-3 sm:px-6 pb-3 sm:pb-6 space-y-4 sm:space-y-6">
               {!totpEnabled ? (
                 <div className="space-y-4">
-                  <div className="flex items-center justify-between p-4 border rounded-lg">
+                  <div className="flex flex-col sm:flex-row sm:items-center justify-between p-3 sm:p-4 border rounded-lg space-y-3 sm:space-y-0">
                     <div className="flex items-center space-x-3">
                       <div className="p-2 bg-blue-100 rounded-lg">
-                        <Smartphone className="h-5 w-5 text-blue-600" />
+                        <Smartphone className="h-4 w-4 sm:h-5 sm:w-5 text-blue-600" />
                       </div>
                       <div>
-                        <h4 className="font-medium">Google Authenticator</h4>
-                        <p className="text-sm text-gray-500">Use your mobile device to generate security codes</p>
+                        <h4 className="font-medium text-sm sm:text-base">Google Authenticator</h4>
+                        <p className="text-xs sm:text-sm text-gray-500">Use your mobile device to generate security codes</p>
                       </div>
                     </div>
-                    <Button onClick={handleTotpSetup} disabled={loading}>
+                    <Button onClick={handleTotpSetup} disabled={loading} className="w-full sm:w-auto text-xs sm:text-sm h-8 sm:h-9">
                       {loading ? 'Setting up...' : 'Enable 2FA'}
                     </Button>
                   </div>
 
                   {showTotpSetup && totpSetup && (
-                    <div className="space-y-4 p-4 border rounded-lg bg-blue-50">
-                      <h4 className="font-medium text-blue-900">Setup Instructions</h4>
-                      <div className="space-y-3">
-                        <p className="text-sm text-blue-800">1. Install Google Authenticator on your mobile device</p>
-                        <p className="text-sm text-blue-800">2. Scan this QR code with the app:</p>
+                    <div className="space-y-3 sm:space-y-4 p-3 sm:p-4 border rounded-lg bg-blue-50">
+                      <h4 className="font-medium text-blue-900 text-sm sm:text-base">Setup Instructions</h4>
+                      <div className="space-y-2 sm:space-y-3">
+                        <p className="text-xs sm:text-sm text-blue-800">1. Install Google Authenticator on your mobile device</p>
+                        <p className="text-xs sm:text-sm text-blue-800">2. Scan this QR code with the app:</p>
                         <div className="flex justify-center">
-                          <img src={totpSetup.qrCode} alt="QR Code" className="w-48 h-48 border rounded-lg" />
+                          <img src={totpSetup.qrCode} alt="QR Code" className="w-36 h-36 sm:w-48 sm:h-48 border rounded-lg" />
                         </div>
-                        <p className="text-sm text-blue-800">3. Enter the 6-digit code from the app:</p>
-                        <div className="flex space-x-2">
+                        <p className="text-xs sm:text-sm text-blue-800">3. Enter the 6-digit code from the app:</p>
+                        <div className="flex flex-col sm:flex-row space-y-2 sm:space-y-0 sm:space-x-2">
                           <Input
                             type="text"
                             placeholder="123456"
                             value={totpCode}
                             onChange={(e) => setTotpCode(e.target.value)}
-                            className="w-32"
+                            className="w-full sm:w-32 text-center"
                             maxLength={6}
                           />
-                          <Button onClick={handleTotpVerify} disabled={loading || totpCode.length !== 6}>
+                          <Button onClick={handleTotpVerify} disabled={loading || totpCode.length !== 6} className="w-full sm:w-auto text-xs sm:text-sm h-8 sm:h-9">
                             {loading ? 'Verifying...' : 'Verify'}
                           </Button>
                         </div>
@@ -673,56 +692,56 @@ const Security: React.FC = () => {
         </TabsContent>
 
         {/* Settings Tab */}
-        <TabsContent value="settings" className="space-y-6">
+        <TabsContent value="settings" className="space-y-4 sm:space-y-6">
           <Card>
-            <CardHeader>
-              <CardTitle className="flex items-center space-x-2">
-                <Settings className="h-5 w-5" />
+            <CardHeader className="px-3 sm:px-6 pt-3 sm:pt-6 pb-3 sm:pb-6">
+              <CardTitle className="flex items-center space-x-2 text-base sm:text-lg">
+                <Settings className="h-4 w-4 sm:h-5 sm:w-5" />
                 <span>Security Settings</span>
               </CardTitle>
-              <CardDescription>
+              <CardDescription className="text-sm">
                 Configure your security preferences and notification settings.
               </CardDescription>
             </CardHeader>
-            <CardContent className="space-y-6">
-              <div className="space-y-4">
-                <div className="flex items-center justify-between">
-                  <div className="space-y-0.5">
-                    <Label className="text-base">Login Notifications</Label>
-                    <p className="text-sm text-muted-foreground">
+            <CardContent className="px-3 sm:px-6 pb-3 sm:pb-6 space-y-4 sm:space-y-6">
+              <div className="space-y-4 sm:space-y-6">
+                <div className="flex flex-col sm:flex-row sm:items-center justify-between space-y-3 sm:space-y-0">
+                  <div className="space-y-1">
+                    <Label className="text-sm sm:text-base">Login Notifications</Label>
+                    <p className="text-xs sm:text-sm text-muted-foreground">
                       Get notified when someone logs into your account from a new device
                     </p>
                   </div>
                   <Switch
-                    checked={securitySettings.notifyOnNewDevice}
+                    checked={securitySettings?.notifyOnNewDevice ?? false}
                     onCheckedChange={(checked) => handleUpdateSettings({ notifyOnNewDevice: checked })}
                     disabled={loading}
                   />
                 </div>
 
-                <div className="flex items-center justify-between">
-                  <div className="space-y-0.5">
-                    <Label className="text-base">Allow New Device Login</Label>
-                    <p className="text-sm text-muted-foreground">
+                <div className="flex flex-col sm:flex-row sm:items-center justify-between space-y-3 sm:space-y-0">
+                  <div className="space-y-1">
+                    <Label className="text-sm sm:text-base">Allow New Device Login</Label>
+                    <p className="text-xs sm:text-sm text-muted-foreground">
                       Allow login from devices that haven't been trusted before
                     </p>
                   </div>
                   <Switch
-                    checked={securitySettings.allowNewDeviceLogin}
+                    checked={securitySettings?.allowNewDeviceLogin ?? true}
                     onCheckedChange={(checked) => handleUpdateSettings({ allowNewDeviceLogin: checked })}
                     disabled={loading}
                   />
                 </div>
 
-                <div className="flex items-center justify-between">
-                  <div className="space-y-0.5">
-                    <Label className="text-base">Require Two-Factor Authentication</Label>
-                    <p className="text-sm text-muted-foreground">
+                <div className="flex flex-col sm:flex-row sm:items-center justify-between space-y-3 sm:space-y-0">
+                  <div className="space-y-1">
+                    <Label className="text-sm sm:text-base">Require Two-Factor Authentication</Label>
+                    <p className="text-xs sm:text-sm text-muted-foreground">
                       Force all users to enable 2FA for their accounts
                     </p>
                   </div>
                   <Switch
-                    checked={securitySettings.requireTwoFactor}
+                    checked={securitySettings?.requireTwoFactor ?? false}
                     onCheckedChange={(checked) => handleUpdateSettings({ requireTwoFactor: checked })}
                     disabled={loading}
                   />
@@ -731,40 +750,40 @@ const Security: React.FC = () => {
                 <Separator />
 
                 <div className="space-y-2">
-                  <Label className="text-base">Session Timeout</Label>
-                  <p className="text-sm text-muted-foreground">
+                  <Label className="text-sm sm:text-base">Session Timeout</Label>
+                  <p className="text-xs sm:text-sm text-muted-foreground">
                     Automatically log out inactive users after this many minutes
                   </p>
-                  <div className="flex items-center space-x-2">
+                  <div className="flex flex-col sm:flex-row sm:items-center space-y-2 sm:space-y-0 sm:space-x-2">
                     <Input
                       type="number"
-                      value={securitySettings.sessionTimeout}
+                      value={securitySettings?.sessionTimeout ?? 60}
                       onChange={(e) => handleUpdateSettings({ sessionTimeout: parseInt(e.target.value) })}
-                      className="w-24"
+                      className="w-full sm:w-24 text-sm"
                       min="5"
                       max="1440"
                       disabled={loading}
                     />
-                    <span className="text-sm text-muted-foreground">minutes</span>
+                    <span className="text-xs sm:text-sm text-muted-foreground">minutes</span>
                   </div>
                 </div>
 
                 <div className="space-y-2">
-                  <Label className="text-base">Max Concurrent Sessions</Label>
-                  <p className="text-sm text-muted-foreground">
+                  <Label className="text-sm sm:text-base">Max Concurrent Sessions</Label>
+                  <p className="text-xs sm:text-sm text-muted-foreground">
                     Maximum number of active sessions allowed per user
                   </p>
-                  <div className="flex items-center space-x-2">
+                  <div className="flex flex-col sm:flex-row sm:items-center space-y-2 sm:space-y-0 sm:space-x-2">
                     <Input
                       type="number"
-                      value={securitySettings.maxConcurrentSessions}
+                      value={securitySettings?.maxConcurrentSessions ?? 5}
                       onChange={(e) => handleUpdateSettings({ maxConcurrentSessions: parseInt(e.target.value) })}
-                      className="w-24"
+                      className="w-full sm:w-24 text-sm"
                       min="1"
                       max="20"
                       disabled={loading}
                     />
-                    <span className="text-sm text-muted-foreground">sessions</span>
+                    <span className="text-xs sm:text-sm text-muted-foreground">sessions</span>
                   </div>
                 </div>
               </div>
