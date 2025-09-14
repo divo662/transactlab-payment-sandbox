@@ -30,6 +30,8 @@ export interface ISandboxSession extends Document, ISandboxSessionMethods {
   description: string;
   customerEmail?: string;
   customerName?: string;
+  productImage?: string;
+  productName?: string;
   successUrl?: string;
   cancelUrl?: string;
   metadata: {
@@ -105,6 +107,14 @@ const SandboxSessionSchema = new Schema<ISandboxSession>({
     }
   },
   customerName: {
+    type: String,
+    trim: true
+  },
+  productImage: {
+    type: String,
+    trim: true
+  },
+  productName: {
     type: String,
     trim: true
   },

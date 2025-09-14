@@ -263,7 +263,30 @@ const CheckoutPage: React.FC = () => {
       const res = await fetch(`${BACKEND_BASE}/api/v1/checkout/process/${session.sessionId}`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({})
+        body: JSON.stringify({
+          paymentMethod: selectedMethod,
+          cardDetails: selectedMethod === 'card' ? {
+            cardNumber: formData.cardNumber,
+            expiryDate: formData.expiryDate,
+            cvv: formData.cvv,
+            cardholderName: formData.cardholderName
+          } : selectedMethod === 'mobile_money' ? {
+            phone: formData.phone
+          } : {}, // bank_transfer doesn't need additional data
+          customerData: {
+            email: formData.email,
+            phone: formData.phone,
+            name: formData.cardholderName,
+            address: {
+              line1: formData.addressLine1,
+              line2: formData.addressLine2,
+              city: formData.city,
+              state: formData.state,
+              postalCode: formData.postalCode,
+              country: formData.country
+            }
+          }
+        })
       });
       const json = await res.json();
       // Friendly handling of fraud outcomes

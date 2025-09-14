@@ -42,15 +42,21 @@ export interface SessionResponse {
 
 export interface ApiKeyResponse {
   id: string;
-  name: string;
   apiKey: string;
-  permissions: string[];
+  secretKey: string;
   isActive: boolean;
-  expiresAt?: Date;
   usageCount: number;
   lastUsed?: Date;
   webhookUrl?: string;
-  metadata: any;
+  webhookSecret?: string;
+  rateLimit: {
+    requestsPerMinute: number;
+    requestsPerHour: number;
+    requestsPerDay: number;
+  };
+  environment: string;
+  createdAt: Date;
+  updatedAt: Date;
 }
 
 export class SandboxService {
@@ -63,47 +69,31 @@ export class SandboxService {
   }
 
   /**
-   * Create a new API key for sandbox testing
+   * Get or create user's permanent API key (Stripe-style)
    */
-  async createApiKey(userId: string, data: {
-    name: string;
-    permissions?: string[];
-    expiresAt?: Date;
-    webhookUrl?: string;
-    metadata?: any;
-  }): Promise<ApiKeyResponse> {
+  async getOrCreateApiKey(userId: string): Promise<ApiKeyResponse> {
     try {
-      const apiKey = new SandboxApiKey({
-        userId,
-        name: data.name,
-        permissions: data.permissions || ['payments:read', 'payments:write', 'customers:read', 'webhooks:read'],
-        expiresAt: data.expiresAt,
-        webhookUrl: data.webhookUrl,
-        metadata: {
-          ...data.metadata,
-          environment: 'sandbox'
-        }
-      });
+      const apiKey = await SandboxApiKey.getOrCreateUserKey(userId);
 
-      await apiKey.save();
-
-      logger.info(`Created new API key for user ${userId}: ${apiKey.name}`);
+      logger.info(`Retrieved API key for user ${userId}: ${apiKey.apiKey}`);
 
       return {
         id: apiKey._id.toString(),
-        name: apiKey.name,
         apiKey: apiKey.apiKey,
-        permissions: apiKey.permissions,
+        secretKey: apiKey.secretKey,
         isActive: apiKey.isActive,
-        expiresAt: apiKey.expiresAt,
         usageCount: apiKey.usageCount,
         lastUsed: apiKey.lastUsed,
         webhookUrl: apiKey.webhookUrl,
-        metadata: apiKey.metadata
+        webhookSecret: apiKey.webhookSecret,
+        rateLimit: apiKey.rateLimit,
+        environment: apiKey.environment,
+        createdAt: apiKey.createdAt,
+        updatedAt: apiKey.updatedAt
       };
     } catch (error) {
-      logger.error(`Error creating API key for user ${userId}:`, error);
-      throw new Error('Failed to create API key');
+      logger.error(`Error getting API key for user ${userId}:`, error);
+      throw new Error('Failed to get API key');
     }
   }
 
@@ -113,7 +103,6 @@ export class SandboxService {
   async validateApiKey(apiKey: string): Promise<{
     isValid: boolean;
     userId?: string;
-    permissions?: string[];
     keyData?: any;
   }> {
     try {
@@ -133,12 +122,13 @@ export class SandboxService {
       return {
         isValid: true,
         userId: keyData.userId,
-        permissions: keyData.permissions,
         keyData: {
           id: keyData._id.toString(),
-          name: keyData.name,
-          permissions: keyData.permissions,
-          rateLimit: keyData.rateLimit
+          apiKey: keyData.apiKey,
+          isActive: keyData.isActive,
+          rateLimit: keyData.rateLimit,
+          webhookUrl: keyData.webhookUrl,
+          environment: keyData.environment
         }
       };
     } catch (error) {
@@ -390,39 +380,142 @@ export class SandboxService {
   }
 
   /**
-   * Get user's active API keys
+   * Get user's API key (single permanent key)
    */
-  async getUserApiKeys(userId: string): Promise<ApiKeyResponse[]> {
+  async getUserApiKey(userId: string): Promise<ApiKeyResponse | null> {
     try {
-      const apiKeys = await SandboxApiKey.getUserKeys(userId);
+      const apiKey = await SandboxApiKey.getOrCreateUserKey(userId);
       
-      return apiKeys.map(key => ({
-        id: key._id.toString(),
-        name: key.name,
-        apiKey: key.apiKey,
-        permissions: key.permissions,
-        isActive: key.isActive,
-        expiresAt: key.expiresAt,
-        usageCount: key.usageCount,
-        lastUsed: key.lastUsed,
-        webhookUrl: key.webhookUrl,
-        metadata: key.metadata
-      }));
+      return {
+        id: apiKey._id.toString(),
+        apiKey: apiKey.apiKey,
+        secretKey: apiKey.secretKey,
+        isActive: apiKey.isActive,
+        usageCount: apiKey.usageCount,
+        lastUsed: apiKey.lastUsed,
+        webhookUrl: apiKey.webhookUrl,
+        webhookSecret: apiKey.webhookSecret,
+        rateLimit: apiKey.rateLimit,
+        environment: apiKey.environment,
+        createdAt: apiKey.createdAt,
+        updatedAt: apiKey.updatedAt
+      };
     } catch (error) {
-      logger.error(`Error getting API keys for user ${userId}:`, error);
+      logger.error(`Error getting API key for user ${userId}:`, error);
       throw error;
     }
   }
 
   /**
-   * Deactivate an API key
+   * Update API key settings
    */
-  async deactivateApiKey(apiKey: string): Promise<boolean> {
+  async updateApiKey(userId: string, data: {
+    webhookUrl?: string;
+    webhookSecret?: string;
+    rateLimit?: {
+      requestsPerMinute?: number;
+      requestsPerHour?: number;
+      requestsPerDay?: number;
+    };
+  }): Promise<ApiKeyResponse> {
     try {
-      const result = await SandboxApiKey.deactivateKey(apiKey);
-      return !!result;
+      const apiKey = await SandboxApiKey.getOrCreateUserKey(userId);
+
+      // Update settings
+      if (data.webhookUrl !== undefined) {
+        apiKey.webhookUrl = data.webhookUrl;
+      }
+      if (data.webhookSecret !== undefined) {
+        apiKey.webhookSecret = data.webhookSecret;
+      }
+      if (data.rateLimit) {
+        if (data.rateLimit.requestsPerMinute !== undefined) {
+          apiKey.rateLimit.requestsPerMinute = data.rateLimit.requestsPerMinute;
+        }
+        if (data.rateLimit.requestsPerHour !== undefined) {
+          apiKey.rateLimit.requestsPerHour = data.rateLimit.requestsPerHour;
+        }
+        if (data.rateLimit.requestsPerDay !== undefined) {
+          apiKey.rateLimit.requestsPerDay = data.rateLimit.requestsPerDay;
+        }
+      }
+
+      await apiKey.save();
+
+      return {
+        id: apiKey._id.toString(),
+        apiKey: apiKey.apiKey,
+        secretKey: apiKey.secretKey,
+        isActive: apiKey.isActive,
+        usageCount: apiKey.usageCount,
+        lastUsed: apiKey.lastUsed,
+        webhookUrl: apiKey.webhookUrl,
+        webhookSecret: apiKey.webhookSecret,
+        rateLimit: apiKey.rateLimit,
+        environment: apiKey.environment,
+        createdAt: apiKey.createdAt,
+        updatedAt: apiKey.updatedAt
+      };
     } catch (error) {
-      logger.error(`Error deactivating API key:`, error);
+      logger.error(`Error updating API key for user ${userId}:`, error);
+      throw error;
+    }
+  }
+
+  /**
+   * Toggle API key status (activate/deactivate)
+   */
+  async toggleApiKeyStatus(userId: string): Promise<ApiKeyResponse> {
+    try {
+      const apiKey = await SandboxApiKey.getOrCreateUserKey(userId);
+      apiKey.isActive = !apiKey.isActive;
+      await apiKey.save();
+
+      return {
+        id: apiKey._id.toString(),
+        apiKey: apiKey.apiKey,
+        secretKey: apiKey.secretKey,
+        isActive: apiKey.isActive,
+        usageCount: apiKey.usageCount,
+        lastUsed: apiKey.lastUsed,
+        webhookUrl: apiKey.webhookUrl,
+        webhookSecret: apiKey.webhookSecret,
+        rateLimit: apiKey.rateLimit,
+        environment: apiKey.environment,
+        createdAt: apiKey.createdAt,
+        updatedAt: apiKey.updatedAt
+      };
+    } catch (error) {
+      logger.error(`Error toggling API key status for user ${userId}:`, error);
+      throw error;
+    }
+  }
+
+  /**
+   * Regenerate API key and secret key
+   */
+  async regenerateApiKey(userId: string): Promise<ApiKeyResponse> {
+    try {
+      const apiKey = await SandboxApiKey.getOrCreateUserKey(userId);
+      const newKeys = apiKey.regenerateKeys();
+      await apiKey.save();
+
+      return {
+        id: apiKey._id.toString(),
+        apiKey: newKeys.apiKey,
+        secretKey: newKeys.secretKey,
+        isActive: apiKey.isActive,
+        usageCount: apiKey.usageCount,
+        lastUsed: apiKey.lastUsed,
+        webhookUrl: apiKey.webhookUrl,
+        webhookSecret: apiKey.webhookSecret,
+        rateLimit: apiKey.rateLimit,
+        environment: apiKey.environment,
+        createdAt: apiKey.createdAt,
+        updatedAt: apiKey.updatedAt
+      };
+    } catch (error) {
+      logger.error(`Error regenerating API key for user ${userId}:`, error);
       throw error;
     }
   }

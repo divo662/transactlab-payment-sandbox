@@ -8,6 +8,7 @@ import SandboxPaymentMethod, { ISandboxPaymentMethod } from '../../models/Sandbo
 import { logger } from '../../utils/helpers/logger';
 import EmailService from '../../services/notification/emailService';
 import SandboxTeam from '../../models/SandboxTeam';
+import { CloudinaryService } from '../../services/cloudinaryService';
 
 // Helper function to send sandbox webhooks
 async function sendSandboxWebhook(transactionId: string, status: string, userId: string) {
@@ -150,8 +151,8 @@ export class SandboxController {
          
          sandboxConfig = new SandboxConfig({
            userId: userId.toString(),
-           testApiKey: `sk_test_${userHash}_${timestamp}`,
-           testSecretKey: `sk_test_secret_${userHash}_${timestamp}`,
+           testApiKey: `tk_test_${userHash}_${timestamp}`,
+           testSecretKey: `tk_test_secret_${userHash}_${timestamp}`,
            testWebhookUrl: `https://webhook.site/${userHash}-${timestamp}`,
            webhookEndpoint: '',
            webhookSecret: `whsec_${userHash}_${timestamp}`,
@@ -615,9 +616,9 @@ export class SandboxController {
   }
 
   /**
-   * Create a new API key
+   * Get or create user's permanent API key (Stripe-style)
    */
-  static async createApiKey(req: Request, res: Response) {
+  static async getApiKey(req: Request, res: Response) {
     try {
       const userId = req.user?._id;
       if (!userId) {
@@ -628,42 +629,36 @@ export class SandboxController {
         });
       }
 
-      const { name, permissions, expiresAt, webhookUrl } = req.body;
+      // Get or create the user's permanent API key
+      const apiKey = await SandboxApiKey.getOrCreateUserKey(userId.toString());
 
-      const apiKey = (new SandboxApiKey({
-        userId: userId.toString(),
-        name: name || 'Default API Key',
-        permissions: permissions || ['payments:read', 'payments:write'],
-        expiresAt: expiresAt ? new Date(expiresAt) : undefined,
-        webhookUrl
-      }) as unknown) as ISandboxApiKey;
-
-      await apiKey.save();
-
-      res.status(201).json({
+      res.json({
         success: true,
         data: {
           apiKey: apiKey.apiKey,
           secretKey: apiKey.secretKey,
-          name: apiKey.name,
-          permissions: apiKey.permissions,
-          expiresAt: apiKey.expiresAt
+          isActive: apiKey.isActive,
+          usageCount: apiKey.usageCount,
+          lastUsed: apiKey.lastUsed,
+          environment: apiKey.environment,
+          webhookUrl: apiKey.webhookUrl,
+          createdAt: apiKey.createdAt
         }
       });
     } catch (error) {
-      logger.error('Error creating API key:', error);
+      logger.error('Error getting API key:', error);
       res.status(500).json({
         success: false,
         error: 'Internal server error',
-        message: 'Failed to create API key'
+        message: 'Failed to get API key'
       });
     }
   }
 
   /**
-   * Get user's API keys
+   * Update API key settings (webhook URL, rate limits)
    */
-  static async getApiKeys(req: Request, res: Response) {
+  static async updateApiKey(req: Request, res: Response) {
     try {
       const userId = req.user?._id;
       if (!userId) {
@@ -674,26 +669,58 @@ export class SandboxController {
         });
       }
 
-      const apiKeys = await SandboxApiKey.find({ userId: userId.toString() }).sort({ createdAt: -1 });
+      const { webhookUrl, webhookSecret, rateLimit } = req.body;
+
+      const apiKey = await SandboxApiKey.getOrCreateUserKey(userId.toString());
+
+      // Update webhook settings
+      if (webhookUrl !== undefined) {
+        apiKey.webhookUrl = webhookUrl;
+      }
+      if (webhookSecret !== undefined) {
+        apiKey.webhookSecret = webhookSecret;
+      }
+
+      // Update rate limits
+      if (rateLimit) {
+        if (rateLimit.requestsPerMinute) {
+          apiKey.rateLimit.requestsPerMinute = rateLimit.requestsPerMinute;
+        }
+        if (rateLimit.requestsPerHour) {
+          apiKey.rateLimit.requestsPerHour = rateLimit.requestsPerHour;
+        }
+        if (rateLimit.requestsPerDay) {
+          apiKey.rateLimit.requestsPerDay = rateLimit.requestsPerDay;
+        }
+      }
+
+      await apiKey.save();
 
       res.json({
         success: true,
-        data: apiKeys
+        data: {
+          apiKey: apiKey.apiKey,
+          isActive: apiKey.isActive,
+          webhookUrl: apiKey.webhookUrl,
+          rateLimit: apiKey.rateLimit,
+          updatedAt: apiKey.updatedAt
+        },
+        message: 'API key settings updated successfully'
       });
     } catch (error) {
-      logger.error('Error getting API keys:', error);
+      logger.error('Error updating API key:', error);
       res.status(500).json({
         success: false,
         error: 'Internal server error',
-        message: 'Failed to get API keys'
+        message: 'Failed to update API key'
       });
     }
   }
 
   /**
-   * Deactivate an API key
+   * Regenerate API key and secret key
    */
-  static async deactivateApiKey(req: Request, res: Response) {
+  static async regenerateApiKey(req: Request, res: Response) {
     try {
       const userId = req.user?._id;
       if (!userId) {
@@ -704,32 +731,63 @@ export class SandboxController {
         });
       }
 
-      const { apiKey } = req.params;
-
-      const deactivatedKey = await SandboxApiKey.findOneAndUpdate(
-        { apiKey, userId: userId.toString() },
-        { isActive: false },
-        { new: true }
-      );
-
-      if (!deactivatedKey) {
-        return res.status(404).json({
-          success: false,
-          error: 'Not found',
-          message: 'API key not found'
-        });
-      }
+      const apiKey = await SandboxApiKey.getOrCreateUserKey(userId.toString());
+      const newKeys = apiKey.regenerateKeys();
+      await apiKey.save();
 
       res.json({
         success: true,
-        message: 'API key deactivated successfully'
+        data: {
+          apiKey: newKeys.apiKey,
+          secretKey: newKeys.secretKey,
+          isActive: apiKey.isActive,
+          regeneratedAt: apiKey.updatedAt
+        },
+        message: 'API keys regenerated successfully'
       });
     } catch (error) {
-      logger.error('Error deactivating API key:', error);
+      logger.error('Error regenerating API key:', error);
       res.status(500).json({
         success: false,
         error: 'Internal server error',
-        message: 'Failed to deactivate API key'
+        message: 'Failed to regenerate API key'
+      });
+    }
+  }
+
+  /**
+   * Toggle API key active status
+   */
+  static async toggleApiKeyStatus(req: Request, res: Response) {
+    try {
+      const userId = req.user?._id;
+      if (!userId) {
+        return res.status(401).json({
+          success: false,
+          error: 'Unauthorized',
+          message: 'User not authenticated'
+        });
+      }
+
+      const apiKey = await SandboxApiKey.getOrCreateUserKey(userId.toString());
+      apiKey.isActive = !apiKey.isActive;
+      await apiKey.save();
+
+      res.json({
+        success: true,
+        data: {
+          apiKey: apiKey.apiKey,
+          isActive: apiKey.isActive,
+          updatedAt: apiKey.updatedAt
+        },
+        message: `API key ${apiKey.isActive ? 'activated' : 'deactivated'} successfully`
+      });
+    } catch (error) {
+      logger.error('Error toggling API key status:', error);
+      res.status(500).json({
+        success: false,
+        error: 'Internal server error',
+        message: 'Failed to toggle API key status'
       });
     }
   }
@@ -817,6 +875,8 @@ export class SandboxController {
         description: description || 'Sandbox payment',
         customerEmail,
         customerName: (customerName && customerName.trim()) || (customerEmail ? customerEmail.split('@')[0] : undefined),
+        productImage: null, // Will be populated if this is a subscription session
+        productName: null,  // Will be populated if this is a subscription session
         successUrl: successUrl || success_url,
         cancelUrl: cancelUrl || cancel_url,
         metadata: metadata || { source: 'sandbox-checkout' }
@@ -1926,13 +1986,32 @@ export class SandboxController {
   }
 
   /**
-   * Update a sandbox customer (name only for now)
+   * Update a sandbox customer (name, email, phone, address, description)
    */
   static async updateCustomer(req: Request, res: Response) {
     try {
       const userId = req.user?._id;
       const { customerId } = req.params;
-      const { name } = req.body as { name?: string };
+      const { 
+        name, 
+        email, 
+        phone, 
+        address,
+        description 
+      } = req.body as { 
+        name?: string;
+        email?: string;
+        phone?: string;
+        address?: {
+          line1?: string;
+          line2?: string;
+          city?: string;
+          state?: string;
+          postalCode?: string;
+          country?: string;
+        };
+        description?: string;
+      };
 
       if (!userId) {
         return res.status(401).json({ success: false, error: 'Unauthorized', message: 'User not authenticated' });
@@ -1941,9 +2020,39 @@ export class SandboxController {
         return res.status(400).json({ success: false, message: 'Customer id is required' });
       }
 
+      // Build update object with only provided fields
+      const updateData: any = {};
+      
+      if (name !== undefined && name.trim()) updateData.name = name.trim();
+      if (email !== undefined && email.trim()) {
+        // Validate email format
+        const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+        if (!emailRegex.test(email)) {
+          return res.status(400).json({ 
+            success: false, 
+            message: 'Invalid email format' 
+          });
+        }
+        updateData.email = email.toLowerCase().trim();
+      }
+      if (phone !== undefined) updateData.phone = phone.trim() || null;
+      if (description !== undefined) updateData.description = description.trim() || null;
+      
+      // Handle address update
+      if (address !== undefined) {
+        updateData.address = {
+          line1: address.line1?.trim() || null,
+          line2: address.line2?.trim() || null,
+          city: address.city?.trim() || null,
+          state: address.state?.trim() || null,
+          postalCode: address.postalCode?.trim() || null,
+          country: address.country?.trim() || 'NG' // Default to Nigeria if not provided
+        };
+      }
+
       const customer = await SandboxCustomer.findOneAndUpdate(
         { _id: customerId, userId: userId.toString() },
-        { $set: { ...(name ? { name } : {}) } },
+        { $set: updateData },
         { new: true }
       ).lean();
 
@@ -2026,12 +2135,49 @@ export class SandboxController {
       if (!userId) return res.status(401).json({ success: false, message: 'Unauthorized' });
       const { name, description, image } = req.body as any;
       if (!name) return res.status(400).json({ success: false, message: 'Name required' });
+      
+      let imageUrl = undefined;
+      
+      // Handle image upload to Cloudinary if provided
+      if (image) {
+        
+        // Generate a temporary product ID for the folder structure
+        const tempProductId = `temp_${Date.now()}_${Math.random().toString(36).substr(2, 9)}`;
+        
+        const uploadResult = await CloudinaryService.uploadProductImage(image, tempProductId);
+        
+        if (uploadResult.success && uploadResult.url) {
+          imageUrl = uploadResult.url;
+        } else {
+          console.warn('Failed to upload image to Cloudinary:', uploadResult.error);
+          // Continue without image rather than failing the entire request
+        }
+      }
+      
       const product = await SandboxProduct.create({ 
         userId: userId.toString(), 
         name, 
         description,
-        image: image || undefined
+        image: imageUrl
       });
+      
+      // If we used a temporary ID, update the folder structure with the real product ID
+      if (imageUrl && product.productId) {
+        try {
+          const tempPublicId = CloudinaryService.extractPublicId(imageUrl);
+          if (tempPublicId) {
+            // Extract the temp product ID from the public ID
+            const tempProductId = tempPublicId.split('/').pop()?.split('_')[1];
+            if (tempProductId) {
+              // Note: Cloudinary doesn't support moving files, so we'll keep the temp structure
+              // In production, you might want to re-upload with the correct folder structure
+            }
+          }
+        } catch (error) {
+          console.warn('Failed to update Cloudinary folder structure:', error);
+        }
+      }
+      
       return res.json({ success: true, data: product });
     } catch (error) {
       logger.error('Error creating product:', error);
@@ -2057,18 +2203,61 @@ export class SandboxController {
       const { productId } = req.params as any;
       const { name, description, image, active } = req.body as any;
       if (!userId) return res.status(401).json({ success: false, message: 'Unauthorized' });
+      
+      // Get current product to handle image deletion
+      const currentProduct = await SandboxProduct.findOne({ _id: productId, userId: userId.toString() }).lean();
+      if (!currentProduct) return res.status(404).json({ success: false, message: 'Product not found' });
+      
       const updateData: any = {};
       if (name !== undefined) updateData.name = name;
       if (description !== undefined) updateData.description = description;
-      if (image !== undefined) updateData.image = image;
       if (active !== undefined) updateData.active = active;
+      
+      // Handle image update
+      if (image !== undefined) {
+        if (image === null || image === '') {
+          // Delete existing image from Cloudinary if it exists
+          if (currentProduct.image) {
+            try {
+              const publicId = CloudinaryService.extractPublicId(currentProduct.image);
+              if (publicId) {
+                await CloudinaryService.deleteImage(publicId);
+              }
+            } catch (error) {
+              console.warn('Failed to delete old image from Cloudinary:', error);
+            }
+          }
+          updateData.image = null;
+        } else if (image && image !== currentProduct.image) {
+          // Upload new image to Cloudinary
+          try {
+            const uploadResult = await CloudinaryService.uploadProductImage(image, currentProduct.productId);
+            
+            if (uploadResult.success && uploadResult.url) {
+              // Delete old image if it exists
+              if (currentProduct.image) {
+                const oldPublicId = CloudinaryService.extractPublicId(currentProduct.image);
+                if (oldPublicId) {
+                  await CloudinaryService.deleteImage(oldPublicId);
+                }
+              }
+              updateData.image = uploadResult.url;
+            } else {
+              console.warn('Failed to upload new image to Cloudinary:', uploadResult.error);
+              // Keep the old image if upload fails
+            }
+          } catch (error) {
+            console.warn('Failed to upload image to Cloudinary:', error);
+          }
+        }
+      }
       
       const product = await SandboxProduct.findOneAndUpdate(
         { _id: productId, userId: userId.toString() },
         { $set: updateData },
         { new: true }
       ).lean();
-      if (!product) return res.status(404).json({ success: false, message: 'Product not found' });
+      
       return res.json({ success: true, data: product });
     } catch (error) {
       logger.error('Error updating product:', error);
@@ -2093,6 +2282,18 @@ export class SandboxController {
           success: false,
           message: 'Cannot delete product with active plans. Please archive or delete all plans first.' 
         });
+      }
+
+      // Delete image from Cloudinary if it exists
+      if (product.image) {
+        try {
+          const publicId = CloudinaryService.extractPublicId(product.image);
+          if (publicId) {
+            await CloudinaryService.deleteImage(publicId);
+          }
+        } catch (error) {
+          console.warn('Failed to delete image from Cloudinary:', error);
+        }
       }
 
       // Delete the product
@@ -2231,6 +2432,9 @@ export class SandboxController {
 
       let session: any = null;
       if (chargeNow) {
+        // Fetch product details to include image in checkout session
+        const product = await SandboxProduct.findOne({ productId: plan.productId, userId: userId.toString() }).lean();
+        
         session = await SandboxSession.create({
           userId: userId.toString(),
           apiKeyId: 'default',
@@ -2238,6 +2442,8 @@ export class SandboxController {
           currency: plan.currency,
           description: `Subscription first payment (${plan.interval})`,
           customerEmail,
+          productImage: product?.image || null,
+          productName: product?.name || null,
           metadata: { subscriptionId: subscription.subscriptionId, productId: plan.productId, planId: plan._id },
           paymentConfig: { allowedPaymentMethods: ['card'], requireCustomerEmail: false, requireCustomerName: false, autoCapture: true },
           status: 'pending',
@@ -3421,32 +3627,41 @@ export class SandboxController {
     try {
       const { id: sessionId } = req.params;
       
-      // Use server-side sandbox secret for internal requests
-      const sandboxSecret = process.env.SANDBOX_SECRET;
-      if (!sandboxSecret) {
-        return res.status(500).json({ 
-          success: false, 
-          message: 'Sandbox secret not configured' 
+      // Find session directly (public endpoint for checkout)
+      const session = await SandboxSession.findOne({ sessionId }).lean();
+      if (!session) {
+        return res.status(404).json({
+          success: false,
+          message: 'Session not found or expired'
         });
       }
 
-      // Fetch session using server-side authentication
-      const response = await fetch(`${process.env.TL_BASE}/api/v1/sandbox/sessions/${sessionId}`, {
-        method: 'GET',
-        headers: {
-          'x-sandbox-secret': sandboxSecret,
-          'Content-Type': 'application/json'
-        }
-      });
-
-      const data = await response.json();
-      
-      if (!response.ok) {
-        return res.status(response.status).json(data);
+      // Check if session is expired
+      if (session.status === 'expired' || new Date() > new Date(session.expiresAt)) {
+        return res.status(410).json({
+          success: false,
+          message: 'Session has expired'
+        });
       }
 
-      // Return session data to frontend
-      res.json(data);
+      // Return complete session data for checkout
+      res.json({
+        success: true,
+        data: {
+          sessionId: session.sessionId,
+          checkoutUrl: `${process.env.TL_BASE}/checkout/${session.sessionId}`,
+          amount: session.amount / 100, // Convert to major units
+          currency: session.currency,
+          description: session.description,
+          customerEmail: session.customerEmail,
+          status: session.status,
+          expiresAt: session.expiresAt,
+          productImage: session.productImage || null,
+          productName: session.productName || null,
+          successUrl: session.successUrl,
+          cancelUrl: session.cancelUrl
+        }
+      });
     } catch (error) {
       console.error('Error fetching session for checkout:', error);
       res.status(500).json({ 

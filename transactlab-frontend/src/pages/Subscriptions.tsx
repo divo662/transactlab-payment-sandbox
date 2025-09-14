@@ -70,7 +70,11 @@ const Subscriptions: React.FC = () => {
       if (!selectedCustomer && !form.customerEmail) throw new Error('Select a customer or enter email');
       
       const customerEmail = selectedCustomer || form.customerEmail;
-      const payload = { customerEmail, planId: selectedPlan, chargeNow: form.chargeNow };
+      // Find the actual planId from the selected plan's _id
+      const plan = plans.find(p => p._id === selectedPlan);
+      if (!plan) throw new Error('Selected plan not found');
+      
+      const payload = { customerEmail, planId: plan.planId, chargeNow: form.chargeNow };
       const res = await apiCall('/subscriptions', { method: 'POST', body: JSON.stringify(payload) });
       toast({ title: 'Subscription created', description: form.chargeNow ? 'Redirecting to checkout...' : 'Trial started' });
       if (res?.data?.sessionId) window.location.href = `/checkout/${res.data.sessionId}`;

@@ -245,6 +245,47 @@ class ApiService {
     });
   }
 
+  // Security methods
+  async getSecuritySettings(): Promise<any> {
+    return this.request('/auth/security/settings');
+  }
+
+  async updateSecuritySettings(data: any): Promise<any> {
+    return this.request('/auth/security/settings', {
+      method: 'PUT',
+      body: JSON.stringify(data)
+    });
+  }
+
+  async getTrustedDevices(): Promise<any> {
+    return this.request('/auth/security/devices');
+  }
+
+  async removeTrustedDevice(deviceId: string): Promise<any> {
+    return this.request(`/auth/security/devices/${deviceId}`, {
+      method: 'DELETE'
+    });
+  }
+
+  async setupTotp(): Promise<any> {
+    return this.request('/auth/security/totp/setup', {
+      method: 'POST'
+    });
+  }
+
+  async verifyTotp(data: any): Promise<any> {
+    return this.request('/auth/security/totp/verify', {
+      method: 'POST',
+      body: JSON.stringify(data)
+    });
+  }
+
+  async disableTotp(): Promise<any> {
+    return this.request('/auth/security/totp', {
+      method: 'DELETE'
+    });
+  }
+
   // Health check
   async healthCheck(): Promise<any> {
     return this.request('/health');
@@ -524,6 +565,63 @@ class ApiService {
 
   async exportAnalytics(type: string, format: string = 'json', timeRange: string = '30d') {
     return this.request(`/analytics/export?type=${type}&format=${format}&timeRange=${timeRange}`);
+  }
+
+  // Sandbox API methods (used by Dashboard)
+  async getSandboxStats(params: { product: string; days: number; freq: string; offset?: number }) {
+    let url = `/sandbox/stats?days=${params.days}&freq=${params.freq}&product=${params.product}`;
+    if (params.offset) {
+      url += `&offset=${params.offset}`;
+    }
+    return this.request(url);
+  }
+
+  async getSandboxWebhooks() {
+    return this.request('/sandbox/webhooks');
+  }
+
+  async getSandboxCustomers() {
+    return this.request('/sandbox/customers');
+  }
+
+  async getSandboxTransactions() {
+    return this.request('/sandbox/transactions');
+  }
+
+  async getSandboxRefunds() {
+    return this.request('/sandbox/refunds');
+  }
+
+  // API Key management (single permanent key)
+  async getSandboxApiKey() {
+    return this.request('/sandbox/api-key');
+  }
+
+  async updateSandboxApiKey(data: {
+    webhookUrl?: string;
+    webhookSecret?: string;
+    rateLimit?: {
+      requestsPerMinute?: number;
+      requestsPerHour?: number;
+      requestsPerDay?: number;
+    };
+  }) {
+    return this.request('/sandbox/api-key', {
+      method: 'PUT',
+      body: JSON.stringify(data)
+    });
+  }
+
+  async regenerateSandboxApiKey() {
+    return this.request('/sandbox/api-key/regenerate', {
+      method: 'POST'
+    });
+  }
+
+  async toggleSandboxApiKeyStatus() {
+    return this.request('/sandbox/api-key/toggle', {
+      method: 'POST'
+    });
   }
 }
 

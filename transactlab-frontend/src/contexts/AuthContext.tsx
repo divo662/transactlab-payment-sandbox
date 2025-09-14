@@ -8,7 +8,7 @@ interface AuthContextType {
   tokens: AuthTokens | null;
   isLoading: boolean;
   isAuthenticated: boolean;
-  login: (email: string, password: string, securityAnswer: string, rememberMe?: boolean) => Promise<void>;
+  login: (email: string, password: string, securityAnswer: string, rememberMe?: boolean, totpCode?: string) => Promise<{ requiresTotp?: boolean }>;
   register: (userData: any) => Promise<void>;
   logout: () => Promise<void>;
   refreshAuth: () => Promise<void>;
@@ -129,10 +129,15 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
     return () => clearInterval(interval);
   }, [tokens]);
 
-  const login = async (email: string, password: string, securityAnswer: string, rememberMe = false) => {
+  const login = async (email: string, password: string, securityAnswer: string, rememberMe = false, totpCode?: string) => {
     try {
       setIsLoading(true);
-      const response = await apiService.login({ email, password, securityAnswer, rememberMe });
+      const response = await apiService.login({ email, password, securityAnswer, rememberMe, totpCode });
+      
+      // Check if TOTP is required
+      if (!response.success && response.data?.requiresTotp) {
+        return { requiresTotp: true };
+      }
       
       if (response.success && response.data) {
         const { user: userData, tokens: authTokens, requireKyc } = response.data;
@@ -156,12 +161,14 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
             const hostedUrl = kycRes?.data?.hostedUrl;
             if (hostedUrl) {
               window.location.href = hostedUrl;
-              return; // stop normal flow
+              return { requiresTotp: false }; // stop normal flow
             }
           }
         } catch (e) {
           console.warn('KYC start failed (continuing to app):', e);
         }
+        
+        return { requiresTotp: false };
       } else {
         throw new Error(response.message || 'Login failed');
       }

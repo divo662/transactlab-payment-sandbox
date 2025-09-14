@@ -37,7 +37,7 @@ import adminRoutes from './routes/admin/adminRoutes';
 import systemRoutes from './routes/admin/systemRoutes';
 import checkoutTemplateRoutes from './routes/checkout/checkoutTemplateRoutes';
 import feedbackRoutes from './routes/feedback/feedbackRoutes';
-import analyticsRoutes from './routes/analytics/analyticsRoutes';
+import analyticsRoutes from './routes/api/v1/analyticsRoutes';
 
 /**
  * Express Application Setup
@@ -183,7 +183,6 @@ app.use('/api/v1', internalRoutes);
 
 // Feedback routes
 app.use('/api/v1/feedback', feedbackRoutes);
-app.use('/api/v1/analytics', analyticsRoutes);
 
 // Public checkout route (workspace-bound, no auth required for customers)
 app.get('/checkout/:sessionId', async (req, res) => {
@@ -412,12 +411,18 @@ app.post('/api/v1/checkout/process/:sessionId', async (req, res) => {
       return res.status(500).json({ success: false, message: 'Sandbox secret not configured' });
     }
 
+    // Extract payment method and data from request body
+    const { paymentMethod, cardDetails, customerData } = req.body;
+    
     // Call provider process endpoint directly with secret
     const providerBase = `${req.protocol}://${req.get('host')}/api/v1/sandbox`;
     const resp = await fetch(`${providerBase}/sessions/${sessionId}/process-payment`, {
       method: 'POST',
       headers: { 'Content-Type': 'application/json', 'x-sandbox-secret': sandboxSecret },
-      body: JSON.stringify({})
+      body: JSON.stringify({
+        paymentMethod: paymentMethod || 'card',
+        cardDetails: cardDetails || {}
+      })
     });
     const text = await resp.text();
     let json: any = {};

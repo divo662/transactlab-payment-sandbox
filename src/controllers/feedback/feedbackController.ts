@@ -139,21 +139,38 @@ export const getPublicFeedback = async (req: Request, res: Response) => {
         .sort(sortOrder)
         .skip(skip)
         .limit(Number(limit))
-        .select('rating title message category createdAt helpful notHelpful totalVotes helpfulPercentage')
-        .populate('userId', 'firstName lastName'),
+        .select('rating title message category createdAt helpful notHelpful email priority tags status')
+        .lean(), // Use lean() to avoid population issues
       Feedback.countDocuments(query)
     ]);
 
+    // Transform the data to match frontend expectations
+    const transformedFeedback = feedback.map(item => ({
+      _id: item._id,
+      title: item.title,
+      message: item.message,
+      category: item.category,
+      priority: item.priority || 'medium',
+      rating: item.rating,
+      helpful: item.helpful || 0,
+      notHelpful: item.notHelpful || 0,
+      totalVotes: (item.helpful || 0) + (item.notHelpful || 0),
+      helpfulPercentage: ((item.helpful || 0) + (item.notHelpful || 0)) > 0 ? Math.round(((item.helpful || 0) / ((item.helpful || 0) + (item.notHelpful || 0))) * 100) : 0,
+      userEmail: item.email,
+      createdAt: item.createdAt,
+      updatedAt: item.updatedAt,
+      tags: item.tags || [],
+      status: item.status || 'pending'
+    }));
+
     res.json({
       success: true,
-      data: {
-        feedback,
-        pagination: {
-          current: Number(page),
-          pages: Math.ceil(total / Number(limit)),
-          total,
-          limit: Number(limit)
-        }
+      data: transformedFeedback,
+      pagination: {
+        current: Number(page),
+        pages: Math.ceil(total / Number(limit)),
+        total,
+        limit: Number(limit)
       }
     });
   } catch (error: any) {

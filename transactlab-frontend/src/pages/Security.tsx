@@ -1,5 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
+import apiService from '@/lib/api';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
@@ -91,32 +92,17 @@ const Security: React.FC = () => {
   const loadSecurityData = async () => {
     try {
       setLoading(true);
-      const token = localStorage.getItem('accessToken');
       
       // Load security settings
-      const settingsResponse = await fetch(`${process.env.REACT_APP_API_URL}/api/v1/auth/security/settings`, {
-        headers: {
-          'Authorization': `Bearer ${token}`,
-          'Content-Type': 'application/json'
-        }
-      });
-      
-      if (settingsResponse.ok) {
-        const settingsData = await settingsResponse.json();
+      const settingsData = await apiService.getSecuritySettings();
+      if (settingsData.success) {
         setSecuritySettings(settingsData.data.securitySettings);
         setTotpEnabled(settingsData.data.totpEnabled);
       }
 
       // Load trusted devices
-      const devicesResponse = await fetch(`${process.env.REACT_APP_API_URL}/api/v1/auth/security/devices`, {
-        headers: {
-          'Authorization': `Bearer ${token}`,
-          'Content-Type': 'application/json'
-        }
-      });
-      
-      if (devicesResponse.ok) {
-        const devicesData = await devicesResponse.json();
+      const devicesData = await apiService.getTrustedDevices();
+      if (devicesData.success) {
         setDevices(devicesData.data.devices);
       }
     } catch (error) {
@@ -131,24 +117,15 @@ const Security: React.FC = () => {
   const handleTotpSetup = async () => {
     try {
       setLoading(true);
-      const token = localStorage.getItem('accessToken');
       
-      const response = await fetch(`${process.env.REACT_APP_API_URL}/api/v1/auth/security/totp/setup`, {
-        method: 'POST',
-        headers: {
-          'Authorization': `Bearer ${token}`,
-          'Content-Type': 'application/json'
-        }
-      });
-
-      if (response.ok) {
-        const data = await response.json();
+      const data = await apiService.setupTotp();
+      
+      if (data.success) {
         setTotpSetup(data.data);
         setShowTotpSetup(true);
         toast.success('TOTP setup generated successfully');
       } else {
-        const error = await response.json();
-        toast.error(error.message || 'Failed to setup TOTP');
+        toast.error(data.message || 'Failed to setup TOTP');
       }
     } catch (error) {
       console.error('Error setting up TOTP:', error);
@@ -161,25 +138,16 @@ const Security: React.FC = () => {
   const handleTotpVerify = async () => {
     try {
       setLoading(true);
-      const token = localStorage.getItem('accessToken');
       
-      const response = await fetch(`${process.env.REACT_APP_API_URL}/api/v1/auth/security/totp/verify`, {
-        method: 'POST',
-        headers: {
-          'Authorization': `Bearer ${token}`,
-          'Content-Type': 'application/json'
-        },
-        body: JSON.stringify({ code: totpCode })
-      });
-
-      if (response.ok) {
+      const data = await apiService.verifyTotp({ code: totpCode });
+      
+      if (data.success) {
         setTotpEnabled(true);
         setShowTotpSetup(false);
         setTotpCode('');
         toast.success('Two-Factor Authentication enabled successfully');
       } else {
-        const error = await response.json();
-        toast.error(error.message || 'Invalid TOTP code');
+        toast.error(data.message || 'Invalid TOTP code');
       }
     } catch (error) {
       console.error('Error verifying TOTP:', error);
@@ -192,24 +160,15 @@ const Security: React.FC = () => {
   const handleDisableTotp = async () => {
     try {
       setLoading(true);
-      const token = localStorage.getItem('accessToken');
       
-      const response = await fetch(`${process.env.REACT_APP_API_URL}/api/v1/auth/security/totp`, {
-        method: 'DELETE',
-        headers: {
-          'Authorization': `Bearer ${token}`,
-          'Content-Type': 'application/json'
-        },
-        body: JSON.stringify({ password })
-      });
-
-      if (response.ok) {
+      const data = await apiService.disableTotp();
+      
+      if (data.success) {
         setTotpEnabled(false);
         setPassword('');
         toast.success('Two-Factor Authentication disabled successfully');
       } else {
-        const error = await response.json();
-        toast.error(error.message || 'Failed to disable TOTP');
+        toast.error(data.message || 'Failed to disable TOTP');
       }
     } catch (error) {
       console.error('Error disabling TOTP:', error);
@@ -222,22 +181,14 @@ const Security: React.FC = () => {
   const handleRemoveDevice = async (deviceId: string) => {
     try {
       setLoading(true);
-      const token = localStorage.getItem('accessToken');
       
-      const response = await fetch(`${process.env.REACT_APP_API_URL}/api/v1/auth/security/devices/${deviceId}`, {
-        method: 'DELETE',
-        headers: {
-          'Authorization': `Bearer ${token}`,
-          'Content-Type': 'application/json'
-        }
-      });
-
-      if (response.ok) {
+      const data = await apiService.removeTrustedDevice(deviceId);
+      
+      if (data.success) {
         setDevices(devices.filter(device => device.deviceId !== deviceId));
         toast.success('Device removed successfully');
       } else {
-        const error = await response.json();
-        toast.error(error.message || 'Failed to remove device');
+        toast.error(data.message || 'Failed to remove device');
       }
     } catch (error) {
       console.error('Error removing device:', error);
@@ -250,23 +201,14 @@ const Security: React.FC = () => {
   const handleUpdateSettings = async (newSettings: Partial<SecuritySettings>) => {
     try {
       setLoading(true);
-      const token = localStorage.getItem('accessToken');
       
-      const response = await fetch(`${process.env.REACT_APP_API_URL}/api/v1/auth/security/settings`, {
-        method: 'PUT',
-        headers: {
-          'Authorization': `Bearer ${token}`,
-          'Content-Type': 'application/json'
-        },
-        body: JSON.stringify(newSettings)
-      });
-
-      if (response.ok) {
+      const data = await apiService.updateSecuritySettings(newSettings);
+      
+      if (data.success) {
         setSecuritySettings({ ...securitySettings, ...newSettings });
         toast.success('Security settings updated successfully');
       } else {
-        const error = await response.json();
-        toast.error(error.message || 'Failed to update settings');
+        toast.error(data.message || 'Failed to update settings');
       }
     } catch (error) {
       console.error('Error updating settings:', error);

@@ -12,12 +12,11 @@ interface SandboxContextType {
   // Core API method
   apiCall: (endpoint: string, options?: RequestInit) => Promise<any>;
   
-  // New sandbox features
-  createApiKey: (data: CreateApiKeyData) => Promise<any>;
-  getApiKeys: () => Promise<any>;
-  deactivateApiKey: (apiKey: string) => Promise<any>;
-  updateApiKey: (apiKey: string, data: Partial<UpdateApiKeyData>) => Promise<any>;
-  rotateApiKey: (apiKey: string) => Promise<any>;
+  // API Key management (single permanent key)
+  getApiKey: () => Promise<any>;
+  updateApiKey: (data: Partial<UpdateApiKeyData>) => Promise<any>;
+  regenerateApiKey: () => Promise<any>;
+  toggleApiKeyStatus: () => Promise<any>;
   createSession: (data: CreateSessionData) => Promise<any>;
   getSession: (sessionId: string) => Promise<any>;
   getRecentSessions: () => Promise<any>;
@@ -40,21 +39,14 @@ interface SandboxContextType {
   getSandboxStats: (params?: { days?: number; freq?: 'daily'|'weekly'|'monthly'; product?: 'all'|'subscriptions'|'one-time' }) => Promise<any>;
 }
 
-interface CreateApiKeyData {
-  name: string;
-  permissions: string[];
-  expiresAt?: Date;
-  webhookUrl?: string;
-}
-
 interface UpdateApiKeyData {
-  name: string;
-  permissions: string[];
-  expiresAt?: Date;
   webhookUrl?: string;
-  allowedIps?: string[] | string;
-  rateLimit?: number | { requestsPerHour?: number; requestsPerMinute?: number };
-  isActive?: boolean;
+  webhookSecret?: string;
+  rateLimit?: {
+    requestsPerMinute?: number;
+    requestsPerHour?: number;
+    requestsPerDay?: number;
+  };
 }
 
 interface CreateSessionData {
@@ -244,51 +236,20 @@ export const SandboxProvider: React.FC<SandboxProviderProps> = ({ children }) =>
     setIsSandboxMode(true);
   };
 
-  // New sandbox API methods
-  const createApiKey = async (data: CreateApiKeyData) => {
+  // API Key management (single permanent key)
+  const getApiKey = async () => {
+    try {
+      const result = await apiCall('/api-key');
+      return result;
+    } catch (error) {
+      throw error;
+    }
+  };
+
+  const updateApiKey = async (data: Partial<UpdateApiKeyData>) => {
     try {
       setLoading(true);
-      const result = await apiCall('/api-keys', {
-        method: 'POST',
-        body: JSON.stringify(data),
-      });
-      await refreshSandboxData(); // Refresh data after creation
-      return result;
-    } catch (error) {
-      throw error;
-    } finally {
-      setLoading(false);
-    }
-  };
-
-  const getApiKeys = async () => {
-    try {
-      const result = await apiCall('/api-keys');
-      return result;
-    } catch (error) {
-      throw error;
-    }
-  };
-
-  const deactivateApiKey = async (apiKey: string) => {
-    try {
-    setLoading(true);
-      const result = await apiCall(`/api-keys/${apiKey}`, {
-        method: 'DELETE',
-      });
-      await refreshSandboxData(); // Refresh data after deactivation
-      return result;
-    } catch (error) {
-      throw error;
-    } finally {
-      setLoading(false);
-    }
-  };
-
-  const updateApiKey = async (apiKey: string, data: Partial<UpdateApiKeyData>) => {
-    try {
-      setLoading(true);
-      const result = await apiCall(`/api-keys/${apiKey}`, {
+      const result = await apiCall('/api-key', {
         method: 'PUT',
         body: JSON.stringify(data),
       });
@@ -301,10 +262,25 @@ export const SandboxProvider: React.FC<SandboxProviderProps> = ({ children }) =>
     }
   };
 
-  const rotateApiKey = async (apiKey: string) => {
+  const regenerateApiKey = async () => {
     try {
       setLoading(true);
-      const result = await apiCall(`/api-keys/${apiKey}/rotate`, {
+      const result = await apiCall('/api-key/regenerate', {
+        method: 'POST',
+      });
+      await refreshSandboxData();
+      return result;
+    } catch (error) {
+      throw error;
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  const toggleApiKeyStatus = async () => {
+    try {
+      setLoading(true);
+      const result = await apiCall('/api-key/toggle', {
         method: 'POST',
       });
       await refreshSandboxData();
@@ -589,12 +565,11 @@ export const SandboxProvider: React.FC<SandboxProviderProps> = ({ children }) =>
     // Core API method
     apiCall,
     
-    // New methods
-    createApiKey,
-    getApiKeys,
-    deactivateApiKey,
+    // API Key management (single permanent key)
+    getApiKey,
     updateApiKey,
-    rotateApiKey,
+    regenerateApiKey,
+    toggleApiKeyStatus,
     createSession,
     getSession,
     getRecentSessions,

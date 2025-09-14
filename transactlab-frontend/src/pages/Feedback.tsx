@@ -106,11 +106,19 @@ const Feedback: React.FC = () => {
     try {
       setLoading(true);
       const response = await apiService.getPublicFeedback();
-      if (response.success) {
-        setFeedback(response.data || []);
+      if (response.success && response.data) {
+        // Handle both old format (data.feedback) and new format (data directly)
+        const feedbackData = Array.isArray(response.data) 
+          ? response.data 
+          : response.data.feedback || [];
+        setFeedback(feedbackData);
+      } else {
+        console.warn('Invalid response format:', response);
+        setFeedback([]);
       }
     } catch (error) {
       console.error('Error fetching feedback:', error);
+      setFeedback([]); // Ensure feedback is always an array
       toast({
         title: 'Error',
         description: 'Failed to load feedback. Please try again.',
@@ -246,7 +254,7 @@ const Feedback: React.FC = () => {
     );
   };
 
-  const filteredFeedback = feedback.filter(item => {
+  const filteredFeedback = (feedback || []).filter(item => {
     const matchesFilter = filter === 'all' || item.category === filter;
     const matchesSearch = searchTerm === '' || 
       item.title.toLowerCase().includes(searchTerm.toLowerCase()) ||
@@ -254,7 +262,7 @@ const Feedback: React.FC = () => {
     return matchesFilter && matchesSearch;
   });
 
-  const sortedFeedback = [...filteredFeedback].sort((a, b) => {
+  const sortedFeedback = [...(filteredFeedback || [])].sort((a, b) => {
     switch (sortBy) {
       case 'newest':
         return new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime();

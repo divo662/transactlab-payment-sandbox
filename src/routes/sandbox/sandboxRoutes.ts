@@ -13,10 +13,11 @@ router.use(sandboxFlexibleAuth, applyWorkspaceScope);
 router.get('/data', SandboxController.getSandboxData);
 router.get('/stats', SandboxController.getSandboxStats);
 
-// API Key management
-router.post('/api-keys', SandboxController.createApiKey);
-router.get('/api-keys', SandboxController.getApiKeys);
-router.delete('/api-keys/:apiKey', SandboxController.deactivateApiKey);
+// API Key management (Stripe-style single permanent key)
+router.get('/api-key', SandboxController.getApiKey);
+router.put('/api-key', SandboxController.updateApiKey);
+router.post('/api-key/regenerate', SandboxController.regenerateApiKey);
+router.post('/api-key/toggle', SandboxController.toggleApiKeyStatus);
 
 // Session management
 router.post('/sessions', SandboxController.createSession);

@@ -27,7 +27,12 @@ const GlassInputWrapper = ({ children, error }: { children: React.ReactNode, err
 const schema = z.object({
   email: z.string().email("Please enter a valid email address"),
   password: z.string().min(1, "Password is required"),
-  securityAnswer: z.string().min(1, "Security question answer is required"),
+  securityAnswer: z.string().min(1, "Security question answer is required").optional(),
+  totpCode: z.string().min(6, "Please enter a 6-digit code").max(6, "Please enter a 6-digit code").optional(),
+}).refine((data) => {
+  // If TOTP is required, totpCode is mandatory
+  // If TOTP is not required, securityAnswer is mandatory
+  return true; // We'll handle this in the component logic
 });
 
 type FormValues = z.infer<typeof schema>;
@@ -40,6 +45,8 @@ const Login = () => {
   const [searchParams] = useSearchParams();
   const [resendLoading, setResendLoading] = useState(false);
   const [emailForResend, setEmailForResend] = useState("");
+  const [requiresTotp, setRequiresTotp] = useState(false);
+  const [loginData, setLoginData] = useState<{ email: string; password: string; securityAnswer: string } | null>(null);
 
   const { 
     register, 
@@ -90,7 +97,49 @@ const Login = () => {
 
   const onSubmit = async (data: FormValues) => {
     try {
-      await login(data.email, data.password, data.securityAnswer);
+      // If TOTP is required, validate TOTP code
+      if (requiresTotp && loginData) {
+        if (!data.totpCode || data.totpCode.length !== 6) {
+          toast({
+            title: "Invalid Code",
+            description: "Please enter a valid 6-digit code from your authenticator app.",
+            variant: "destructive"
+          });
+          return;
+        }
+        
+        const result = await login(loginData.email, loginData.password, loginData.securityAnswer, false, data.totpCode);
+        if (result.requiresTotp) {
+          toast({
+            title: "Invalid TOTP Code",
+            description: "Please check your authenticator app and try again.",
+            variant: "destructive"
+          });
+          return;
+        }
+      } else {
+        // First login attempt - validate required fields
+        if (!data.securityAnswer) {
+          toast({
+            title: "Security Answer Required",
+            description: "Please enter your security question answer.",
+            variant: "destructive"
+          });
+          return;
+        }
+        
+        const result = await login(data.email, data.password, data.securityAnswer);
+        if (result.requiresTotp) {
+          setRequiresTotp(true);
+          setLoginData({ email: data.email, password: data.password, securityAnswer: data.securityAnswer });
+          toast({
+            title: "Two-Factor Authentication Required",
+            description: "Please enter the 6-digit code from your authenticator app.",
+            variant: "default"
+          });
+          return;
+        }
+      }
       
       // If KYC is required, AuthContext will redirect to provider immediately.
       // Otherwise, continue to dashboard.
@@ -153,11 +202,14 @@ const Login = () => {
               </div>
               <h1 className="animate-element animate-delay-100 text-xl sm:text-2xl md:text-3xl lg:text-4xl font-semibold leading-tight">
                 <span className="font-light text-foreground tracking-tighter bg-gradient-to-r from-foreground via-foreground to-violet-600 bg-clip-text text-transparent">
-                  Welcome
+                  {requiresTotp ? 'Two-Factor Authentication' : 'Welcome'}
                 </span>
               </h1>
               <p className="animate-element animate-delay-200 text-muted-foreground mt-2 text-sm sm:text-base md:text-lg max-w-md mx-auto leading-relaxed">
-                Access your account and continue your journey with us
+                {requiresTotp 
+                  ? 'Enter the verification code from your authenticator app to complete login'
+                  : 'Access your account and continue your journey with us'
+                }
               </p>
             </div>
 
@@ -270,43 +322,90 @@ const Login = () => {
               </div>
 
               {/* Security Question Answer Field */}
-              <div className="animate-element animate-delay-450 group">
-                <label className="text-xs sm:text-sm font-medium text-muted-foreground block mb-1 transition-colors group-focus-within:text-violet-600">
-                  Security Question Answer
-                </label>
-                <GlassInputWrapper error={!!errors.securityAnswer}>
-                  <input 
-                    {...register("securityAnswer")}
-                    type="text"
-                    placeholder="Answer your security question" 
-                    className="w-full bg-transparent text-sm p-2.5 sm:p-3 rounded-xl focus:outline-none transition-all duration-200 placeholder:text-muted-foreground/60" 
-                  />
-                </GlassInputWrapper>
-                {errors.securityAnswer && (
-                  <p className="text-xs text-red-500 mt-1 animate-fade-in">{errors.securityAnswer.message}</p>
-                )}
-                <p className="text-xs text-muted-foreground mt-1 leading-relaxed">
-                  Enter the answer to the security question you set during registration
-                </p>
-              </div>
+              {!requiresTotp && (
+                <div className="animate-element animate-delay-450 group">
+                  <label className="text-xs sm:text-sm font-medium text-muted-foreground block mb-1 transition-colors group-focus-within:text-violet-600">
+                    Security Question Answer
+                  </label>
+                  <GlassInputWrapper error={!!errors.securityAnswer}>
+                    <input 
+                      {...register("securityAnswer")}
+                      type="text"
+                      placeholder="Answer your security question" 
+                      className="w-full bg-transparent text-sm p-2.5 sm:p-3 rounded-xl focus:outline-none transition-all duration-200 placeholder:text-muted-foreground/60" 
+                    />
+                  </GlassInputWrapper>
+                  {errors.securityAnswer && (
+                    <p className="text-xs text-red-500 mt-1 animate-fade-in">{errors.securityAnswer.message}</p>
+                  )}
+                  <p className="text-xs text-muted-foreground mt-1 leading-relaxed">
+                    Enter the answer to the security question you set during registration
+                  </p>
+                </div>
+              )}
+
+              {/* TOTP Code Field */}
+              {requiresTotp && (
+                <div className="animate-element animate-delay-450 group">
+                  <div className="flex items-center justify-center mb-3">
+                    <div className="p-2 bg-violet-100 dark:bg-violet-900/30 rounded-lg">
+                      <svg className="w-6 h-6 text-violet-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 15v2m-6 4h12a2 2 0 002-2v-6a2 2 0 00-2-2H6a2 2 0 00-2 2v6a2 2 0 002 2zm10-10V7a4 4 0 00-8 0v4h8z" />
+                      </svg>
+                    </div>
+                  </div>
+                  <label className="text-xs sm:text-sm font-medium text-muted-foreground block mb-1 transition-colors group-focus-within:text-violet-600 text-center">
+                    Two-Factor Authentication Code
+                  </label>
+                  <GlassInputWrapper error={!!errors.totpCode}>
+                    <input 
+                      {...register("totpCode")}
+                      type="text"
+                      placeholder="000000" 
+                      maxLength={6}
+                      pattern="[0-9]*"
+                      inputMode="numeric"
+                      className="w-full bg-transparent text-sm p-2.5 sm:p-3 rounded-xl focus:outline-none transition-all duration-200 placeholder:text-muted-foreground/60 text-center text-2xl font-mono tracking-widest" 
+                    />
+                  </GlassInputWrapper>
+                  {errors.totpCode && (
+                    <p className="text-xs text-red-500 mt-1 animate-fade-in text-center">{errors.totpCode.message}</p>
+                  )}
+                  <p className="text-xs text-muted-foreground mt-1 leading-relaxed text-center">
+                    Open your authenticator app and enter the 6-digit code
+                  </p>
+                  <button
+                    type="button"
+                    onClick={() => {
+                      setRequiresTotp(false);
+                      setLoginData(null);
+                    }}
+                    className="text-xs text-violet-400 hover:text-violet-500 hover:underline mt-2 transition-all duration-200 block mx-auto"
+                  >
+                    ← Back to login
+                  </button>
+                </div>
+              )}
 
               {/* Forgot Password and Security Question Reset */}
-              <div className="animate-element animate-delay-500 flex flex-col sm:flex-row sm:items-center sm:justify-between gap-1 sm:gap-0 text-xs">
-                <div className="flex flex-col sm:flex-row gap-1 sm:gap-4">
-                  <Link 
-                    to="/auth/forgot" 
-                    className="hover:underline text-violet-400 transition-all duration-200 hover:text-violet-500 hover:scale-105 inline-block"
-                  >
-                    Forgot password?
-                  </Link>
-                  <Link 
-                    to="/auth/initiate-security-question-reset" 
-                    className="hover:underline text-violet-400 transition-all duration-200 hover:text-violet-500 hover:scale-105 inline-block"
-                  >
-                    Reset security question
-                  </Link>
+              {!requiresTotp && (
+                <div className="animate-element animate-delay-500 flex flex-col sm:flex-row sm:items-center sm:justify-between gap-1 sm:gap-0 text-xs">
+                  <div className="flex flex-col sm:flex-row gap-1 sm:gap-4">
+                    <Link 
+                      to="/auth/forgot" 
+                      className="hover:underline text-violet-400 transition-all duration-200 hover:text-violet-500 hover:scale-105 inline-block"
+                    >
+                      Forgot password?
+                    </Link>
+                    <Link 
+                      to="/auth/initiate-security-question-reset" 
+                      className="hover:underline text-violet-400 transition-all duration-200 hover:text-violet-500 hover:scale-105 inline-block"
+                    >
+                      Reset security question
+                    </Link>
+                  </div>
                 </div>
-              </div>
+              )}
 
               {/* Login Button */}
               <button 
@@ -317,10 +416,10 @@ const Login = () => {
                 {isLoading ? (
                   <div className="flex items-center justify-center space-x-2">
                     <div className="w-4 h-4 border-2 border-white border-t-transparent rounded-full animate-spin"></div>
-                    <span className="text-sm">Signing in...</span>
+                    <span className="text-sm">{requiresTotp ? 'Verifying...' : 'Signing in...'}</span>
                   </div>
                 ) : (
-                  <span className="text-sm">Sign In</span>
+                  <span className="text-sm">{requiresTotp ? 'Verify Code' : 'Sign In'}</span>
                 )}
               </button>
             </form>
