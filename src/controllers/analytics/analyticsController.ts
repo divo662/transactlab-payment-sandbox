@@ -515,3 +515,13 @@ const convertToCSV = (data: any[]) => {
   
   return csvContent;
 };
+
+// Export the controller functions
+export const AnalyticsController = {
+  getAnalyticsOverview,
+  getTransactionAnalytics,
+  getCustomerAnalytics,
+  exportAnalytics
+};
+
+export default AnalyticsController;

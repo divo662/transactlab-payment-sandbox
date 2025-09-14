@@ -1,6 +1,6 @@
 import { Router } from 'express';
 import { authenticateToken } from '../../middleware/auth/authMiddleware';
-import { adminOnly } from '../../middleware/auth/roleMiddleware';
+import { requireAdmin as adminOnly } from '../../middleware/auth/roleMiddleware';
 import {
   createFeedback,
   getUserFeedback,
