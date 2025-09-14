@@ -49,6 +49,23 @@ const Products: React.FC = () => {
     return imageUrl && imageUrl.includes('/uploads/');
   };
 
+  // Helper function to get full image URL for display
+  const getImageUrl = (imageUrl: string): string => {
+    if (!imageUrl) return '';
+    
+    // If it's already a full URL (Cloudinary), return as is
+    if (imageUrl.startsWith('http')) {
+      return imageUrl;
+    }
+    
+    // If it's a local upload path, prepend the backend URL
+    if (imageUrl.startsWith('/uploads/')) {
+      return `${import.meta.env.VITE_API_URL || 'https://transactlab-backend.onrender.com'}${imageUrl}`;
+    }
+    
+    return imageUrl;
+  };
+
   // Image upload helpers
   const validateImageFile = (file: File): boolean => {
     const maxSize = 5 * 1024 * 1024; // 5MB
@@ -575,7 +592,7 @@ const Products: React.FC = () => {
                     {p.image && (
                       <div className="relative">
                         <img 
-                          src={p.image} 
+                          src={getImageUrl(p.image)} 
                           alt={p.name} 
                           className="w-8 h-8 object-cover rounded border"
                         />
@@ -762,7 +779,7 @@ const Products: React.FC = () => {
                     <div className="flex items-start gap-4">
                       <div className="relative">
                         <img 
-                          src={editForm.image} 
+                          src={getImageUrl(editForm.image)} 
                           alt="Preview" 
                           className="w-20 h-20 object-cover rounded-lg border-2 border-gray-200 shadow-sm"
                         />

@@ -137,6 +137,13 @@ export class SecurityService {
    */
   static async sendNewDeviceAlert(user: any, deviceInfo: DeviceInfo, loginAttempt: LoginAttempt): Promise<void> {
     try {
+      logger.info('sendNewDeviceAlert called', {
+        userId: user._id,
+        email: user.email,
+        notifyOnNewDevice: user.securitySettings?.notifyOnNewDevice,
+        hasSecuritySettings: !!user.securitySettings
+      });
+
       if (!user.securitySettings?.notifyOnNewDevice) {
         logger.info('New device notifications disabled for user', { userId: user._id });
         return;
@@ -217,10 +224,12 @@ export class SecurityService {
         `
       });
 
-      logger.info('New device alert email sent', { 
+      logger.info('New device alert email sent successfully', { 
         userId: user._id, 
         email: user.email, 
-        deviceId: deviceInfo.deviceId 
+        deviceId: deviceInfo.deviceId,
+        deviceName: deviceInfo.deviceName,
+        location: location
       });
     } catch (error) {
       logger.error('Error sending new device alert email:', error);

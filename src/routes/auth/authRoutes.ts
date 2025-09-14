@@ -99,6 +99,13 @@ router.post('/reset-security-question-password', rateLimiters.auth, AuthControll
  */
 router.post('/unlock-account', rateLimiters.auth, AuthController.unlockAccount);
 
+/**
+ * @route   DELETE /api/v1/auth/account
+ * @desc    Delete user account permanently
+ * @access  Private
+ */
+router.delete('/account', authenticateToken, AuthController.deleteAccount);
+
 // KYC
 router.post('/kyc/start', authenticateToken, KycController.startKyc);
 router.get('/kyc/status/:sessionId', authenticateToken, KycController.getKycStatus);

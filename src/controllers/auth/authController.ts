@@ -253,8 +253,19 @@ export class AuthController {
       }
 
       // Check if this is a new device and send alert if configured
-      if (!isDeviceTrusted && (user as any).securitySettings?.notifyOnNewDevice) {
+      const shouldNotify = !isDeviceTrusted && (
+        (user as any).securitySettings?.notifyOnNewDevice !== false // Default to true if not set
+      );
+      
+      if (shouldNotify) {
         try {
+          logger.info('Sending new device alert', {
+            userId: user._id.toString(),
+            email: user.email,
+            deviceId: deviceInfo.deviceId,
+            notifyOnNewDevice: (user as any).securitySettings?.notifyOnNewDevice
+          });
+          
           await SecurityService.sendNewDeviceAlert(user, deviceInfo, {
             userId: user._id.toString(),
             email: user.email,
@@ -262,10 +273,21 @@ export class AuthController {
             success: true,
             timestamp: new Date()
           });
+          
+          logger.info('New device alert sent successfully', {
+            userId: user._id.toString(),
+            email: user.email
+          });
         } catch (error) {
           logger.error('Error sending new device alert:', error);
           // Don't fail login if email sending fails
         }
+      } else {
+        logger.info('Skipping new device alert', {
+          userId: user._id.toString(),
+          isDeviceTrusted,
+          notifyOnNewDevice: (user as any).securitySettings?.notifyOnNewDevice
+        });
       }
 
       // Add device to trusted devices
@@ -922,6 +944,102 @@ export class AuthController {
         success: false,
         error: 'Failed to unlock account',
         message: 'An error occurred while unlocking the account'
+      });
+    }
+  }
+
+  /**
+   * Delete user account permanently
+   * DELETE /api/v1/auth/account
+   */
+  static async deleteAccount(req: Request, res: Response): Promise<void> {
+    try {
+      const userId = req.user?._id?.toString();
+      const { password, confirmation } = req.body;
+
+      if (!userId) {
+        res.status(401).json({
+          success: false,
+          error: 'Unauthorized',
+          message: 'User not authenticated'
+        });
+        return;
+      }
+
+      if (!password) {
+        res.status(400).json({
+          success: false,
+          error: 'Password required',
+          message: 'Password is required to delete account'
+        });
+        return;
+      }
+
+      if (confirmation !== 'DELETE') {
+        res.status(400).json({
+          success: false,
+          error: 'Invalid confirmation',
+          message: 'Please type DELETE to confirm account deletion'
+        });
+        return;
+      }
+
+      // Find user and verify password
+      const user = await User.findById(userId).select('+password');
+      if (!user) {
+        res.status(404).json({
+          success: false,
+          error: 'User not found',
+          message: 'User not found'
+        });
+        return;
+      }
+
+      // Verify password
+      const isPasswordValid = await user.comparePassword(password);
+      if (!isPasswordValid) {
+        res.status(401).json({
+          success: false,
+          error: 'Invalid password',
+          message: 'Password is incorrect'
+        });
+        return;
+      }
+
+      // Clean up user data before deletion
+      try {
+        // Remove refresh token from Redis
+        await redisClient.del(`refresh_token:${userId}`);
+        
+        // TODO: Add cleanup for other user-related data
+        // - Delete sandbox data (transactions, products, etc.)
+        // - Delete uploaded files
+        // - Delete webhooks
+        // - Delete API keys
+        // - Delete team memberships
+        // - Delete audit logs
+        
+        logger.info(`Cleaning up data for user: ${user.email}`);
+      } catch (cleanupError) {
+        logger.error('Error during account cleanup:', cleanupError);
+        // Continue with deletion even if cleanup fails
+      }
+
+      // Delete the user account
+      await User.findByIdAndDelete(userId);
+      
+      logger.info(`Account deleted permanently: ${user.email}`);
+
+      res.status(200).json({
+        success: true,
+        message: 'Account deleted successfully'
+      });
+    } catch (error) {
+      logger.error('Delete account error:', error);
+      res.status(500).json({
+        success: false,
+        error: 'Failed to delete account',
+        message: 'An error occurred while deleting the account'
       });
     }
   }

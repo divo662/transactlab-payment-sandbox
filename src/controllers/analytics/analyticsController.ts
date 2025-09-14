@@ -7,6 +7,7 @@ import SandboxPlan from '../../models/SandboxPlan';
 import ApiKey from '../../models/ApiKey';
 import Webhook from '../../models/Webhook';
 import User from '../../models/User';
+import { CacheService } from '../../services/cache/cacheService';
 
 // Helper function to get date range based on timeRange parameter
 const getDateRange = (timeRange: string) => {
@@ -109,6 +110,21 @@ export const getAnalyticsOverview = async (req: Request, res: Response) => {
         message: 'User not authenticated'
       });
     }
+    
+    const userIdStr = userId.toString();
+    const cacheKey = `analytics:overview:${userIdStr}:${timeRange}`;
+    
+    // Try to get from cache first
+    const cachedAnalytics = await CacheService.getAnalytics(cacheKey);
+    if (cachedAnalytics) {
+      console.log(`Cache HIT: Analytics overview for user ${userIdStr}`);
+      return res.json({
+        success: true,
+        data: cachedAnalytics
+      });
+    }
+    
+    console.log(`Cache MISS: Analytics overview for user ${userIdStr}`);
     
     const { start, end } = getDateRange(timeRange as string);
     
@@ -239,6 +255,9 @@ export const getAnalyticsOverview = async (req: Request, res: Response) => {
       },
       revenue
     };
+    
+    // Cache the results for 5 minutes
+    await CacheService.setAnalytics(cacheKey, analyticsData, 300);
     
     res.json({
       success: true,

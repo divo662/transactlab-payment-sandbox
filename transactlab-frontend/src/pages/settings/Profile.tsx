@@ -807,6 +807,7 @@ const Profile = () => {
             <TabsTrigger value="team" className="text-xs sm:text-sm px-2 sm:px-3 py-2 whitespace-nowrap">Team</TabsTrigger>
             <TabsTrigger value="workspaces" className="text-xs sm:text-sm px-2 sm:px-3 py-2 whitespace-nowrap">Workspaces</TabsTrigger>
             <TabsTrigger value="fraud" className="text-xs sm:text-sm px-2 sm:px-3 py-2 whitespace-nowrap">Fraud</TabsTrigger>
+            <TabsTrigger value="danger" className="text-xs sm:text-sm px-2 sm:px-3 py-2 whitespace-nowrap">Danger Zone</TabsTrigger>
         </TabsList>
         </div>
 
@@ -1066,7 +1067,20 @@ const Profile = () => {
           </Card>
         </TabsContent>
 
-        
+        {/* Danger Zone */}
+        <TabsContent value="danger">
+          <Card>
+            <CardHeader>
+              <CardTitle className="text-lg sm:text-xl text-red-600">Danger Zone</CardTitle>
+              <p className="text-xs sm:text-sm text-muted-foreground">
+                These actions are irreversible. Please proceed with caution.
+              </p>
+            </CardHeader>
+            <CardContent>
+              <DangerZoneSection />
+            </CardContent>
+          </Card>
+        </TabsContent>
 
       </Tabs>
     </div>
@@ -1074,6 +1088,143 @@ const Profile = () => {
 };
 
 export default Profile;
+
+// --- Danger Zone Section ---
+const DangerZoneSection: React.FC = () => {
+  const { deleteAccount } = useAuth();
+  const { toast } = useToast();
+  const [showDeleteDialog, setShowDeleteDialog] = React.useState(false);
+  const [password, setPassword] = useState('');
+  const [confirmation, setConfirmation] = useState('');
+  const [isDeleting, setIsDeleting] = React.useState(false);
+
+  const handleDeleteAccount = async () => {
+    if (!password.trim()) {
+      toast({
+        title: "Password Required",
+        description: "Please enter your password to confirm account deletion.",
+        variant: "destructive"
+      });
+      return;
+    }
+
+    if (confirmation !== 'DELETE') {
+      toast({
+        title: "Confirmation Required",
+        description: "Please type DELETE to confirm account deletion.",
+        variant: "destructive"
+      });
+      return;
+    }
+
+    try {
+      setIsDeleting(true);
+      await deleteAccount(password);
+    } catch (error: any) {
+      toast({
+        title: "Failed to Delete Account",
+        description: error?.message || "An error occurred while deleting your account.",
+        variant: "destructive"
+      });
+    } finally {
+      setIsDeleting(false);
+    }
+  };
+
+  return (
+    <div className="space-y-6">
+      {/* Delete Account */}
+      <div className="border border-red-200 rounded-lg p-4 bg-red-50">
+        <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
+          <div className="space-y-1">
+            <h3 className="font-semibold text-red-900 text-sm sm:text-base">Delete Account</h3>
+            <p className="text-xs sm:text-sm text-red-700">
+              Permanently delete your account and all associated data. This action cannot be undone.
+            </p>
+          </div>
+          <Button
+            variant="destructive"
+            size="sm"
+            onClick={() => setShowDeleteDialog(true)}
+            className="w-full sm:w-auto"
+          >
+            Delete Account
+          </Button>
+        </div>
+      </div>
+
+      {/* Delete Account Dialog */}
+      <Dialog open={showDeleteDialog} onOpenChange={setShowDeleteDialog}>
+        <DialogContent className="mx-4 sm:mx-0 max-w-md">
+          <DialogHeader>
+            <DialogTitle className="text-lg sm:text-xl text-red-600">Delete Account</DialogTitle>
+            <DialogDescription className="text-sm">
+              This action cannot be undone. This will permanently delete your account and remove all data from our servers.
+            </DialogDescription>
+          </DialogHeader>
+          
+          <div className="space-y-4">
+            <div className="space-y-2">
+              <Label htmlFor="delete-password" className="text-sm font-medium">
+                Password
+              </Label>
+              <Input
+                id="delete-password"
+                type="password"
+                value={password}
+                onChange={(e) => setPassword(e.target.value)}
+                placeholder="Enter your password"
+                className="text-sm"
+              />
+            </div>
+            
+            <div className="space-y-2">
+              <Label htmlFor="delete-confirmation" className="text-sm font-medium">
+                Type DELETE to confirm
+              </Label>
+              <Input
+                id="delete-confirmation"
+                value={confirmation}
+                onChange={(e) => setConfirmation(e.target.value)}
+                placeholder="Type DELETE"
+                className="text-sm"
+              />
+            </div>
+          </div>
+
+          <DialogFooter className="flex-col sm:flex-row gap-2">
+            <Button
+              variant="outline"
+              onClick={() => {
+                setShowDeleteDialog(false);
+                setPassword('');
+                setConfirmation('');
+              }}
+              className="w-full sm:w-auto"
+            >
+              Cancel
+            </Button>
+            <Button
+              variant="destructive"
+              onClick={handleDeleteAccount}
+              disabled={isDeleting || !password.trim() || confirmation !== 'DELETE'}
+              className="w-full sm:w-auto"
+            >
+              {isDeleting ? (
+                <>
+                  <div className="animate-spin rounded-full h-4 w-4 border-b-2 border-white mr-2"></div>
+                  Deleting...
+                </>
+              ) : (
+                'Delete Account'
+              )}
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
+    </div>
+  );
+};
 
 // --- Fraud Settings Section ---
 const MagicSdkWizardSection: React.FC = () => {

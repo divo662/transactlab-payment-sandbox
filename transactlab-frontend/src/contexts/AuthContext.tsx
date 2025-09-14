@@ -11,6 +11,7 @@ interface AuthContextType {
   login: (email: string, password: string, securityAnswer: string, rememberMe?: boolean, totpCode?: string) => Promise<{ requiresTotp?: boolean }>;
   register: (userData: any) => Promise<void>;
   logout: () => Promise<void>;
+  deleteAccount: (password: string) => Promise<void>;
   refreshAuth: () => Promise<void>;
   updateUser: (userData: Partial<User>) => void;
   initiateSecurityQuestionReset: (email: string) => Promise<void>;
@@ -237,6 +238,42 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
     }
   };
 
+  const deleteAccount = async (password: string) => {
+    try {
+      setIsLoading(true);
+      await apiService.deleteAccount({ 
+        password, 
+        confirmation: 'DELETE' 
+      });
+      
+      toast({
+        title: "Account Deleted",
+        description: "Your account has been permanently deleted.",
+      });
+      
+      // Clear all auth data and redirect
+      setUser(null);
+      setTokens(null);
+      localStorage.removeItem('accessToken');
+      localStorage.removeItem('refreshToken');
+      localStorage.removeItem('userData');
+      
+      // Redirect to home page
+      try {
+        if (typeof window !== 'undefined') {
+          window.location.href = '/';
+        }
+      } catch (_) {
+        // no-op
+      }
+    } catch (error) {
+      console.error('Delete account error:', error);
+      throw error;
+    } finally {
+      setIsLoading(false);
+    }
+  };
+
   const refreshAuth = async () => {
     try {
       const response = await apiService.refreshToken();
@@ -275,6 +312,7 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
     login,
     register,
     logout,
+    deleteAccount,
     refreshAuth,
     updateUser,
     initiateSecurityQuestionReset: async (email: string) => {

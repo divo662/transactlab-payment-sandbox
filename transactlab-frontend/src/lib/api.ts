@@ -145,6 +145,13 @@ class ApiService {
     });
   }
 
+  async deleteAccount(data: { password: string; confirmation: string }): Promise<any> {
+    return this.request('/auth/account', {
+      method: 'DELETE',
+      body: JSON.stringify(data)
+    });
+  }
+
   async refreshToken(): Promise<any> {
     const refreshToken = localStorage.getItem('refreshToken');
     if (!refreshToken) {

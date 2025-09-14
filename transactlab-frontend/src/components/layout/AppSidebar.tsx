@@ -17,7 +17,8 @@ import {
   Zap,
   ChevronDown,
   MessageSquare,
-  TrendingUp
+  TrendingUp,
+  LogOut
 } from "lucide-react";
 import {
   Sidebar,
@@ -31,7 +32,9 @@ import {
   SidebarHeader,
   SidebarFooter,
 } from "@/components/ui/sidebar";
+import { Button } from "@/components/ui/button";
 import { useSandbox } from "@/contexts/SandboxContext";
+import { useAuth } from "@/contexts/AuthContext";
 import { useState } from "react";
 
 // Main navigation items
@@ -76,7 +79,16 @@ const settingsItems = [
 export function AppSidebar() {
   const location = useLocation();
   const { isSandboxMode } = useSandbox();
+  const { logout } = useAuth();
   const isActive = (path: string) => location.pathname === path;
+
+  const handleLogout = async () => {
+    try {
+      await logout();
+    } catch (error) {
+      console.error('Logout error:', error);
+    }
+  };
 
   return (
     <Sidebar collapsible="icon" className="border-r border-gray-200 w-64 sm:w-64 md:w-64 lg:w-64">
@@ -251,9 +263,20 @@ export function AppSidebar() {
       </SidebarContent>
 
       <SidebarFooter className="border-t border-gray-200 p-2 sm:p-4">
-        <div className="group-data-[collapsible=icon]:hidden">
-          <div className="text-xs text-gray-500 mb-1">Environment</div>
-          <div className="text-sm font-medium text-[#0a164d]">Sandbox Mode</div>
+        <div className="space-y-3">
+          <div className="group-data-[collapsible=icon]:hidden">
+            <div className="text-xs text-gray-500 mb-1">Environment</div>
+            <div className="text-sm font-medium text-[#0a164d]">Sandbox Mode</div>
+          </div>
+          <Button
+            variant="outline"
+            size="sm"
+            onClick={handleLogout}
+            className="w-full text-red-600 hover:text-red-700 hover:bg-red-50 border-red-200 group-data-[collapsible=icon]:justify-center group-data-[collapsible=icon]:p-2"
+          >
+            <LogOut className="h-4 w-4 group-data-[collapsible=icon]:mr-0 group-data-[collapsible=icon]:mr-2" />
+            <span className="group-data-[collapsible=icon]:hidden">Logout</span>
+          </Button>
         </div>
       </SidebarFooter>
     </Sidebar>

@@ -10,6 +10,8 @@ import EmailService from '../../services/notification/emailService';
 import SandboxTeam from '../../models/SandboxTeam';
 import { CloudinaryService } from '../../services/cloudinaryService';
 import { LocalUploadService } from '../../services/localUploadService';
+import { CacheService } from '../../services/cache/cacheService';
+import { CacheInvalidationService } from '../../services/cache/cacheInvalidationService';
 
 // Helper function to send sandbox webhooks
 async function sendSandboxWebhook(transactionId: string, status: string, userId: string) {
@@ -2205,6 +2207,9 @@ export class SandboxController {
         }
       }
       
+      // Invalidate product-related caches
+      await CacheInvalidationService.invalidateProductData(userId.toString());
+      
       return res.json({ success: true, data: product });
     } catch (error) {
       logger.error('Error creating product:', error);
@@ -2216,7 +2221,23 @@ export class SandboxController {
     try {
       const userId = req.user?._id;
       if (!userId) return res.status(401).json({ success: false, message: 'Unauthorized' });
-      const products = await SandboxProduct.find({ userId: userId.toString() }).sort({ createdAt: -1 }).lean();
+      
+      const userIdStr = userId.toString();
+      
+      // Try to get from cache first
+      const cachedProducts = await CacheService.get('products', userIdStr);
+      if (cachedProducts) {
+        logger.debug(`Cache HIT: Products for user ${userIdStr}`);
+        return res.json({ success: true, data: cachedProducts });
+      }
+
+      // Cache miss - fetch from database
+      logger.debug(`Cache MISS: Products for user ${userIdStr}`);
+      const products = await SandboxProduct.find({ userId: userIdStr }).sort({ createdAt: -1 }).lean();
+      
+      // Cache the results for 10 minutes
+      await CacheService.set('products', userIdStr, products, { ttl: 600 });
+      
       return res.json({ success: true, data: products });
     } catch (error) {
       logger.error('Error getting products:', error);
@@ -2327,6 +2348,9 @@ export class SandboxController {
         { $set: updateData },
         { new: true }
       ).lean();
+      
+      // Invalidate product-related caches
+      await CacheInvalidationService.invalidateProductData(userId.toString(), productId);
       
       return res.json({ success: true, data: product });
     } catch (error) {

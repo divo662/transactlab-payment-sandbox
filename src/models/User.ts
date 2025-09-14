@@ -55,6 +55,7 @@ export interface IUser extends Document {
   twoFactorSecret?: string;
   twoFactorEnabled: boolean;
   totpEnabled?: boolean;
+  totpSecret?: string;
   totpBackupCodes?: string[];
   
   // Security settings
@@ -249,6 +250,10 @@ const userSchema = new Schema<IUser>(
     totpEnabled: {
       type: Boolean,
       default: false
+    },
+    totpSecret: {
+      type: String,
+      select: false
     },
     totpBackupCodes: [{
       type: String,
@@ -562,6 +567,60 @@ userSchema.methods.generateTotpBackupCodes = function (): string[] {
   }
   
   return codes;
+};
+
+// Instance method to verify TOTP code
+userSchema.methods.verifyTotpCode = async function (code: string): Promise<boolean> {
+  try {
+    if (!this.totpSecret) {
+      console.error('TOTP secret not found for user');
+      return false;
+    }
+
+    const speakeasy = require('speakeasy');
+    
+    const verified = speakeasy.totp.verify({
+      secret: this.totpSecret,
+      encoding: 'base32',
+      token: code,
+      window: 2 // Allow 2 time steps (60 seconds) of tolerance
+    });
+
+    console.log('TOTP Verification Debug:', {
+      userId: this._id,
+      code,
+      secret: this.totpSecret ? 'present' : 'missing',
+      verified
+    });
+
+    return verified;
+  } catch (error) {
+    console.error('TOTP verification error:', error);
+    return false;
+  }
+};
+
+// Instance method to check if backup code is valid
+userSchema.methods.isBackupCodeValid = function (code: string): boolean {
+  if (!this.totpBackupCodes || this.totpBackupCodes.length === 0) {
+    return false;
+  }
+  
+  return this.totpBackupCodes.includes(code.toUpperCase());
+};
+
+// Instance method to use backup code (remove it after use)
+userSchema.methods.useBackupCode = async function (code: string): Promise<void> {
+  if (!this.totpBackupCodes) {
+    return;
+  }
+  
+  // Remove the used backup code
+  this.totpBackupCodes = this.totpBackupCodes.filter(
+    (backupCode: string) => backupCode !== code.toUpperCase()
+  );
+  
+  await this.save();
 };
 
 // Static method to find by email
