@@ -444,7 +444,7 @@ class ApiService {
 
   // Sandbox quick payment link
   async createQuickPaymentLink(data: any): Promise<any> {
-    return this.request('/sandbox/links/quick', {
+    return this.request('/sandbox/payment-links/quick', {
       method: 'POST',
       body: JSON.stringify(data)
     });

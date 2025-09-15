@@ -76,13 +76,7 @@ const PaymentLinkNew: React.FC = () => {
       const res = await api.createQuickPaymentLink(payload);
       const data = (res as any)?.data || res;
       const out = data?.data || data;
-      const checkoutUrl = out?.checkoutUrl;
       const publicUrl = out?.publicUrl;
-      if (checkoutUrl) {
-        // Immediate session created → redirect to hosted checkout
-        window.location.href = checkoutUrl;
-        return;
-      }
       if (publicUrl) {
         setResultUrl(publicUrl);
         toast({ title: 'Link created', description: 'Your payment link is ready to share' });

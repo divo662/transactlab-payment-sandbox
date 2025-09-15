@@ -205,9 +205,9 @@ export class SandboxController {
         setTimeout(() => SandboxController.quickLinkStore.delete(cacheKey), Math.max(1000, expiresAt.getTime() - now));
       }
 
-      const publicUrl = `${process.env.TL_BASE || 'https://transactlab-backend.onrender.com'}/sandbox/pay/ql/${token}`;
+      const publicUrl = `${process.env.REACT_APP_FRONTEND_URL || 'http://localhost:8080'}/pay/ql/${token}`;
       // If the request explicitly asks for an immediate session (one-time, no override, fixed amount), create and return checkoutUrl directly
-      const wantsImmediate = !allowAmountOverride && paymentType !== 'recurring' && (typeof amount === 'number' || finalAmountIsNumber(payloadFromBody(req)));
+      const wantsImmediate = !allowAmountOverride && paymentType !== 'recurring' && typeof amount === 'number';
       if (wantsImmediate) {
         // Reuse the start endpoint logic minimally
         const fakeReq: any = { ...req, params: { token }, body: {} };

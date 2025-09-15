@@ -10,25 +10,25 @@ import { Separator } from '@/components/ui/separator';
 import { Alert, AlertDescription } from '@/components/ui/alert';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { 
-  Shield, 
+  // Shield, 
   Smartphone, 
   Monitor, 
   Tablet, 
   MapPin, 
   Calendar,
-  Eye,
-  EyeOff,
+  // Eye,
+  // EyeOff,
   Trash2,
   CheckCircle,
   XCircle,
   AlertTriangle,
-  QrCode,
-  Key,
+  // QrCode,
+  // Key,
   Settings,
   Bell,
-  Lock,
+  // Lock,
   Smartphone as MobileIcon,
-  Globe
+  // Globe
 } from 'lucide-react';
 import { toast } from 'sonner';
 
@@ -49,29 +49,29 @@ interface SecuritySettings {
   requireEmailVerification: boolean;
   allowNewDeviceLogin: boolean;
   notifyOnNewDevice: boolean;
-  requireTwoFactor: boolean;
+  // requireTwoFactor: boolean;
   sessionTimeout: number;
   maxConcurrentSessions: number;
 }
 
-interface TotpSetup {
-  secret: string;
-  qrCode: string;
-  backupCodes: string[];
-}
+// interface TotpSetup {
+//   secret: string;
+//   qrCode: string;
+//   backupCodes: string[];
+// }
 
 const Security: React.FC = () => {
   // State management
   const [activeTab, setActiveTab] = useState('overview');
   const [loading, setLoading] = useState(false);
   const [initialLoading, setInitialLoading] = useState(true);
-  const [totpEnabled, setTotpEnabled] = useState(false);
-  const [showBackupCodes, setShowBackupCodes] = useState(false);
-  const [showTotpSetup, setShowTotpSetup] = useState(false);
-  const [totpSetup, setTotpSetup] = useState<TotpSetup | null>(null);
-  const [totpCode, setTotpCode] = useState('');
-  const [password, setPassword] = useState('');
-  const [showPassword, setShowPassword] = useState(false);
+  // const [totpEnabled, setTotpEnabled] = useState(false);
+  // const [showBackupCodes, setShowBackupCodes] = useState(false);
+  // const [showTotpSetup, setShowTotpSetup] = useState(false);
+  // const [totpSetup, setTotpSetup] = useState<TotpSetup | null>(null);
+  // const [totpCode, setTotpCode] = useState('');
+  // const [password, setPassword] = useState('');
+  // const [showPassword, setShowPassword] = useState(false);
   
   // Data state
   const [devices, setDevices] = useState<Device[]>([]);
@@ -79,7 +79,7 @@ const Security: React.FC = () => {
     requireEmailVerification: true,
     allowNewDeviceLogin: true,
     notifyOnNewDevice: true,
-    requireTwoFactor: false,
+    // requireTwoFactor: false,
     sessionTimeout: 60,
     maxConcurrentSessions: 5
   });
@@ -103,12 +103,12 @@ const Security: React.FC = () => {
             requireEmailVerification: receivedSettings.requireEmailVerification ?? true,
             allowNewDeviceLogin: receivedSettings.allowNewDeviceLogin ?? true,
             notifyOnNewDevice: receivedSettings.notifyOnNewDevice ?? true,
-            requireTwoFactor: receivedSettings.requireTwoFactor ?? false,
+            // requireTwoFactor: receivedSettings.requireTwoFactor ?? false,
             sessionTimeout: receivedSettings.sessionTimeout ?? 60,
             maxConcurrentSessions: receivedSettings.maxConcurrentSessions ?? 5
           });
         }
-        setTotpEnabled(settingsData.data.totpEnabled ?? false);
+        // setTotpEnabled(settingsData.data.totpEnabled ?? false);
       } else {
         // If API fails, keep default values
         console.warn('Failed to load security settings, using defaults');
@@ -133,69 +133,69 @@ const Security: React.FC = () => {
     }
   };
 
-  const handleTotpSetup = async () => {
-    try {
-      setLoading(true);
-      
-      const data = await apiService.setupTotp();
-      
-      if (data.success) {
-        setTotpSetup(data.data);
-        setShowTotpSetup(true);
-        toast.success('TOTP setup generated successfully');
-      } else {
-        toast.error(data.message || 'Failed to setup TOTP');
-      }
-    } catch (error) {
-      console.error('Error setting up TOTP:', error);
-      toast.error('Failed to setup TOTP');
-    } finally {
-      setLoading(false);
-    }
-  };
+  // const handleTotpSetup = async () => {
+  //   try {
+  //     setLoading(true);
+  //     
+  //     const data = await apiService.setupTotp();
+  //     
+  //     if (data.success) {
+  //       setTotpSetup(data.data);
+  //       setShowTotpSetup(true);
+  //       toast.success('TOTP setup generated successfully');
+  //     } else {
+  //       toast.error(data.message || 'Failed to setup TOTP');
+  //     }
+  //   } catch (error) {
+  //     console.error('Error setting up TOTP:', error);
+  //     toast.error('Failed to setup TOTP');
+  //   } finally {
+  //     setLoading(false);
+  //   }
+  // };
 
-  const handleTotpVerify = async () => {
-    try {
-      setLoading(true);
-      
-      const data = await apiService.verifyTotp({ code: totpCode });
-      
-      if (data.success) {
-        setTotpEnabled(true);
-        setShowTotpSetup(false);
-        setTotpCode('');
-        toast.success('Two-Factor Authentication enabled successfully');
-      } else {
-        toast.error(data.message || 'Invalid TOTP code');
-      }
-    } catch (error) {
-      console.error('Error verifying TOTP:', error);
-      toast.error('Failed to verify TOTP code');
-    } finally {
-      setLoading(false);
-    }
-  };
+  // const handleTotpVerify = async () => {
+  //   try {
+  //     setLoading(true);
+  //     
+  //     const data = await apiService.verifyTotp({ code: totpCode });
+  //     
+  //     if (data.success) {
+  //     setTotpEnabled(true);
+  //     setShowTotpSetup(false);
+  //     setTotpCode('');
+  //     toast.success('Two-Factor Authentication enabled successfully');
+  //   } else {
+  //     toast.error(data.message || 'Invalid TOTP code');
+  //   }
+  // } catch (error) {
+  //   console.error('Error verifying TOTP:', error);
+  //   toast.error('Failed to verify TOTP code');
+  // } finally {
+  //   setLoading(false);
+  // }
+  // };
 
-  const handleDisableTotp = async () => {
-    try {
-      setLoading(true);
-      
-      const data = await apiService.disableTotp();
-      
-      if (data.success) {
-        setTotpEnabled(false);
-        setPassword('');
-        toast.success('Two-Factor Authentication disabled successfully');
-      } else {
-        toast.error(data.message || 'Failed to disable TOTP');
-      }
-    } catch (error) {
-      console.error('Error disabling TOTP:', error);
-      toast.error('Failed to disable TOTP');
-    } finally {
-      setLoading(false);
-    }
-  };
+  // const handleDisableTotp = async () => {
+  //   try {
+  //     setLoading(true);
+  //     
+  //     const data = await apiService.disableTotp();
+  //     
+  //     if (data.success) {
+  //       setTotpEnabled(false);
+  //       setPassword('');
+  //       toast.success('Two-Factor Authentication disabled successfully');
+  //     } else {
+  //       toast.error(data.message || 'Failed to disable TOTP');
+  //     }
+  //   } catch (error) {
+  //     console.error('Error disabling TOTP:', error);
+  //     toast.error('Failed to disable TOTP');
+  //   } finally {
+  //     setLoading(false);
+  //   }
+  // };
 
   const handleRemoveDevice = async (deviceId: string) => {
     try {
@@ -348,18 +348,18 @@ const Security: React.FC = () => {
       </div>
 
       <Tabs value={activeTab} onValueChange={setActiveTab} className="space-y-4 sm:space-y-6">
-        <TabsList className="grid w-full grid-cols-2 sm:grid-cols-4 h-auto">
+        <TabsList className="grid w-full grid-cols-2 sm:grid-cols-3 h-auto">
           <TabsTrigger value="overview" className="text-xs sm:text-sm py-2 sm:py-3">Overview</TabsTrigger>
           <TabsTrigger value="devices" className="text-xs sm:text-sm py-2 sm:py-3">Devices</TabsTrigger>
-          <TabsTrigger value="two-factor" className="text-xs sm:text-sm py-2 sm:py-3">Two-Factor</TabsTrigger>
+          {/* <TabsTrigger value="two-factor" className="text-xs sm:text-sm py-2 sm:py-3">Two-Factor</TabsTrigger> */}
           <TabsTrigger value="settings" className="text-xs sm:text-sm py-2 sm:py-3">Settings</TabsTrigger>
         </TabsList>
 
         {/* Overview Tab */}
         <TabsContent value="overview" className="space-y-4 sm:space-y-6">
           <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4 sm:gap-6">
-            {/* Security Status Card */}
-            <Card>
+            {/* Security Status Card - TOTP Disabled */}
+            {/* <Card>
               <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2 px-3 sm:px-6 pt-3 sm:pt-6">
                 <CardTitle className="text-xs sm:text-sm font-medium">Security Status</CardTitle>
                 <Shield className="h-3 w-3 sm:h-4 sm:w-4 text-muted-foreground" />
@@ -382,7 +382,7 @@ const Security: React.FC = () => {
                   {totpEnabled ? 'Two-Factor Authentication enabled' : 'Enable 2FA for better security'}
                 </p>
               </CardContent>
-            </Card>
+            </Card> */}
 
             {/* Trusted Devices Card */}
             <Card>
@@ -435,7 +435,8 @@ const Security: React.FC = () => {
               <CardDescription className="text-sm">Improve your account security with these recommendations</CardDescription>
             </CardHeader>
             <CardContent className="px-3 sm:px-6 pb-3 sm:pb-6 space-y-3 sm:space-y-4">
-              {!totpEnabled && (
+              {/* TOTP Recommendation - Disabled */}
+              {/* {!totpEnabled && (
                 <Alert>
                   <Shield className="h-4 w-4" />
                   <AlertDescription>
@@ -450,7 +451,7 @@ const Security: React.FC = () => {
                     </Button>
                   </AlertDescription>
                 </Alert>
-              )}
+              )} */}
               
               {!securitySettings?.notifyOnNewDevice && (
                 <Alert>
@@ -546,8 +547,8 @@ const Security: React.FC = () => {
           </Card>
         </TabsContent>
 
-        {/* Two-Factor Authentication Tab */}
-        <TabsContent value="two-factor" className="space-y-4 sm:space-y-6">
+        {/* Two-Factor Authentication Tab - DISABLED */}
+        {/* <TabsContent value="two-factor" className="space-y-4 sm:space-y-6">
           <Card>
             <CardHeader className="px-3 sm:px-6 pt-3 sm:pt-6 pb-3 sm:pb-6">
               <CardTitle className="flex items-center space-x-2 text-base sm:text-lg">
@@ -689,7 +690,7 @@ const Security: React.FC = () => {
               )}
             </CardContent>
           </Card>
-        </TabsContent>
+        </TabsContent> */}
 
         {/* Settings Tab */}
         <TabsContent value="settings" className="space-y-4 sm:space-y-6">
@@ -733,7 +734,8 @@ const Security: React.FC = () => {
                   />
                 </div>
 
-                <div className="flex flex-col sm:flex-row sm:items-center justify-between space-y-3 sm:space-y-0">
+                {/* TOTP Setting - Disabled */}
+                {/* <div className="flex flex-col sm:flex-row sm:items-center justify-between space-y-3 sm:space-y-0">
                   <div className="space-y-1">
                     <Label className="text-sm sm:text-base">Require Two-Factor Authentication</Label>
                     <p className="text-xs sm:text-sm text-muted-foreground">
@@ -745,7 +747,7 @@ const Security: React.FC = () => {
                     onCheckedChange={(checked) => handleUpdateSettings({ requireTwoFactor: checked })}
                     disabled={loading}
                   />
-                </div>
+                </div> */}
 
                 <Separator />
 

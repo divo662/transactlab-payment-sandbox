@@ -31,6 +31,7 @@ import webhookConfigRoutes from './routes/merchant/webhookConfigRoutes';
 import paymentHubRoutes from './routes/payment/paymentHubRoutes';
 import sandboxRoutes from './routes/sandbox/sandboxRoutes';
 import internalRoutes from './routes/sandbox/internalRoutes';
+import { SandboxController } from './controllers/sandbox/sandboxController';
 import analyticsDashboardRoutes from './routes/analytics/analyticsRoutes';
 import reportRoutes from './routes/analytics/reportRoutes';
 import adminRoutes from './routes/admin/adminRoutes';
@@ -176,6 +177,10 @@ app.use('/api/v1/merchant/webhooks', webhookConfigRoutes);
 app.use('/api/v1/payment-hub', paymentHubRoutes);
 // Checkout template routes
 app.use('/api/v1/checkout', checkoutTemplateRoutes);
+
+// Public payment link routes (no auth required)
+app.get('/sandbox/pay/ql/:token', SandboxController.getQuickPaymentLinkMeta);
+app.post('/sandbox/pay/ql/:token/start', SandboxController.startQuickPaymentFromLink);
 
 // Sandbox routes
 app.use('/api/v1/sandbox', sandboxRoutes);
