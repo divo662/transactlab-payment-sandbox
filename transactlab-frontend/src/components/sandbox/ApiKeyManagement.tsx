@@ -73,7 +73,7 @@ const ApiKeyManagement: React.FC = () => {
     }
   };
 
-  useEffect(() => {
+  useEffect(() => { 
     loadApiKey();
   }, []);
 
@@ -100,7 +100,7 @@ const ApiKeyManagement: React.FC = () => {
       const response = await regenerateApiKey();
       if (response.success) {
         setApiKey(response.data);
-        toast({
+        toast({ 
           title: 'Success',
           description: 'API keys regenerated successfully',
         });
@@ -112,8 +112,8 @@ const ApiKeyManagement: React.FC = () => {
         description: 'Failed to regenerate API keys',
         variant: 'destructive'
       });
-    } finally {
-      setLoading(false);
+    } finally { 
+      setLoading(false); 
     }
   };
 
@@ -123,10 +123,10 @@ const ApiKeyManagement: React.FC = () => {
       const response = await toggleApiKeyStatus();
       if (response.success) {
         setApiKey(response.data);
-        toast({
+        toast({ 
           title: 'Success',
           description: `API key ${response.data.isActive ? 'activated' : 'deactivated'} successfully`,
-        });
+        }); 
       }
     } catch (error) {
       console.error('Error toggling status:', error);
@@ -195,8 +195,8 @@ const ApiKeyManagement: React.FC = () => {
               <div className="flex items-center gap-2">
                 <div className="h-10 flex-1 bg-gray-200 rounded animate-pulse"></div>
                 <div className="h-10 w-10 bg-gray-200 rounded animate-pulse"></div>
-              </div>
-            </div>
+          </div>
+        </div>
 
             {/* Secret Key Input Skeleton */}
             <div className="space-y-2">
@@ -206,7 +206,7 @@ const ApiKeyManagement: React.FC = () => {
                 <div className="h-10 w-10 bg-gray-200 rounded animate-pulse"></div>
                 <div className="h-10 w-10 bg-gray-200 rounded animate-pulse"></div>
               </div>
-            </div>
+        </div>
 
             {/* Stats Skeleton */}
             <div className="grid grid-cols-1 md:grid-cols-3 gap-4 pt-4 border-t">
@@ -215,23 +215,23 @@ const ApiKeyManagement: React.FC = () => {
                 <div className="space-y-1">
                   <div className="h-4 w-24 bg-gray-200 rounded animate-pulse"></div>
                   <div className="h-6 w-12 bg-gray-200 rounded animate-pulse"></div>
-                </div>
-              </div>
+                    </div>
+                  </div>
               <div className="flex items-center gap-2">
                 <div className="h-4 w-4 bg-gray-200 rounded animate-pulse"></div>
                 <div className="space-y-1">
                   <div className="h-4 w-16 bg-gray-200 rounded animate-pulse"></div>
                   <div className="h-4 w-20 bg-gray-200 rounded animate-pulse"></div>
+                  </div>
                 </div>
-              </div>
               <div className="flex items-center gap-2">
                 <div className="h-4 w-4 bg-gray-200 rounded animate-pulse"></div>
                 <div className="space-y-1">
                   <div className="h-4 w-20 bg-gray-200 rounded animate-pulse"></div>
                   <div className="h-4 w-16 bg-gray-200 rounded animate-pulse"></div>
-                </div>
-              </div>
             </div>
+          </div>
+        </div>
 
             {/* Action Buttons Skeleton */}
             <div className="flex gap-2 pt-4 border-t">
@@ -247,7 +247,7 @@ const ApiKeyManagement: React.FC = () => {
             <div className="flex items-center gap-2">
               <div className="h-5 w-5 bg-gray-200 rounded animate-pulse"></div>
               <div className="h-6 w-40 bg-gray-200 rounded animate-pulse"></div>
-            </div>
+              </div>
           </CardHeader>
           <CardContent>
             <div className="space-y-3">
@@ -258,7 +258,7 @@ const ApiKeyManagement: React.FC = () => {
               <div className="space-y-2">
                 <div className="h-4 w-24 bg-gray-200 rounded animate-pulse"></div>
                 <div className="h-4 w-full bg-gray-200 rounded animate-pulse"></div>
-              </div>
+            </div>
               <div className="space-y-2">
                 <div className="h-4 w-28 bg-gray-200 rounded animate-pulse"></div>
                 <div className="h-4 w-full bg-gray-200 rounded animate-pulse"></div>
@@ -280,8 +280,8 @@ const ApiKeyManagement: React.FC = () => {
       </Alert>
     );
   }
-
-  return (
+                  
+                  return (
     <div className="space-y-4 sm:space-y-6">
       {/* Header */}
       <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
@@ -290,9 +290,9 @@ const ApiKeyManagement: React.FC = () => {
           <p className="text-sm sm:text-base text-muted-foreground">
             Manage your permanent TransactLab API key
           </p>
-        </div>
+                          </div>
         <div className="flex flex-col sm:flex-row gap-2">
-          <Button
+                            <Button
             variant="outline"
             onClick={() => setShowSettings(!showSettings)}
             className="w-full sm:w-auto"
@@ -300,9 +300,9 @@ const ApiKeyManagement: React.FC = () => {
             <Settings className="h-4 w-4 mr-2" />
             <span className="hidden sm:inline">Settings</span>
             <span className="sm:hidden">Configure</span>
-          </Button>
-          <Button
-            variant="outline"
+                        </Button>
+                        <Button
+                          variant="outline"
             onClick={handleToggleStatus}
             disabled={loading}
             className="w-full sm:w-auto"
@@ -320,9 +320,9 @@ const ApiKeyManagement: React.FC = () => {
                 <span className="sm:hidden">Enable</span>
               </>
             )}
-          </Button>
-        </div>
-      </div>
+                        </Button>
+                      </div>
+                    </div>
 
       {/* API Key Card */}
       <Card>
@@ -331,7 +331,7 @@ const ApiKeyManagement: React.FC = () => {
             <div className="flex items-center gap-2">
               <Key className="h-5 w-5" />
               <span className="text-lg sm:text-xl">Your API Key</span>
-            </div>
+                  </div>
             <Badge variant={apiKey.isActive ? 'default' : 'secondary'} className="w-fit">
               {apiKey.isActive ? 'Active' : 'Inactive'}
             </Badge>
@@ -357,13 +357,13 @@ const ApiKeyManagement: React.FC = () => {
                 <span className="sm:inline hidden">Copy</span>
               </Button>
             </div>
-          </div>
-
+            </div>
+            
           {/* Secret Key */}
-          <div>
+                <div>
             <Label className="text-sm font-medium">Secret Key</Label>
             <div className="flex flex-col sm:flex-row gap-2 mt-1">
-              <Input
+                  <Input 
                 type={showSecret ? 'text' : 'password'}
                 value={apiKey.secretKey}
                 readOnly
@@ -388,9 +388,9 @@ const ApiKeyManagement: React.FC = () => {
                   <Copy className="h-4 w-4 sm:mr-2" />
                   <span className="sm:inline hidden">Copy</span>
                 </Button>
+                </div>
+                </div>
               </div>
-            </div>
-          </div>
 
           {/* Usage Stats */}
           <div className="grid grid-cols-1 sm:grid-cols-3 gap-3 sm:gap-4 pt-4 border-t">
@@ -399,8 +399,8 @@ const ApiKeyManagement: React.FC = () => {
               <div className="min-w-0">
                 <p className="text-xs sm:text-sm font-medium text-gray-600">Requests Made</p>
                 <p className="text-lg sm:text-2xl font-bold truncate">{apiKey.usageCount || 0}</p>
-              </div>
-            </div>
+                      </div>
+                    </div>
             <div className="flex items-center gap-2 p-3 bg-gray-50 rounded-lg">
               <CheckCircle className="h-4 w-4 text-green-500 flex-shrink-0" />
               <div className="min-w-0">
@@ -408,30 +408,30 @@ const ApiKeyManagement: React.FC = () => {
                 <p className="text-sm font-medium capitalize">
                   {apiKey.isActive ? 'Active' : 'Inactive'}
                 </p>
+                </div>
               </div>
-            </div>
             <div className="flex items-center gap-2 p-3 bg-gray-50 rounded-lg">
               <Database className="h-4 w-4 text-purple-500 flex-shrink-0" />
               <div className="min-w-0">
                 <p className="text-xs sm:text-sm font-medium text-gray-600">Environment</p>
                 <p className="text-sm font-medium capitalize">{apiKey.environment}</p>
+                </div>
+                </div>
               </div>
-            </div>
-          </div>
 
           {/* Actions */}
           <div className="flex flex-col sm:flex-row gap-2 pt-4 border-t">
-            <Button
+                <Button 
               onClick={handleRegenerateKeys}
               disabled={loading}
-              variant="outline"
+                  variant="outline" 
               className="w-full sm:w-auto"
-            >
+                >
               <RefreshCw className="h-4 w-4 mr-2" />
               <span className="hidden sm:inline">Regenerate Keys</span>
               <span className="sm:hidden">New Keys</span>
-            </Button>
-            <Button
+                </Button>
+                <Button 
               onClick={() => window.open('https://docs.transactlab.com/api', '_blank')}
               variant="outline"
               className="w-full sm:w-auto"
@@ -439,8 +439,8 @@ const ApiKeyManagement: React.FC = () => {
               <ExternalLink className="h-4 w-4 mr-2" />
               <span className="hidden sm:inline">API Documentation</span>
               <span className="sm:hidden">Docs</span>
-            </Button>
-          </div>
+                </Button>
+              </div>
         </CardContent>
       </Card>
 
@@ -467,25 +467,25 @@ const ApiKeyManagement: React.FC = () => {
             </div>
 
             {/* Webhook Secret */}
-            <div>
+                <div>
               <Label htmlFor="webhookSecret" className="text-sm font-medium">Webhook Secret</Label>
-              <Input
+                  <Input 
                 id="webhookSecret"
                 type="password"
                 value={settings.webhookSecret}
                 onChange={(e) => setSettings(prev => ({ ...prev, webhookSecret: e.target.value }))}
                 placeholder="Optional webhook secret"
                 className="mt-1"
-              />
-            </div>
+                  />
+                </div>
 
             {/* Rate Limits */}
-            <div>
+                <div>
               <Label className="text-sm font-medium">Rate Limits</Label>
               <div className="grid grid-cols-1 sm:grid-cols-3 gap-3 sm:gap-4 mt-2">
                 <div className="space-y-1">
                   <Label htmlFor="rpm" className="text-xs font-medium text-gray-600">Per Minute</Label>
-                  <Input
+                  <Input 
                     id="rpm"
                     type="number"
                     value={settings.rateLimit.requestsPerMinute}
@@ -498,9 +498,9 @@ const ApiKeyManagement: React.FC = () => {
                 </div>
                 <div className="space-y-1">
                   <Label htmlFor="rph" className="text-xs font-medium text-gray-600">Per Hour</Label>
-                  <Input
+                  <Input 
                     id="rph"
-                    type="number"
+                    type="number" 
                     value={settings.rateLimit.requestsPerHour}
                     onChange={(e) => setSettings(prev => ({
                       ...prev,
@@ -511,7 +511,7 @@ const ApiKeyManagement: React.FC = () => {
                 </div>
                 <div className="space-y-1">
                   <Label htmlFor="rpd" className="text-xs font-medium text-gray-600">Per Day</Label>
-                  <Input
+                  <Input 
                     id="rpd"
                     type="number"
                     value={settings.rateLimit.requestsPerDay}
@@ -522,26 +522,26 @@ const ApiKeyManagement: React.FC = () => {
                     className="text-sm"
                   />
                 </div>
+                </div>
               </div>
-            </div>
 
             {/* Save Button */}
             <div className="flex flex-col sm:flex-row gap-2 pt-4 border-t">
-              <Button
+                  <Button
                 onClick={handleSaveSettings}
                 disabled={loading}
                 className="w-full sm:w-auto"
               >
                 Save Settings
-              </Button>
-              <Button
-                variant="outline"
+                  </Button>
+                  <Button
+                    variant="outline"
                 onClick={() => setShowSettings(false)}
                 className="w-full sm:w-auto"
               >
                 Cancel
-              </Button>
-            </div>
+                  </Button>
+                </div>
           </CardContent>
         </Card>
       )}
@@ -563,16 +563,16 @@ const ApiKeyManagement: React.FC = () => {
             <div className="p-3 bg-red-50 rounded-lg">
               <p className="font-medium text-red-900 mb-1">Secret Key</p>
               <p>Use this key only on your server for sensitive operations. Never expose it in client-side code.</p>
-            </div>
+                </div>
             <div className="p-3 bg-green-50 rounded-lg">
               <p className="font-medium text-green-900 mb-1">Environment</p>
               <p>This is a sandbox key for testing. Use it to test your integration before going live.</p>
-            </div>
+              </div>
             <div className="p-3 bg-yellow-50 rounded-lg">
               <p className="font-medium text-yellow-900 mb-1">Rate Limits</p>
               <p>Your current rate limits are shown above. Contact support if you need higher limits.</p>
+              </div>
             </div>
-          </div>
         </CardContent>
       </Card>
     </div>

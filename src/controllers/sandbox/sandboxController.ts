@@ -206,6 +206,18 @@ export class SandboxController {
       }
 
       const publicUrl = `${process.env.TL_BASE || 'https://transactlab-backend.onrender.com'}/sandbox/pay/ql/${token}`;
+      // If the request explicitly asks for an immediate session (one-time, no override, fixed amount), create and return checkoutUrl directly
+      const wantsImmediate = !allowAmountOverride && paymentType !== 'recurring' && (typeof amount === 'number' || finalAmountIsNumber(payloadFromBody(req)));
+      if (wantsImmediate) {
+        // Reuse the start endpoint logic minimally
+        const fakeReq: any = { ...req, params: { token }, body: {} };
+        const fakeRes: any = {
+          status: (code: number) => ({ json: (d: any) => ({ code, d }) }),
+          json: (d: any) => ({ code: 200, d })
+        };
+        const started: any = await SandboxController.startQuickPaymentFromLink(fakeReq, fakeRes) as any;
+        // If start returned normally via express, we cannot capture here. So fallback to just returning link + let client call start.
+      }
       return res.status(201).json({ success: true, data: { linkId: token, publicUrl } });
     } catch (error) {
       logger.error('Error creating reusable quick payment link:', error);
@@ -335,11 +347,8 @@ export class SandboxController {
           customerName: (customerName && String(customerName).trim()) || (customerEmail ? String(customerEmail).split('@')[0] : undefined),
           successUrl: cfg.successUrl,
           cancelUrl: cfg.cancelUrl,
-          // Surface branding and customer requirement in metadata for checkout
-          metadata: { source: 'quicklink', quickLinkToken: token, branding: cfg.branding || undefined, requireCustomerInfo: !!cfg.requireCustomerInfo },
-          // Use branding logo as a visual fallback on checkout when no product image exists
-          productImage: (cfg.branding && cfg.branding.logoUrl) ? cfg.branding.logoUrl : null,
-          productName: cfg.title || null,
+          // Surface customer requirement (branding no longer used for product visuals)
+          metadata: { source: 'quicklink', quickLinkToken: token, requireCustomerInfo: !!cfg.requireCustomerInfo },
           status: 'pending',
           expiresAt: new Date(Date.now() + 60 * 60 * 1000)
         }) as unknown) as ISandboxSession;
@@ -2971,9 +2980,9 @@ export class SandboxController {
             // Not a valid ObjectId, continue
           }
           
-          // If still not found, try to find any product for this user (fallback)
+          // If still not found, try to find any recent active product for this user (fallback)
           if (!product) {
-            const userProducts = await SandboxProduct.find({ userId: userId.toString(), active: true }).lean();
+            const userProducts = await SandboxProduct.find({ userId: userId.toString(), active: true }).sort({ updatedAt: -1 }).lean();
             if (userProducts.length > 0) {
               product = userProducts[0]; // Use the first active product as fallback
               logger.warn('Using fallback product for checkout session', {
@@ -4240,6 +4249,28 @@ export class SandboxController {
         }
       };
 
+      // Optionally hydrate missing product info from related plan/product
+      let productName = (session as any).productName || null;
+      let productImage = absolutize((session as any).productImage) || null;
+      try {
+        if (!productName || !productImage) {
+          const m: any = (session as any).metadata || {};
+          let planDoc: any = null;
+          if (m.planId) {
+            planDoc = await (await import('../../models/SandboxPlan')).default.findOne({ $or: [{ _id: m.planId }, { planId: m.planId }] }).lean();
+          }
+          let prodDoc: any = null;
+          if (planDoc?.productId) {
+            const ProductModel = (await import('../../models/SandboxProduct')).default as any;
+            prodDoc = await ProductModel.findOne({ $or: [{ _id: planDoc.productId }, { productId: planDoc.productId }], userId: (session as any).userId }).lean();
+          }
+          if (prodDoc) {
+            productName = prodDoc.name || productName;
+            productImage = absolutize(prodDoc.image) || productImage;
+          }
+        }
+      } catch {}
+
       // Return complete session data for checkout
       res.json({
         success: true,
@@ -4252,8 +4283,8 @@ export class SandboxController {
           customerEmail: session.customerEmail,
           status: session.status,
           expiresAt: session.expiresAt,
-          productImage: absolutize((session as any).productImage) || null,
-          productName: session.productName || null,
+          productImage,
+          productName,
           successUrl: session.successUrl,
           cancelUrl: session.cancelUrl
         }

@@ -34,12 +34,7 @@ const PaymentLinkNew: React.FC = () => {
   const [requireCustomerInfo, setRequireCustomerInfo] = useState<boolean>(false);
   const [expiresInMinutes, setExpiresInMinutes] = useState<string>('');
   const [maxUses, setMaxUses] = useState<string>('');
-  // Branding
-  const [primaryColor, setPrimaryColor] = useState<string>('#0a164d');
-  const [secondaryColor, setSecondaryColor] = useState<string>('#1e3a8a');
-  const [logoUrl, setLogoUrl] = useState<string>('');
-  const [pageTitle, setPageTitle] = useState<string>('');
-  const [pageDescription, setPageDescription] = useState<string>('');
+  // Branding (removed from UI for one-time links)
 
   // Quick Pay removed
 
@@ -69,13 +64,7 @@ const PaymentLinkNew: React.FC = () => {
         const v = parseInt(maxUses, 10);
         if (!isNaN(v) && v > 0) payload.maxUses = v;
       }
-      payload.branding = {
-        primaryColor: primaryColor || '#0a164d',
-        secondaryColor: secondaryColor || '#1e3a8a',
-        logoUrl: logoUrl || undefined,
-        pageTitle: pageTitle || undefined,
-        pageDescription: pageDescription || undefined
-      };
+      // branding removed for one-time link visuals
       if (mode === 'recurring') {
         payload.paymentType = 'recurring';
         payload.interval = interval;
@@ -86,14 +75,20 @@ const PaymentLinkNew: React.FC = () => {
       }
       const res = await api.createQuickPaymentLink(payload);
       const data = (res as any)?.data || res;
-      const link = data?.data || data;
-      const publicUrl = link?.publicUrl;
+      const out = data?.data || data;
+      const checkoutUrl = out?.checkoutUrl;
+      const publicUrl = out?.publicUrl;
+      if (checkoutUrl) {
+        // Immediate session created → redirect to hosted checkout
+        window.location.href = checkoutUrl;
+        return;
+      }
       if (publicUrl) {
         setResultUrl(publicUrl);
         toast({ title: 'Link created', description: 'Your payment link is ready to share' });
-      } else {
-        toast({ title: 'Error', description: 'Failed to get payment link URL', variant: 'destructive' });
+        return;
       }
+      toast({ title: 'Error', description: 'Failed to get payment link URL', variant: 'destructive' });
     } catch (e: any) {
       toast({ title: 'Error', description: e?.message || 'Failed to create link', variant: 'destructive' });
     } finally { setLoading(false); }
@@ -434,29 +429,7 @@ const PaymentLinkNew: React.FC = () => {
             </div>
           </div>
 
-          {/* Branding */}
-          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
-            <div>
-              <Label className="text-xs text-gray-600">Primary color</Label>
-              <Input type="text" value={primaryColor} onChange={(e)=>setPrimaryColor(e.target.value)} placeholder="#0a164d" className="text-xs sm:text-sm" />
-            </div>
-            <div>
-              <Label className="text-xs text-gray-600">Secondary color</Label>
-              <Input type="text" value={secondaryColor} onChange={(e)=>setSecondaryColor(e.target.value)} placeholder="#1e3a8a" className="text-xs sm:text-sm" />
-            </div>
-            <div>
-              <Label className="text-xs text-gray-600">Logo URL</Label>
-              <Input type="text" value={logoUrl} onChange={(e)=>setLogoUrl(e.target.value)} placeholder="https://..." className="text-xs sm:text-sm" />
-            </div>
-            <div>
-              <Label className="text-xs text-gray-600">Page title</Label>
-              <Input type="text" value={pageTitle} onChange={(e)=>setPageTitle(e.target.value)} placeholder="Checkout" className="text-xs sm:text-sm" />
-            </div>
-            <div>
-              <Label className="text-xs text-gray-600">Page description</Label>
-              <Input type="text" value={pageDescription} onChange={(e)=>setPageDescription(e.target.value)} placeholder="Pay securely with TransactLab" className="text-xs sm:text-sm" />
-            </div>
-          </div>
+          {/* Branding section removed per request */}
 
           <div className="pt-2">
             <Button 
