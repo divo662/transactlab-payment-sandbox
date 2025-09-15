@@ -305,28 +305,28 @@ const Feedback: React.FC = () => {
 
   if (loading) {
     return (
-      <div className="container mx-auto px-4 py-8">
-        <div className="flex items-center justify-center h-64">
-          <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-[#0a164d]"></div>
+      <div className="container mx-auto px-3 sm:px-4 py-4 sm:py-8">
+        <div className="flex items-center justify-center h-48 sm:h-64">
+          <div className="animate-spin rounded-full h-6 w-6 sm:h-8 sm:w-8 border-b-2 border-[#0a164d]"></div>
         </div>
       </div>
     );
   }
 
   return (
-    <div className="container mx-auto px-4 py-8 max-w-6xl">
+    <div className="container mx-auto px-3 sm:px-4 py-4 sm:py-8 max-w-6xl">
       {/* Header */}
-      <div className="mb-8">
+      <div className="mb-6 sm:mb-8">
         <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
           <div>
-            <h1 className="text-3xl font-bold text-gray-900 mb-2">Community Feedback</h1>
-            <p className="text-gray-600">
+            <h1 className="text-2xl sm:text-3xl font-bold text-gray-900 mb-2">Community Feedback</h1>
+            <p className="text-sm sm:text-base text-gray-600">
               Share your ideas, report issues, and help improve TransactLab together.
             </p>
           </div>
           <Button
             onClick={() => setShowCreateForm(!showCreateForm)}
-            className="bg-[#0a164d] hover:bg-[#0a164d]/90 text-white"
+            className="bg-[#0a164d] hover:bg-[#0a164d]/90 text-white w-full sm:w-auto text-sm sm:text-base px-4 py-2"
           >
             <Plus className="h-4 w-4 mr-2" />
             {showCreateForm ? 'Cancel' : 'Submit Feedback'}
@@ -335,7 +335,7 @@ const Feedback: React.FC = () => {
       </div>
 
       {/* Filters and Search */}
-      <div className="mb-6 space-y-4 sm:space-y-0 sm:flex sm:items-center sm:justify-between sm:gap-4">
+      <div className="mb-6 space-y-3 sm:space-y-0 sm:flex sm:items-center sm:justify-between sm:gap-4">
         <div className="flex flex-col sm:flex-row gap-3 sm:gap-4">
           {/* Search */}
           <div className="relative flex-1 max-w-md">
@@ -344,13 +344,13 @@ const Feedback: React.FC = () => {
               placeholder="Search feedback..."
               value={searchTerm}
               onChange={(e) => setSearchTerm(e.target.value)}
-              className="pl-10"
+              className="pl-10 text-sm"
             />
           </div>
 
           {/* Category Filter */}
           <Select value={filter} onValueChange={setFilter}>
-            <SelectTrigger className="w-full sm:w-48">
+            <SelectTrigger className="w-full sm:w-48 text-sm">
               <Filter className="h-4 w-4 mr-2" />
               <SelectValue />
             </SelectTrigger>
@@ -366,7 +366,7 @@ const Feedback: React.FC = () => {
 
           {/* Sort */}
           <Select value={sortBy} onValueChange={setSortBy}>
-            <SelectTrigger className="w-full sm:w-48">
+            <SelectTrigger className="w-full sm:w-48 text-sm">
               <SelectValue />
             </SelectTrigger>
             <SelectContent>
@@ -382,15 +382,15 @@ const Feedback: React.FC = () => {
 
       {/* Create Feedback Form */}
       {showCreateForm && (
-        <Card className="mb-8">
-          <CardHeader>
-            <CardTitle className="flex items-center gap-2">
-              <MessageCircle className="h-5 w-5" />
+        <Card className="mb-6 sm:mb-8">
+          <CardHeader className="p-4 sm:p-6">
+            <CardTitle className="flex items-center gap-2 text-lg sm:text-xl">
+              <MessageCircle className="h-4 w-4 sm:h-5 sm:w-5" />
               Submit New Feedback
             </CardTitle>
           </CardHeader>
-          <CardContent>
-            <form onSubmit={handleCreateFeedback} className="space-y-6">
+          <CardContent className="p-4 sm:p-6 pt-0">
+            <form onSubmit={handleCreateFeedback} className="space-y-4 sm:space-y-6">
               {/* Rating */}
               <div className="space-y-2">
                 <Label className="text-sm font-medium">Rate your experience</Label>
@@ -429,7 +429,7 @@ const Feedback: React.FC = () => {
                   value={formData.message}
                   onChange={(e) => setFormData(prev => ({ ...prev, message: e.target.value }))}
                   placeholder="Please provide as much detail as possible..."
-                  className="text-sm min-h-[120px] resize-none"
+                  className="text-sm min-h-[100px] sm:min-h-[120px] resize-none"
                   maxLength={2000}
                   required
                 />
@@ -477,33 +477,33 @@ const Feedback: React.FC = () => {
               </div>
 
               {/* Public visibility */}
-              <div className="flex items-center space-x-2">
+              <div className="flex items-start space-x-2">
                 <input
                   type="checkbox"
                   id="isPublic"
                   checked={formData.isPublic}
                   onChange={(e) => setFormData(prev => ({ ...prev, isPublic: e.target.checked }))}
-                  className="h-4 w-4 text-[#0a164d] focus:ring-[#0a164d] border-gray-300 rounded"
+                  className="h-4 w-4 text-[#0a164d] focus:ring-[#0a164d] border-gray-300 rounded mt-0.5"
                 />
-                <Label htmlFor="isPublic" className="text-sm text-gray-700">
+                <Label htmlFor="isPublic" className="text-sm text-gray-700 leading-relaxed">
                   Make this feedback public (others can see and vote on it)
                 </Label>
               </div>
 
               {/* Action buttons */}
-              <div className="flex items-center justify-end gap-3 pt-4 border-t">
+              <div className="flex flex-col sm:flex-row items-stretch sm:items-center justify-end gap-3 pt-4 border-t">
                 <Button
                   type="button"
                   variant="outline"
                   onClick={() => setShowCreateForm(false)}
-                  className="text-sm"
+                  className="text-sm w-full sm:w-auto"
                 >
                   Cancel
                 </Button>
                 <Button
                   type="submit"
                   disabled={isSubmitting || !formData.title.trim() || !formData.message.trim()}
-                  className="text-sm bg-[#0a164d] hover:bg-[#0a164d]/90"
+                  className="text-sm bg-[#0a164d] hover:bg-[#0a164d]/90 w-full sm:w-auto"
                 >
                   {isSubmitting ? (
                     <>
@@ -524,13 +524,13 @@ const Feedback: React.FC = () => {
       )}
 
       {/* Feedback List */}
-      <div className="space-y-4">
+      <div className="space-y-3 sm:space-y-4">
         {sortedFeedback.length === 0 ? (
           <Card>
-            <CardContent className="text-center py-12">
-              <MessageCircle className="h-12 w-12 text-gray-400 mx-auto mb-4" />
-              <h3 className="text-lg font-semibold text-gray-900 mb-2">No feedback found</h3>
-              <p className="text-gray-600">
+            <CardContent className="text-center py-8 sm:py-12">
+              <MessageCircle className="h-10 w-10 sm:h-12 sm:w-12 text-gray-400 mx-auto mb-4" />
+              <h3 className="text-base sm:text-lg font-semibold text-gray-900 mb-2">No feedback found</h3>
+              <p className="text-sm sm:text-base text-gray-600">
                 {searchTerm || filter !== 'all' 
                   ? 'Try adjusting your search or filter criteria.'
                   : 'Be the first to share feedback with the community!'
@@ -543,29 +543,29 @@ const Feedback: React.FC = () => {
             const CategoryIcon = categoryIcons[item.category];
             return (
               <Card key={item._id} className="hover:shadow-md transition-shadow">
-                <CardHeader className="pb-3">
+                <CardHeader className="pb-3 p-4 sm:p-6">
                   <div className="flex items-start justify-between">
-                    <div className="flex-1">
-                      <div className="flex items-center gap-2 mb-2">
-                        <CategoryIcon className="h-4 w-4 text-gray-600" />
-                        <Badge className={categoryColors[item.category]}>
+                    <div className="flex-1 min-w-0">
+                      <div className="flex flex-wrap items-center gap-1 sm:gap-2 mb-2">
+                        <CategoryIcon className="h-4 w-4 text-gray-600 flex-shrink-0" />
+                        <Badge className={`text-xs ${categoryColors[item.category]}`}>
                           {item.category}
                         </Badge>
-                        <Badge className={priorityColors[item.priority]}>
+                        <Badge className={`text-xs ${priorityColors[item.priority]}`}>
                           {item.priority}
                         </Badge>
-                        <Badge className={statusColors[item.status]}>
+                        <Badge className={`text-xs ${statusColors[item.status]}`}>
                           {item.status}
                         </Badge>
                       </div>
-                      <CardTitle className="text-lg mb-2">{item.title}</CardTitle>
-                      <div className="flex items-center gap-4 text-sm text-gray-600">
-                        <div className="flex items-center gap-1">
-                          <User className="h-4 w-4" />
-                          <span>{item.userEmail}</span>
+                      <CardTitle className="text-base sm:text-lg mb-2 leading-tight">{item.title}</CardTitle>
+                      <div className="flex flex-col sm:flex-row sm:items-center gap-2 sm:gap-4 text-xs sm:text-sm text-gray-600">
+                        <div className="flex items-center gap-1 min-w-0">
+                          <User className="h-3 w-3 sm:h-4 sm:w-4 flex-shrink-0" />
+                          <span className="truncate">{item.userEmail}</span>
                         </div>
                         <div className="flex items-center gap-1">
-                          <Calendar className="h-4 w-4" />
+                          <Calendar className="h-3 w-3 sm:h-4 sm:w-4 flex-shrink-0" />
                           <span>{formatDate(item.createdAt)}</span>
                         </div>
                         <div className="flex items-center gap-1">
@@ -577,75 +577,81 @@ const Feedback: React.FC = () => {
                   </div>
                 </CardHeader>
 
-                <CardContent className="pt-0">
-                  <p className="text-gray-700 mb-4 leading-relaxed">{item.message}</p>
+                <CardContent className="pt-0 p-4 sm:p-6">
+                  <p className="text-sm sm:text-base text-gray-700 mb-4 leading-relaxed">{item.message}</p>
 
                   {/* Voting Section */}
-                  <div className="flex items-center justify-between pt-4 border-t">
-                    <div className="flex items-center gap-4">
+                  <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3 pt-4 border-t">
+                    <div className="flex flex-col sm:flex-row sm:items-center gap-3">
                       {isOwnFeedback(item.userEmail) ? (
-                        <div className="flex items-center gap-2">
-                          <Button
-                            variant="outline"
-                            size="sm"
-                            disabled
-                            className="text-gray-400 bg-gray-50 cursor-not-allowed"
-                          >
-                            <ThumbsUp className="h-4 w-4 mr-1" />
-                            Helpful ({item.helpful})
-                          </Button>
-                          <Button
-                            variant="outline"
-                            size="sm"
-                            disabled
-                            className="text-gray-400 bg-gray-50 cursor-not-allowed"
-                          >
-                            <ThumbsDown className="h-4 w-4 mr-1" />
-                            Not Helpful ({item.notHelpful})
-                          </Button>
-                          <span className="text-xs text-gray-500 ml-2">Your feedback</span>
+                        <div className="flex flex-col sm:flex-row items-start sm:items-center gap-2">
+                          <div className="flex items-center gap-2">
+                            <Button
+                              variant="outline"
+                              size="sm"
+                              disabled
+                              className="text-gray-400 bg-gray-50 cursor-not-allowed text-xs"
+                            >
+                              <ThumbsUp className="h-3 w-3 sm:h-4 sm:w-4 mr-1" />
+                              Helpful ({item.helpful})
+                            </Button>
+                            <Button
+                              variant="outline"
+                              size="sm"
+                              disabled
+                              className="text-gray-400 bg-gray-50 cursor-not-allowed text-xs"
+                            >
+                              <ThumbsDown className="h-3 w-3 sm:h-4 sm:w-4 mr-1" />
+                              Not Helpful ({item.notHelpful})
+                            </Button>
+                          </div>
+                          <span className="text-xs text-gray-500">Your feedback</span>
                         </div>
                       ) : (
-                        <div className="flex items-center gap-2">
-                          <Button
-                            variant="outline"
-                            size="sm"
-                            onClick={() => handleVote(item._id, 'helpful')}
-                            disabled={voting === item._id}
-                            className="text-green-600 hover:text-green-700 hover:bg-green-50"
-                          >
-                            <ThumbsUp className="h-4 w-4 mr-1" />
-                            Helpful ({item.helpful})
-                          </Button>
-                          <Button
-                            variant="outline"
-                            size="sm"
-                            onClick={() => handleVote(item._id, 'notHelpful')}
-                            disabled={voting === item._id}
-                            className="text-red-600 hover:text-red-700 hover:bg-red-50"
-                          >
-                            <ThumbsDown className="h-4 w-4 mr-1" />
-                            Not Helpful ({item.notHelpful})
-                          </Button>
+                        <div className="flex flex-col sm:flex-row items-start sm:items-center gap-2">
+                          <div className="flex items-center gap-2">
+                            <Button
+                              variant="outline"
+                              size="sm"
+                              onClick={() => handleVote(item._id, 'helpful')}
+                              disabled={voting === item._id}
+                              className="text-green-600 hover:text-green-700 hover:bg-green-50 text-xs"
+                            >
+                              <ThumbsUp className="h-3 w-3 sm:h-4 sm:w-4 mr-1" />
+                              Helpful ({item.helpful})
+                            </Button>
+                            <Button
+                              variant="outline"
+                              size="sm"
+                              onClick={() => handleVote(item._id, 'notHelpful')}
+                              disabled={voting === item._id}
+                              className="text-red-600 hover:text-red-700 hover:bg-red-50 text-xs"
+                            >
+                              <ThumbsDown className="h-3 w-3 sm:h-4 sm:w-4 mr-1" />
+                              Not Helpful ({item.notHelpful})
+                            </Button>
+                          </div>
+                          <div className="text-xs sm:text-sm text-gray-600">
+                            {item.totalVotes} total votes • {item.helpfulPercentage}% helpful
+                          </div>
                         </div>
                       )}
-                      <div className="text-sm text-gray-600">
-                        {item.totalVotes} total votes • {item.helpfulPercentage}% helpful
-                      </div>
                     </div>
                   </div>
 
                   {/* Admin Response */}
                   {item.response && (
-                    <div className="mt-4 p-4 bg-blue-50 border border-blue-200 rounded-lg">
-                      <div className="flex items-center gap-2 mb-2">
-                        <Clock className="h-4 w-4 text-blue-600" />
-                        <span className="text-sm font-medium text-blue-900">Admin Response</span>
+                    <div className="mt-4 p-3 sm:p-4 bg-blue-50 border border-blue-200 rounded-lg">
+                      <div className="flex flex-col sm:flex-row sm:items-center gap-1 sm:gap-2 mb-2">
+                        <div className="flex items-center gap-2">
+                          <Clock className="h-3 w-3 sm:h-4 sm:w-4 text-blue-600 flex-shrink-0" />
+                          <span className="text-xs sm:text-sm font-medium text-blue-900">Admin Response</span>
+                        </div>
                         <span className="text-xs text-blue-600">
                           {item.respondedAt && formatDate(item.respondedAt)}
                         </span>
                       </div>
-                      <p className="text-sm text-blue-800">{item.response}</p>
+                      <p className="text-xs sm:text-sm text-blue-800 leading-relaxed">{item.response}</p>
                     </div>
                   )}
                 </CardContent>

@@ -34,6 +34,8 @@ async function sendSandboxWebhook(transactionId: string, status: string, userId:
 export class SandboxController {
   // Simple in-process scheduler flag
   private static schedulerStarted = false;
+  // In-memory fallback store for quick payment links when Redis is unavailable
+  private static quickLinkStore: Map<string, any> = new Map<string, any>();
 
   // Build absolute checkout URL from a relative path using env or request host
   private static buildAbsoluteCheckoutUrl(req: Request, relativePath: string): string {
@@ -118,6 +120,305 @@ export class SandboxController {
       }
     }, 60 * 1000);
     logger.info('Sandbox renewal scheduler started');
+  }
+
+  /**
+   * Create a reusable Quick Payment Link (no pre-created customer required)
+   * POST /api/v1/sandbox/payment-links/quick
+   * Body: { title, amount, currency, description?, requireCustomerInfo?, successUrl?, cancelUrl?, expiresInMinutes?, maxUses?, branding?, allowAmountOverride?, paymentType?, interval?, trialDays? }
+   * Returns: { linkId, publicUrl }
+   */
+  static async createQuickPaymentLinkReusable(req: Request, res: Response) {
+    try {
+      const userId = req.user?._id;
+      if (!userId) {
+        return res.status(401).json({ success: false, error: 'Unauthorized', message: 'User not authenticated' });
+      }
+
+      const {
+        title,
+        amount,
+        currency,
+        description,
+        requireCustomerInfo = true,
+        successUrl,
+        cancelUrl,
+        expiresInMinutes = 7 * 24 * 60, // default 7 days
+        maxUses,
+        branding,
+        allowAmountOverride = false,
+        paymentType = 'one_time', // 'one_time' | 'recurring'
+        interval,
+        trialDays,
+      } = req.body || {};
+
+      if (!title || typeof title !== 'string') {
+        return res.status(400).json({ success: false, message: 'title (string) is required' });
+      }
+      if (!allowAmountOverride) {
+        if (amount === undefined || amount === null || typeof amount !== 'number' || amount <= 0) {
+          return res.status(400).json({ success: false, message: 'amount (number, major units) is required' });
+        }
+      }
+      if (!currency || typeof currency !== 'string') {
+        return res.status(400).json({ success: false, message: 'currency (string) is required' });
+      }
+
+      const token = `ql_${Math.random().toString(36).slice(2, 10)}_${Date.now().toString(36)}`;
+      const now = Date.now();
+      const expiresAt = new Date(now + Math.max(1, Number(expiresInMinutes)) * 60 * 1000);
+
+      const config = {
+        version: 1,
+        userId: userId.toString(),
+        title,
+        amount, // major units
+        currency: String(currency).toUpperCase(),
+        description: description || undefined,
+        requireCustomerInfo: !!requireCustomerInfo,
+        successUrl: successUrl || undefined,
+        cancelUrl: cancelUrl || undefined,
+        expiresAt: expiresAt.toISOString(),
+        maxUses: maxUses ? Number(maxUses) : undefined,
+        currentUses: 0,
+        branding: branding || undefined,
+        allowAmountOverride: !!allowAmountOverride,
+        paymentType,
+        interval: interval || undefined,
+        trialDays: trialDays || 0
+      };
+
+      // Try Redis first
+      let stored = false;
+      const cacheKey = `quicklink:${userId.toString()}:${token}`;
+      try {
+        if (CacheService.isAvailable()) {
+          const ttlSeconds = Math.ceil((expiresAt.getTime() - now) / 1000);
+          await CacheService.set('quicklinks', cacheKey, config, { ttl: ttlSeconds });
+          stored = true;
+        }
+      } catch {}
+
+      if (!stored) {
+        SandboxController.quickLinkStore.set(cacheKey, config);
+        // Schedule cleanup at expiration (best-effort)
+        setTimeout(() => SandboxController.quickLinkStore.delete(cacheKey), Math.max(1000, expiresAt.getTime() - now));
+      }
+
+      const publicUrl = `${process.env.TL_BASE || 'https://transactlab-backend.onrender.com'}/sandbox/pay/ql/${token}`;
+      return res.status(201).json({ success: true, data: { linkId: token, publicUrl } });
+    } catch (error) {
+      logger.error('Error creating reusable quick payment link:', error);
+      return res.status(500).json({ success: false, message: 'Failed to create payment link' });
+    }
+  }
+
+  /**
+   * Fetch reusable Quick Payment Link metadata (public)
+   * GET /sandbox/pay/ql/:token
+   */
+  static async getQuickPaymentLinkMeta(req: Request, res: Response) {
+    try {
+      const { token } = req.params as any;
+      if (!token) return res.status(400).json({ success: false, message: 'token is required' });
+
+      const keyPrefix = 'quicklink:';
+      const tryKeys = async (): Promise<any | null> => {
+        // We do not know userId here; scan in-memory fallback first
+        for (const [k, v] of SandboxController.quickLinkStore.entries()) {
+          if (k.endsWith(`:${token}`)) return v;
+        }
+        // Try Redis namespace if available (we cannot scan keys reliably; rely on client-side knowing user)
+        return null;
+      };
+
+      let cfg: any = await tryKeys();
+      if (!cfg) {
+        // As a fallback, accept userId via query to locate exact key in Redis
+        const { userId } = req.query as any;
+        if (userId && CacheService.isAvailable()) {
+          const cacheKey = `${keyPrefix}${userId}:${token}`;
+          cfg = await CacheService.get('quicklinks', cacheKey);
+        }
+      }
+
+      if (!cfg) return res.status(404).json({ success: false, message: 'Payment link not found' });
+
+      // Check usability
+      const expired = new Date(cfg.expiresAt).getTime() <= Date.now();
+      if (expired) return res.status(410).json({ success: false, message: 'Payment link expired' });
+      if (cfg.maxUses && cfg.currentUses >= cfg.maxUses) {
+        return res.status(429).json({ success: false, message: 'Payment link usage limit reached' });
+      }
+
+      return res.json({
+        success: true,
+        data: {
+          title: cfg.title,
+          description: cfg.description,
+          amount: cfg.amount,
+          currency: cfg.currency,
+          requireCustomerInfo: cfg.requireCustomerInfo,
+          branding: cfg.branding,
+          allowAmountOverride: cfg.allowAmountOverride,
+          paymentType: cfg.paymentType,
+          interval: cfg.interval,
+          trialDays: cfg.trialDays,
+          expiresAt: cfg.expiresAt,
+          remainingUses: cfg.maxUses ? Math.max(0, Number(cfg.maxUses) - Number(cfg.currentUses || 0)) : null
+        }
+      });
+    } catch (error) {
+      logger.error('Error fetching quick payment link meta:', error);
+      return res.status(500).json({ success: false, message: 'Failed to fetch payment link' });
+    }
+  }
+
+  /**
+   * Start a payment from a reusable Quick Payment Link (public)
+   * POST /sandbox/pay/ql/:token/start
+   * Body: { amount?, customerEmail?, customerName? }
+   * Returns: { sessionId, checkoutUrl }
+   */
+  static async startQuickPaymentFromLink(req: Request, res: Response) {
+    try {
+      const { token } = req.params as any;
+      const { amount, customerEmail, customerName } = req.body || {};
+
+      const findConfig = async (): Promise<{ key: string; cfg: any } | null> => {
+        for (const [k, v] of SandboxController.quickLinkStore.entries()) {
+          if (k.endsWith(`:${token}`)) return { key: k, cfg: v };
+        }
+        // If Redis was used, require userId to compute key
+        const { userId } = req.query as any;
+        if (userId && CacheService.isAvailable()) {
+          const key = `quicklink:${userId}:${token}`;
+          const v = await CacheService.get('quicklinks', key);
+          if (v) return { key, cfg: v };
+        }
+        return null;
+      };
+
+      const located = await findConfig();
+      if (!located) return res.status(404).json({ success: false, message: 'Payment link not found' });
+      const { key, cfg } = located;
+
+      // Validate usability
+      const expired = new Date(cfg.expiresAt).getTime() <= Date.now();
+      if (expired) return res.status(410).json({ success: false, message: 'Payment link expired' });
+      if (cfg.maxUses && cfg.currentUses >= cfg.maxUses) {
+        return res.status(429).json({ success: false, message: 'Payment link usage limit reached' });
+      }
+
+      // Determine amount (major units in cfg, convert to minor for session)
+      let finalAmountMajor = cfg.amount;
+      if (cfg.allowAmountOverride) {
+        if (amount !== undefined && amount !== null) {
+          if (typeof amount !== 'number' || amount <= 0) {
+            return res.status(400).json({ success: false, message: 'amount must be a positive number' });
+          }
+          finalAmountMajor = amount;
+        }
+      }
+
+      let session: ISandboxSession | null = null;
+
+      if (String(cfg.paymentType).toLowerCase() !== 'recurring') {
+        // One-time session
+        session = (new SandboxSession({
+          userId: cfg.userId,
+          apiKeyId: 'default',
+          amount: Math.round(Number(finalAmountMajor) * 100),
+          currency: cfg.currency,
+          description: cfg.description || cfg.title,
+          customerEmail: customerEmail || undefined,
+          customerName: (customerName && String(customerName).trim()) || (customerEmail ? String(customerEmail).split('@')[0] : undefined),
+          successUrl: cfg.successUrl,
+          cancelUrl: cfg.cancelUrl,
+          // Surface branding and customer requirement in metadata for checkout
+          metadata: { source: 'quicklink', quickLinkToken: token, branding: cfg.branding || undefined, requireCustomerInfo: !!cfg.requireCustomerInfo },
+          // Use branding logo as a visual fallback on checkout when no product image exists
+          productImage: (cfg.branding && cfg.branding.logoUrl) ? cfg.branding.logoUrl : null,
+          productName: cfg.title || null,
+          status: 'pending',
+          expiresAt: new Date(Date.now() + 60 * 60 * 1000)
+        }) as unknown) as ISandboxSession;
+        await session.save();
+      } else {
+        // Recurring flow: ensure product and plan exist, create subscription and first payment session
+        const SandboxProductModel = (await import('../../models/SandboxProduct')).default as any;
+        const SandboxPlanModel = (await import('../../models/SandboxPlan')).default as any;
+        const SandboxSubscriptionModel = (await import('../../models/SandboxSubscription')).default as any;
+
+        // Reuse a product for this link if previously created (by naming convention), else create one
+        const linkProductName = `QuickLink: ${cfg.title}`;
+        let product = await SandboxProductModel.findOne({ userId: cfg.userId, name: linkProductName });
+        if (!product) {
+          product = await SandboxProductModel.create({ userId: cfg.userId, name: linkProductName, description: cfg.description || 'Subscription via QuickLink', active: true });
+        }
+
+        const interval = String(cfg.interval || 'month').toLowerCase();
+        const planAmountMinor = Math.round(Number(finalAmountMajor) * 100);
+        let plan = await SandboxPlanModel.findOne({ userId: cfg.userId, productId: product._id, amount: planAmountMinor, currency: cfg.currency, interval });
+        if (!plan) {
+          plan = await SandboxPlanModel.create({ userId: cfg.userId, productId: product._id, amount: planAmountMinor, currency: cfg.currency, interval, trialDays: Number(cfg.trialDays || 0), active: true });
+        }
+
+        // Create subscription
+        const now = new Date();
+        const sub = await SandboxSubscriptionModel.create({
+          userId: cfg.userId,
+          customerEmail: customerEmail || undefined,
+          productId: product._id,
+          planId: plan._id,
+          status: (cfg.trialDays && Number(cfg.trialDays) > 0) ? 'trialing' : 'active',
+          startDate: now,
+          currentPeriodStart: now,
+          currentPeriodEnd: SandboxController.addInterval(now, interval),
+          metadata: { quickLinkToken: token }
+        });
+
+        // Create first payment session (pending)
+        session = (new SandboxSession({
+          userId: cfg.userId,
+          apiKeyId: 'default',
+          amount: plan.amount,
+          currency: plan.currency,
+          description: `Subscription first payment (${plan.interval})`,
+          customerEmail: customerEmail || undefined,
+          customerName: (customerName && String(customerName).trim()) || (customerEmail ? String(customerEmail).split('@')[0] : undefined),
+          productImage: product?.image || null,
+          productName: product?.name || null,
+          // Include branding and customer requirement
+          metadata: { source: 'quicklink-subscription', quickLinkToken: token, subscriptionId: sub.subscriptionId, productId: product._id, planId: plan._id, branding: cfg.branding || undefined, requireCustomerInfo: !!cfg.requireCustomerInfo },
+          paymentConfig: { allowedPaymentMethods: ['card'], requireCustomerEmail: false, requireCustomerName: false, autoCapture: true },
+          status: 'pending',
+          webhookDelivered: false,
+          webhookAttempts: 0,
+          sessionId: `sess_${Math.random().toString(36).slice(2, 10)}`,
+          expiresAt: new Date(Date.now() + 60 * 60 * 1000)
+        }) as unknown) as ISandboxSession;
+        await session.save();
+      }
+
+      // Update usage count
+      const updated = { ...cfg, currentUses: Number(cfg.currentUses || 0) + 1 };
+      try {
+        if (CacheService.isAvailable()) {
+          // Preserve remaining TTL if possible; fallback to 1 day
+          const ttlSeconds = Math.max(60, Math.ceil((new Date(cfg.expiresAt).getTime() - Date.now()) / 1000));
+          await CacheService.set('quicklinks', key, updated, { ttl: ttlSeconds });
+        } else {
+          SandboxController.quickLinkStore.set(key, updated);
+        }
+      } catch {}
+
+      const checkoutUrl = SandboxController.buildAbsoluteCheckoutUrl(req, (session as any).getCheckoutUrl());
+      return res.status(201).json({ success: true, data: { sessionId: session.sessionId, checkoutUrl } });
+    } catch (error) {
+      logger.error('Error starting payment from quick link:', error);
+      return res.status(500).json({ success: false, message: 'Failed to start payment' });
+    }
   }
   /**
    * Get sandbox data for a specific user
@@ -1686,17 +1987,46 @@ export class SandboxController {
         .limit(limitNum)
         .lean();
 
-      const transactions = sessionPayments.map((s: any) => ({
-        transactionId: s.sessionId, // use sessionId as the transaction identifier in sandbox
-        sessionId: s.sessionId,
-        amount: s.amount,
-        currency: s.currency,
-        description: s.description,
-        customerEmail: s.customerEmail,
-        status: s.status === 'completed' ? 'successful' : s.status,
-        createdAt: s.completedAt || s.createdAt,
-        paymentMethod: 'Credit/Debit Card'
-      }));
+      const transactions = sessionPayments.map((s: any) => {
+        // Get payment method from metadata
+        const paymentMethodUsed = s.metadata?.customFields?.paymentMethodUsed;
+        let formattedPaymentMethod = 'Credit/Debit Card';
+        
+        if (paymentMethodUsed) {
+          switch (paymentMethodUsed.toLowerCase()) {
+            case 'card':
+              formattedPaymentMethod = 'Credit/Debit Card';
+              break;
+            case 'bank_transfer':
+              formattedPaymentMethod = 'Bank Transfer';
+              break;
+            case 'mobile_money':
+              formattedPaymentMethod = 'Mobile Money';
+              break;
+            case 'wallet':
+              formattedPaymentMethod = 'Digital Wallet';
+              break;
+            case 'bank_account':
+              formattedPaymentMethod = 'Bank Account';
+              break;
+            default:
+              formattedPaymentMethod = 'Credit/Debit Card';
+          }
+        }
+
+        return {
+          transactionId: s.sessionId, // use sessionId as the transaction identifier in sandbox
+          sessionId: s.sessionId,
+          amount: s.amount,
+          currency: s.currency,
+          description: s.description,
+          customerEmail: s.customerEmail,
+          status: s.status === 'completed' ? 'successful' : s.status,
+          createdAt: s.completedAt || s.createdAt,
+          paymentMethod: formattedPaymentMethod,
+          metadata: s.metadata // Include full metadata for frontend processing
+        };
+      });
 
       // Calculate pagination info
       const totalPages = Math.ceil(totalTransactions / limitNum);
@@ -2663,6 +2993,18 @@ export class SandboxController {
           planProductId: plan.productId
         });
         
+        // Ensure absolute URL if product image is local path
+        const makeAbsolute = (url: string | undefined | null): string | null => {
+          if (!url) return null;
+          try {
+            if (/^https?:\/\//i.test(url)) return url;
+            const base = process.env.TL_BASE || `${req.protocol}://${req.get('host') || 'localhost:3000'}`;
+            const normalizedBase = base.replace(/\/$/, '');
+            const path = url.startsWith('/') ? url : `/${url}`;
+            return `${normalizedBase}${path}`;
+          } catch { return url; }
+        };
+
         session = await SandboxSession.create({
           userId: userId.toString(),
           apiKeyId: 'default',
@@ -2670,7 +3012,7 @@ export class SandboxController {
           currency: plan.currency,
           description: `Subscription first payment (${plan.interval})`,
           customerEmail,
-          productImage: product?.image || null,
+          productImage: makeAbsolute(product?.image) || null,
           productName: product?.name || null,
           metadata: { 
             source: 'sandbox-subscription',
@@ -3883,6 +4225,21 @@ export class SandboxController {
         });
       }
 
+      // Normalize product image URL to absolute if needed
+      const absolutize = (pathOrUrl: string | null | undefined): string | null => {
+        if (!pathOrUrl) return null;
+        try {
+          // Already absolute
+          if (/^https?:\/\//i.test(pathOrUrl)) return pathOrUrl;
+          const base = process.env.TL_BASE || `${req.protocol}://${req.get('host') || 'localhost:3000'}`;
+          const normalizedBase = base.replace(/\/$/, '');
+          const path = pathOrUrl.startsWith('/') ? pathOrUrl : `/${pathOrUrl}`;
+          return `${normalizedBase}${path}`;
+        } catch {
+          return pathOrUrl;
+        }
+      };
+
       // Return complete session data for checkout
       res.json({
         success: true,
@@ -3895,7 +4252,7 @@ export class SandboxController {
           customerEmail: session.customerEmail,
           status: session.status,
           expiresAt: session.expiresAt,
-          productImage: session.productImage || null,
+          productImage: absolutize((session as any).productImage) || null,
           productName: session.productName || null,
           successUrl: session.successUrl,
           cancelUrl: session.cancelUrl

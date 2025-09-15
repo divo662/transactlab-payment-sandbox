@@ -15,7 +15,7 @@ export class SecurityController {
     try {
       const userId = (req as any).user?._id?.toString();
       
-      const user = await User.findById(userId);
+      const user = await User.findById(userId).select('+totpSecret +totpBackupCodes');
       if (!user) {
         res.status(404).json({
           success: false,
@@ -55,7 +55,7 @@ static async setupTotp(req: Request, res: Response): Promise<void> {
     try {
       const userId = (req as any).user?._id?.toString();
       
-      const user = await User.findById(userId);
+      const user = await User.findById(userId).select('+totpSecret +totpBackupCodes');
       if (!user) {
         res.status(404).json({
           success: false,

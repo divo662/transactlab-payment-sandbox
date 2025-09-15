@@ -313,12 +313,16 @@ export const getTransactionAnalytics = async (req: Request, res: Response) => {
       return acc;
     }, {} as Record<string, { count: number; amount: number }>);
     
-    // Group by payment method (mock data for now)
-    const paymentMethodData = {
-      'card': { count: Math.round(sessions.length * 0.8), amount: Math.round(totalAmount * 0.8) },
-      'bank_transfer': { count: Math.round(sessions.length * 0.15), amount: Math.round(totalAmount * 0.15) },
-      'wallet': { count: Math.round(sessions.length * 0.05), amount: Math.round(totalAmount * 0.05) }
-    };
+    // Group by payment method from actual session data
+    const paymentMethodData = sessions.reduce((acc, session) => {
+      const paymentMethod = session.metadata?.customFields?.paymentMethodUsed || 'card';
+      if (!acc[paymentMethod]) {
+        acc[paymentMethod] = { count: 0, amount: 0 };
+      }
+      acc[paymentMethod].count += 1;
+      acc[paymentMethod].amount += session.amount || 0;
+      return acc;
+    }, {} as Record<string, { count: number; amount: number }>);
     
     res.json({
       success: true,
@@ -448,15 +452,42 @@ export const exportAnalytics = async (req: Request, res: Response) => {
           userId,
           createdAt: { $gte: start, $lte: end }
         });
-        data = sessions.map(session => ({
-          id: session._id,
-          customerEmail: session.customerEmail,
-          amount: session.amount,
-          currency: session.currency,
-          status: session.status,
-          paymentMethod: 'card', // Default payment method since it's not stored in the model
-          createdAt: session.createdAt
-        }));
+        data = sessions.map(session => {
+          const paymentMethodUsed = session.metadata?.customFields?.paymentMethodUsed;
+          let formattedPaymentMethod = 'card';
+          
+          if (paymentMethodUsed) {
+            switch (paymentMethodUsed.toLowerCase()) {
+              case 'card':
+                formattedPaymentMethod = 'Credit/Debit Card';
+                break;
+              case 'bank_transfer':
+                formattedPaymentMethod = 'Bank Transfer';
+                break;
+              case 'mobile_money':
+                formattedPaymentMethod = 'Mobile Money';
+                break;
+              case 'wallet':
+                formattedPaymentMethod = 'Digital Wallet';
+                break;
+              case 'bank_account':
+                formattedPaymentMethod = 'Bank Account';
+                break;
+              default:
+                formattedPaymentMethod = 'Credit/Debit Card';
+            }
+          }
+
+          return {
+            id: session._id,
+            customerEmail: session.customerEmail,
+            amount: session.amount,
+            currency: session.currency,
+            status: session.status,
+            paymentMethod: formattedPaymentMethod,
+            createdAt: session.createdAt
+          };
+        });
         break;
         
       case 'customers':

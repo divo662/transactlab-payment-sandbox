@@ -183,10 +183,15 @@ const Analytics: React.FC = () => {
             const refunds = (refundsResponse as any).data;
             refundsData = {
               total: refunds.length,
-              amount: refunds.reduce((sum: number, refund: any) => sum + (refund.amount || 0), 0),
+              // Convert from kobo to NGN for NGN refunds
+              amount: refunds.reduce((sum: number, refund: any) => {
+                const amount = refund.currency === 'NGN' ? (refund.amount || 0) / 100 : (refund.amount || 0);
+                return sum + amount;
+              }, 0),
               recentRefunds: refunds.slice(0, 5).map((refund: any) => ({
                 id: refund._id,
-                amount: refund.amount,
+                // Convert from kobo to NGN for display
+                amount: refund.currency === 'NGN' ? (refund.amount || 0) / 100 : (refund.amount || 0),
                 currency: refund.currency || 'NGN',
                 status: refund.status || 'completed',
                 createdAt: refund.createdAt
@@ -205,10 +210,13 @@ const Analytics: React.FC = () => {
           const customers = (customersResponse as any).data;
           topCustomers = customers.slice(0, 5).map((customer: any) => {
             // Calculate total spent from transactionsByCurrency array
+            // Convert from kobo to NGN (divide by 100)
             let totalSpent = 0;
             if (customer.transactionsByCurrency && customer.transactionsByCurrency.length > 0) {
               totalSpent = customer.transactionsByCurrency.reduce((sum: number, tx: any) => {
-                return sum + (tx.total || 0);
+                // Convert from kobo to NGN for NGN transactions
+                const amount = tx.currency === 'NGN' ? (tx.total || 0) / 100 : (tx.total || 0);
+                return sum + amount;
               }, 0);
             }
             
@@ -262,7 +270,7 @@ const Analytics: React.FC = () => {
             successful: Math.floor((stats.newOrders || 0) * 0.85), // Assume 85% success rate
             failed: Math.floor((stats.newOrders || 0) * 0.10), // Assume 10% failure rate
             pending: Math.floor((stats.newOrders || 0) * 0.05), // Assume 5% pending
-            totalAmount: (stats.allRevenue || 0) - refundsData.amount, // Net transaction amount
+            totalAmount: (stats.allRevenue || 0) - refundsData.amount, // Net transaction amount (already in proper units)
             averageAmount: stats.avgOrderRevenue || 0,
             successRate: 85,
             dailyData: stats.series?.map((item: any) => ({
@@ -300,7 +308,7 @@ const Analytics: React.FC = () => {
           revenue: {
             total: (stats.allRevenue || 0) - refundsData.amount, // Net revenue (gross - refunds)
             gross: stats.allRevenue || 0, // Gross revenue (before refunds)
-            refunded: refundsData.amount, // Total refunded amount
+            refunded: refundsData.amount, // Total refunded amount (converted from kobo)
             thisMonth: (stats.allRevenue || 0) - refundsData.amount,
             lastMonth: prevStats ? (prevStats.allRevenue || 0) - (prevStats.refundedAmount || 0) : 0,
             growthRate: prevStats && prevStats.allRevenue > 0 ? 

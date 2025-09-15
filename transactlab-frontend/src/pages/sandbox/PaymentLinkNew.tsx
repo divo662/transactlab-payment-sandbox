@@ -11,7 +11,9 @@ import { useToast } from '@/hooks/use-toast';
 
 const PaymentLinkNew: React.FC = () => {
   const { toast } = useToast();
+  const [activeTab, setActiveTab] = useState<'create'>('create');
   const [mode, setMode] = useState<'one_time'|'recurring'>('one_time');
+  const [title, setTitle] = useState<string>('');
   const [amount, setAmount] = useState<string>('');
   const [currency, setCurrency] = useState<string>('NGN');
   const [description, setDescription] = useState<string>('');
@@ -27,6 +29,19 @@ const PaymentLinkNew: React.FC = () => {
   const [initialLoading, setInitialLoading] = useState(true);
   const [resultUrl, setResultUrl] = useState<string>('');
   const [sessionId, setSessionId] = useState<string>('');
+  // Advanced options
+  const [allowAmountOverride, setAllowAmountOverride] = useState<boolean>(false);
+  const [requireCustomerInfo, setRequireCustomerInfo] = useState<boolean>(false);
+  const [expiresInMinutes, setExpiresInMinutes] = useState<string>('');
+  const [maxUses, setMaxUses] = useState<string>('');
+  // Branding
+  const [primaryColor, setPrimaryColor] = useState<string>('#0a164d');
+  const [secondaryColor, setSecondaryColor] = useState<string>('#1e3a8a');
+  const [logoUrl, setLogoUrl] = useState<string>('');
+  const [pageTitle, setPageTitle] = useState<string>('');
+  const [pageDescription, setPageDescription] = useState<string>('');
+
+  // Quick Pay removed
 
   const createLink = async () => {
     try {
@@ -34,31 +49,56 @@ const PaymentLinkNew: React.FC = () => {
       setResultUrl('');
       setSessionId('');
       const payload: any = {
-        amount: parseFloat(amount || '0'),
+        title: (title && title.trim()) || (description && description.trim()) || 'Quick Payment Link',
         currency,
-        description,
-        customerEmail: email || undefined,
+        description: description || undefined,
         successUrl: successUrl || undefined,
         cancelUrl: cancelUrl || undefined,
+      };
+      const amtNum = parseFloat(amount || '0');
+      if (!isNaN(amtNum) && amtNum > 0) {
+        payload.amount = amtNum;
+      }
+      payload.allowAmountOverride = !!allowAmountOverride;
+      payload.requireCustomerInfo = !!requireCustomerInfo;
+      if (expiresInMinutes) {
+        const v = parseInt(expiresInMinutes, 10);
+        if (!isNaN(v) && v > 0) payload.expiresInMinutes = v;
+      }
+      if (maxUses) {
+        const v = parseInt(maxUses, 10);
+        if (!isNaN(v) && v > 0) payload.maxUses = v;
+      }
+      payload.branding = {
+        primaryColor: primaryColor || '#0a164d',
+        secondaryColor: secondaryColor || '#1e3a8a',
+        logoUrl: logoUrl || undefined,
+        pageTitle: pageTitle || undefined,
+        pageDescription: pageDescription || undefined
       };
       if (mode === 'recurring') {
         payload.paymentType = 'recurring';
         payload.interval = interval;
         payload.trialDays = parseInt(trialDays || '0', 10) || 0;
         payload.chargeNow = chargeNow;
+      } else {
+        payload.paymentType = 'one_time';
       }
       const res = await api.createQuickPaymentLink(payload);
-      const data = res?.data || {};
-      const sid = data.sessionId || data.id || '';
-      setSessionId(sid);
-      const frontendBase = typeof window !== 'undefined' ? window.location.origin.replace(/\/$/, '') : '';
-      const normalizedUrl = sid ? `${frontendBase}/checkout/${sid}` : (data.checkoutUrl || '');
-      if (normalizedUrl) setResultUrl(normalizedUrl);
-      toast({ title: 'Link created', description: 'Your payment link is ready to share' });
+      const data = (res as any)?.data || res;
+      const link = data?.data || data;
+      const publicUrl = link?.publicUrl;
+      if (publicUrl) {
+        setResultUrl(publicUrl);
+        toast({ title: 'Link created', description: 'Your payment link is ready to share' });
+      } else {
+        toast({ title: 'Error', description: 'Failed to get payment link URL', variant: 'destructive' });
+      }
     } catch (e: any) {
       toast({ title: 'Error', description: e?.message || 'Failed to create link', variant: 'destructive' });
     } finally { setLoading(false); }
   };
+
 
   useEffect(() => {
     (async () => {
@@ -201,7 +241,10 @@ const PaymentLinkNew: React.FC = () => {
           </CardTitle>
         </CardHeader>
         <CardContent className="px-3 sm:px-6 pb-3 sm:pb-6 space-y-4 sm:space-y-6">
-          <div>
+          
+
+          {activeTab === 'create' && (
+          <>
             <Label className="text-xs text-gray-600">Payment Type</Label>
             <div className="mt-2 grid grid-cols-1 sm:grid-cols-2 gap-2">
               <button 
@@ -227,9 +270,18 @@ const PaymentLinkNew: React.FC = () => {
                 <p className="text-xs text-gray-500 mt-1">Subscription-based link</p>
               </button>
             </div>
-          </div>
+          
 
           <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
+            <div>
+              <Label className="text-xs text-gray-600">Title</Label>
+              <Input 
+                value={title} 
+                onChange={(e)=>setTitle(e.target.value)} 
+                placeholder="Payment title" 
+                className="transition-all focus:shadow-sm text-xs sm:text-sm" 
+              />
+            </div>
             <div>
               <Label className="text-xs text-gray-600">Amount</Label>
               <Input 
@@ -300,6 +352,27 @@ const PaymentLinkNew: React.FC = () => {
             />
           </div>
 
+          {/* Advanced options */}
+          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
+            <label className="inline-flex items-center gap-2 text-xs sm:text-sm">
+              <input type="checkbox" className="w-3 h-3 sm:w-4 sm:h-4" checked={allowAmountOverride} onChange={(e)=>setAllowAmountOverride(e.target.checked)} />
+              Allow amount override
+            </label>
+            <label className="inline-flex items-center gap-2 text-xs sm:text-sm">
+              <input type="checkbox" className="w-3 h-3 sm:w-4 sm:h-4" checked={requireCustomerInfo} onChange={(e)=>setRequireCustomerInfo(e.target.checked)} />
+              Require customer info
+            </label>
+            <div />
+            <div>
+              <Label className="text-xs text-gray-600">Expires in (minutes)</Label>
+              <Input value={expiresInMinutes} onChange={(e)=>setExpiresInMinutes(e.target.value)} placeholder="e.g. 10080" className="text-xs sm:text-sm" />
+            </div>
+            <div>
+              <Label className="text-xs text-gray-600">Max uses</Label>
+              <Input value={maxUses} onChange={(e)=>setMaxUses(e.target.value)} placeholder="e.g. 100" className="text-xs sm:text-sm" />
+            </div>
+          </div>
+
           {mode === 'recurring' && (
             <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
               <div>
@@ -361,6 +434,30 @@ const PaymentLinkNew: React.FC = () => {
             </div>
           </div>
 
+          {/* Branding */}
+          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
+            <div>
+              <Label className="text-xs text-gray-600">Primary color</Label>
+              <Input type="text" value={primaryColor} onChange={(e)=>setPrimaryColor(e.target.value)} placeholder="#0a164d" className="text-xs sm:text-sm" />
+            </div>
+            <div>
+              <Label className="text-xs text-gray-600">Secondary color</Label>
+              <Input type="text" value={secondaryColor} onChange={(e)=>setSecondaryColor(e.target.value)} placeholder="#1e3a8a" className="text-xs sm:text-sm" />
+            </div>
+            <div>
+              <Label className="text-xs text-gray-600">Logo URL</Label>
+              <Input type="text" value={logoUrl} onChange={(e)=>setLogoUrl(e.target.value)} placeholder="https://..." className="text-xs sm:text-sm" />
+            </div>
+            <div>
+              <Label className="text-xs text-gray-600">Page title</Label>
+              <Input type="text" value={pageTitle} onChange={(e)=>setPageTitle(e.target.value)} placeholder="Checkout" className="text-xs sm:text-sm" />
+            </div>
+            <div>
+              <Label className="text-xs text-gray-600">Page description</Label>
+              <Input type="text" value={pageDescription} onChange={(e)=>setPageDescription(e.target.value)} placeholder="Pay securely with TransactLab" className="text-xs sm:text-sm" />
+            </div>
+          </div>
+
           <div className="pt-2">
             <Button 
               onClick={createLink} 
@@ -380,6 +477,8 @@ const PaymentLinkNew: React.FC = () => {
               )}
             </Button>
           </div>
+          </>
+          )}
         </CardContent>
       </Card>
 

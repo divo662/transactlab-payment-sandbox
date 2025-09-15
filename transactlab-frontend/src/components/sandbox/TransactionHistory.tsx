@@ -222,6 +222,12 @@ const TransactionHistory: React.FC = () => {
 
   // Get formatted payment method
   const getFormattedPaymentMethod = (transaction: any) => {
+    // First try to use the formatted paymentMethod from the API response
+    if (transaction.paymentMethod) {
+      return transaction.paymentMethod;
+    }
+    
+    // Fallback to the raw payment method from metadata
     const paymentMethod = transaction.metadata?.customFields?.paymentMethodUsed;
     
     if (!paymentMethod) {

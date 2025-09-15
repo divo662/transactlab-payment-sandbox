@@ -90,7 +90,7 @@ export class SecurityService {
    */
   static async isDeviceTrusted(userId: string, deviceId: string): Promise<boolean> {
     try {
-      const user = await User.findById(userId);
+      const user = await User.findById(userId).select('+totpSecret +totpBackupCodes');
       if (!user) return false;
       
       return (user as any).isDeviceTrusted(deviceId);
@@ -105,7 +105,7 @@ export class SecurityService {
    */
   static async addTrustedDevice(userId: string, deviceInfo: DeviceInfo): Promise<void> {
     try {
-      const user = await User.findById(userId);
+      const user = await User.findById(userId).select('+totpSecret +totpBackupCodes');
       if (!user) throw new Error('User not found');
       
       await (user as any).addTrustedDevice(deviceInfo);
@@ -121,7 +121,7 @@ export class SecurityService {
    */
   static async removeTrustedDevice(userId: string, deviceId: string): Promise<void> {
     try {
-      const user = await User.findById(userId);
+      const user = await User.findById(userId).select('+totpSecret +totpBackupCodes');
       if (!user) throw new Error('User not found');
       
       await (user as any).removeTrustedDevice(deviceId);

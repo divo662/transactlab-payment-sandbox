@@ -450,6 +450,20 @@ class ApiService {
     });
   }
 
+  // Public quick link endpoints (no auth required by server, but we still send token if available)
+  async getQuickLinkMeta(token: string, userIdHint?: string): Promise<any> {
+    const qs = userIdHint ? `?userId=${encodeURIComponent(userIdHint)}` : '';
+    return this.request(`/sandbox/pay/ql/${encodeURIComponent(token)}${qs}`);
+  }
+
+  async startPaymentFromQuickLink(token: string, payload: { amount?: number; customerEmail?: string; customerName?: string }, userIdHint?: string): Promise<any> {
+    const qs = userIdHint ? `?userId=${encodeURIComponent(userIdHint)}` : '';
+    return this.request(`/sandbox/pay/ql/${encodeURIComponent(token)}/start${qs}`, {
+      method: 'POST',
+      body: JSON.stringify(payload)
+    });
+  }
+
   // Sandbox catalogs
   async listSandboxProducts(): Promise<any> {
     return this.request('/sandbox/products');

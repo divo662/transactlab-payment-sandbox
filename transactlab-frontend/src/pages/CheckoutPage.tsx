@@ -35,6 +35,8 @@ interface CheckoutSession {
   productImage?: string;
   productName?: string;
   // Deprecated: template UI config (not used)
+  // Augmented branding info (optional)
+  // Not stored directly; read via raw JSON in fetch hook
 }
 
 interface PaymentFormData {
@@ -74,6 +76,8 @@ const CheckoutPage: React.FC = () => {
   const [showBankModal, setShowBankModal] = useState(false);
   const [bankConfirmed, setBankConfirmed] = useState(false);
   // Template UI customization paused
+  const [branding, setBranding] = useState<{ primaryColor?: string; secondaryColor?: string; logoUrl?: string; pageTitle?: string; pageDescription?: string } | null>(null);
+  const [requireCustomerInfo, setRequireCustomerInfo] = useState<boolean>(false);
   
   const [formData, setFormData] = useState<PaymentFormData>({
     cardNumber: '',
@@ -126,15 +130,27 @@ const CheckoutPage: React.FC = () => {
           success_url: s.success_url,
           cancelUrl: s.cancelUrl || s.cancel_url,
           cancel_url: s.cancel_url,
-          paymentConfig: s.paymentConfig
+          paymentConfig: s.paymentConfig,
+          // Prefer explicit fields; else attempt to derive from metadata.branding
+          productImage: s.productImage || (s.metadata?.branding?.logoUrl || null),
+          productName: s.productName || (s.metadata?.branding?.pageTitle || null)
         };
         setSession(normalized);
+        try {
+          setBranding(s?.metadata?.branding || null);
+          setRequireCustomerInfo(!!s?.metadata?.requireCustomerInfo);
+        } catch {}
         // derive initial method from URL param or default to card
         const searchParams = new URLSearchParams(location.search);
         const pmParam = searchParams.get('pm') as 'card' | 'bank_transfer' | 'mobile_money' | null;
         const initial = pmParam && (['card','bank_transfer','mobile_money'] as const).includes(pmParam) ? pmParam : 'card';
         setSelectedMethod(initial);
         setFormData(prev => ({ ...prev, email: normalized.customerEmail || '' }));
+        // Apply dynamic document title if available
+        try {
+          const pageTitle = s?.metadata?.branding?.pageTitle as string | undefined;
+          if (pageTitle) document.title = pageTitle;
+        } catch {}
       } catch (e: any) {
         setError(e?.message || 'Failed to load checkout session');
       } finally {
@@ -365,7 +381,10 @@ const CheckoutPage: React.FC = () => {
   const majorAmount = (session.amount || 0) / 100;
 
   // Static background
-  const pageBackgroundStyle: React.CSSProperties = {};
+  const pageBackgroundStyle: React.CSSProperties = {
+    ['--tl-primary' as any]: branding?.primaryColor || '#0a164d',
+    ['--tl-secondary' as any]: branding?.secondaryColor || '#1e3a8a'
+  };
 
   return (
     <>
@@ -381,12 +400,12 @@ const CheckoutPage: React.FC = () => {
             Back
           </button>
          
-          <h1 className="text-2xl sm:text-3xl md:text-4xl font-bold text-gray-900 mb-1 sm:mb-2 text-center">Checkout</h1>
+          <h1 className="text-2xl sm:text-3xl md:text-4xl font-bold text-gray-900 mb-1 sm:mb-2 text-center">{branding?.pageTitle || 'Checkout'}</h1>
           <div className="flex items-center justify-center gap-2 text-xs sm:text-sm text-gray-500">
-            <span>Powered by</span>
+            <span>{branding?.pageDescription || 'Powered by'}</span>
             <div className="inline-flex items-center gap-1 px-2 py-1 rounded-md border border-gray-200 bg-white shadow-sm">
-              <img src="/transactlab/1.png" alt="TransactLab" className="h-4 w-4" />
-              <span className="font-semibold text-[#0a164d]">TransactLab</span>
+              <img src={branding?.logoUrl || '/transactlab/1.png'} alt="TransactLab" className="h-4 w-4" />
+              <span className="font-semibold" style={{ color: branding?.primaryColor || '#0a164d' }}>TransactLab</span>
             </div>
           </div>
         </div>
@@ -406,7 +425,8 @@ const CheckoutPage: React.FC = () => {
                     key={m}
                     type="button"
                     onClick={() => setSelectedMethod(m)}
-                    className={`px-3 py-2 rounded border text-xs sm:text-sm ${selectedMethod===m ? 'border-[#0a164d] text-[#0a164d] bg-[#0a164d]/5' : 'border-gray-200 text-gray-600'}`}
+                    className={`px-3 py-2 rounded border text-xs sm:text-sm ${selectedMethod===m ? '' : 'border-gray-200 text-gray-600'}`}
+                    style={ selectedMethod===m ? { borderColor: branding?.primaryColor || '#0a164d', color: branding?.primaryColor || '#0a164d', backgroundColor: (branding?.primaryColor ? `${branding.primaryColor}1A` : '#0a164d1A') } : undefined }
                   >
                     {m === 'card' ? 'Card' : m === 'bank_transfer' ? 'Bank Transfer' : 'Mobile Money'}
                   </button>
@@ -425,6 +445,7 @@ const CheckoutPage: React.FC = () => {
                     onChange={(e) => handleInputChange('cardholderName', e.target.value)}
                     className="w-full px-3 sm:px-4 py-3 sm:py-4 border border-gray-300 rounded-lg focus:ring-2 focus:ring-[#0a164d] focus:border-[#0a164d] transition-all text-sm sm:text-base md:text-lg"
                     placeholder="John Doe"
+                    required={requireCustomerInfo}
                   />
               </div>
 
@@ -498,6 +519,7 @@ const CheckoutPage: React.FC = () => {
                     onChange={(e) => handleInputChange('email', e.target.value)}
                     className="w-full px-3 sm:px-4 py-3 sm:py-4 border border-gray-300 rounded-lg focus:ring-2 focus:ring-[#0a164d] focus:border-[#0a164d] transition-all text-sm sm:text-base md:text-lg"
                     placeholder="john@example.com"
+                    required={requireCustomerInfo}
                   />
                 </div>
 
@@ -539,6 +561,7 @@ const CheckoutPage: React.FC = () => {
                       onChange={(e) => handleInputChange('addressLine1', e.target.value)}
                       className="w-full px-3 sm:px-4 py-3 sm:py-4 border border-gray-300 rounded-lg focus:ring-2 focus:ring-[#0a164d] focus:border-[#0a164d] transition-all text-sm sm:text-base md:text-lg"
                       placeholder="123 Example Street"
+                      required={requireCustomerInfo}
                     />
                   </div>
                   <div>
@@ -643,7 +666,8 @@ const CheckoutPage: React.FC = () => {
                 <button
                   type="submit"
                   disabled={processing || session.status !== 'pending' || decision?.action === 'review'}
-                  className="w-full bg-[#0a164d] text-white py-3 sm:py-4 px-4 sm:px-6 rounded-lg font-semibold hover:bg-[#0a164d]/90 disabled:opacity-50 disabled:cursor-not-allowed transition-all transform hover:scale-[1.02] active:scale-[0.98] text-sm sm:text-base md:text-lg"
+                  className="w-full text-white py-3 sm:py-4 px-4 sm:px-6 rounded-lg font-semibold disabled:opacity-50 disabled:cursor-not-allowed transition-all transform hover:scale-[1.02] active:scale-[0.98] text-sm sm:text-base md:text-lg"
+                  style={{ backgroundColor: branding?.primaryColor || '#0a164d' }}
                 >
                   {processing ? (
                     <div className="flex items-center justify-center">
@@ -695,7 +719,7 @@ const CheckoutPage: React.FC = () => {
                       className="w-8 h-8 sm:w-10 sm:h-10 rounded-lg object-cover border flex-shrink-0"
                     />
                   ) : (
-                    <div className="w-8 h-8 sm:w-10 sm:h-10 bg-[#0a164d] rounded-lg flex items-center justify-center flex-shrink-0">
+                    <div className="w-8 h-8 sm:w-10 sm:h-10 rounded-lg flex items-center justify-center flex-shrink-0" style={{ backgroundColor: branding?.primaryColor || '#0a164d' }}>
                       <CreditCard className="w-4 h-4 sm:w-5 sm:h-5 text-white" />
                     </div>
                   )}

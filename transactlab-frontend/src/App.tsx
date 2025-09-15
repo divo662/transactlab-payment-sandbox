@@ -43,6 +43,7 @@ import PaymentLinkNew from "./pages/sandbox/PaymentLinkNew";
 import SDKSetup from "./pages/sandbox/SDKSetup";
 import Feedback from "./pages/Feedback";
 import Analytics from "./pages/Analytics";
+import QuickLinkPay from "./pages/QuickLinkPay";
 
 const queryClient = new QueryClient();
 
@@ -100,6 +101,7 @@ const App = () => (
               </Route>
 
               {/* Checkout (public) */}
+              <Route path="/pay/ql/:token" element={<QuickLinkPay />} />
               <Route path="/checkout/:sessionId" element={<CheckoutPage />} />
               <Route path="/checkout/success" element={<CheckoutSuccessPage />} />
               <Route path="/checkout/error" element={<CheckoutErrorPage />} />

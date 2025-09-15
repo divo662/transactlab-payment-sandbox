@@ -66,6 +66,11 @@ router.get('/debug/plan-product-relationships', SandboxController.debugPlanProdu
 
 // Customers (with caching for GET requests)
 router.post('/customers', SandboxController.createCustomer);
+// Reusable Quick Payment Links
+router.post('/payment-links/quick', SandboxController.createQuickPaymentLinkReusable);
+// Public endpoints for quick links (no auth middleware should be placed before these in the app router stack)
+router.get('/pay/ql/:token', SandboxController.getQuickPaymentLinkMeta);
+router.post('/pay/ql/:token/start', SandboxController.startQuickPaymentFromLink);
 router.get('/customers', cacheMiddleware({ 
   ttl: 300, // 5 minutes
   keyGenerator: cacheKeyGenerators.userRoute 
