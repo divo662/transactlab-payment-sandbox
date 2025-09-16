@@ -481,7 +481,7 @@ const Login = () => {
 
       {/* Right column: hero image + testimonials carousel */}
       <section className="hidden md:block flex-1 relative p-4 w-full">
-        <div className="animate-slide-right animate-delay-300 absolute inset-4 rounded-3xl bg-cover bg-center" style={{ backgroundImage: `url(https://images.unsplash.com/photo-1642615835477-d303d7dc9ee9?w=2160&q=80)` }}></div>
+        <div className="animate-slide-right animate-delay-300 absolute inset-4 rounded-3xl bg-contain bg-top-center" style={{ backgroundImage: `url(/transactlab/login.png)` }}></div>
         
         {/* Testimonials Carousel */}
         <div className="absolute bottom-8 left-4 right-4">

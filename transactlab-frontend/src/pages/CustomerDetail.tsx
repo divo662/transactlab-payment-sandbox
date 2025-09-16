@@ -415,7 +415,7 @@ const CustomerDetail: React.FC = () => {
       });
       if (refundsRes.ok) {
         const refundsData = await refundsRes.json();
-        const list = refundsData.data || [];
+        const list = refundsData.data || refundsData.refunds || [];
         setRefunds(list);
         if (refundsData.pagination) {
           setRefundsPagination(refundsData.pagination);
@@ -608,6 +608,14 @@ const CustomerDetail: React.FC = () => {
     }).format(amount / 100);
   };
 
+  const formatNumber = (value: string) => {
+    const numericValue = value.replace(/[^0-9.]/g, '');
+    if (!numericValue) return '';
+    const parts = numericValue.split('.');
+    parts[0] = parts[0].replace(/\B(?=(\d{3})+(?!\d))/g, ',');
+    return parts.join('.');
+  };
+
   const formatDate = (dateString: string) => {
     return new Date(dateString).toLocaleDateString('en-US', {
       year: 'numeric',
@@ -664,7 +672,7 @@ const CustomerDetail: React.FC = () => {
           'Content-Type': 'application/json'
         },
         body: JSON.stringify({
-          amount: parseInt(paymentForm.amount) * 100, // Convert to cents
+          amount: parseFloat(paymentForm.amount.replace(/,/g, '')), // Remove commas before parsing
           currency: paymentForm.currency,
           description: paymentForm.description,
           customerEmail: customer?.email,
@@ -709,7 +717,7 @@ const CustomerDetail: React.FC = () => {
           'Content-Type': 'application/json'
         },
         body: JSON.stringify({
-          amount: parseInt(invoiceForm.amount) * 100, // Convert to cents
+          amount: parseFloat(invoiceForm.amount.replace(/,/g, '')), // Remove commas before parsing
           currency: invoiceForm.currency,
           description: invoiceForm.description,
           customerEmail: customer?.email,
@@ -1072,7 +1080,7 @@ const CustomerDetail: React.FC = () => {
         },
         body: JSON.stringify({
           transactionId: selectedTransaction.sessionId, // Use sessionId as transactionId for sandbox
-          amount: refundForm.amount ? parseInt(refundForm.amount) * 100 : selectedTransaction.amount, // Convert to cents
+          amount: refundForm.amount ? parseFloat(refundForm.amount) : (selectedTransaction.amount / 100), // Keep as is - backend handles conversion
           reason: refundForm.reason,
           customerEmail: selectedTransaction.customerEmail
         })
@@ -1628,7 +1636,7 @@ const CustomerDetail: React.FC = () => {
               <CardHeader className="px-3 sm:px-6 pt-3 sm:pt-6 pb-3 sm:pb-6">
                 <CardTitle className="flex items-center text-sm sm:text-lg lg:text-xl">
                   <XCircle className="w-4 h-4 sm:w-5 sm:h-5 mr-2" />
-                  Refunds
+                  Refunds ({refunds.length})
                 </CardTitle>
               </CardHeader>
               <CardContent className="px-3 sm:px-6 pt-0 pb-3 sm:pb-6">
@@ -1653,12 +1661,7 @@ const CustomerDetail: React.FC = () => {
                 ) : refunds.length > 0 ? (
                   <>
                   <div className="space-y-3 sm:space-y-4">
-                    {(() => {
-                      const start = (refundsPagination.currentPage - 1) * refundsPagination.itemsPerPage;
-                      const end = start + refundsPagination.itemsPerPage;
-                      const pageItems = refunds.slice(start, end);
-                      return pageItems;
-                    })().map((refund) => (
+                    {refunds.map((refund) => (
                       <div 
                         key={refund._id} 
                         className="flex flex-col sm:flex-row sm:items-center sm:justify-between p-3 sm:p-4 border rounded-lg gap-3 sm:gap-4"
@@ -1672,7 +1675,7 @@ const CustomerDetail: React.FC = () => {
                               {formatAmount(refund.amount, refund.currency)}
                             </p>
                             <p className="text-xs sm:text-sm text-gray-600 truncate">
-                              Transaction: {refund.transactionId}
+                              Transaction: {refund.transactionId || refund.refundId}
                             </p>
                             <p className="text-xs text-gray-500">
                               Reason: {refund.reason?.replace(/_/g, ' ').replace(/\b\w/g, l => l.toUpperCase())}
@@ -1724,7 +1727,18 @@ const CustomerDetail: React.FC = () => {
             {/* Customer Details */}
             <Card>
               <CardHeader className="px-3 sm:px-6 pt-3 sm:pt-6 pb-3 sm:pb-6">
-                <CardTitle className="text-sm sm:text-base lg:text-lg">Customer Details</CardTitle>
+                <div className="flex items-center justify-between">
+                  <CardTitle className="text-sm sm:text-base lg:text-lg">Customer Details</CardTitle>
+                  <Button
+                    variant="outline"
+                    size="sm"
+                    onClick={handleOpenEdit}
+                    className="text-xs sm:text-sm"
+                  >
+                    <User className="w-3 h-3 sm:w-4 sm:h-4 mr-1 sm:mr-2" />
+                    <span className="hidden sm:inline">Edit</span>
+                  </Button>
+                </div>
               </CardHeader>
               <CardContent className="px-3 sm:px-6 pb-3 sm:pb-6 space-y-3 sm:space-y-4">
                 <div>
@@ -1820,13 +1834,21 @@ const CustomerDetail: React.FC = () => {
                   <Label htmlFor="amount" className="text-xs sm:text-sm">Amount</Label>
                   <Input
                     id="amount"
-                    type="number"
+                    type="text"
                     value={paymentForm.amount}
-                    onChange={(e) => setPaymentForm({...paymentForm, amount: e.target.value})}
-                    placeholder="0.00"
+                    onChange={(e) => {
+                      const formatted = formatNumber(e.target.value);
+                      setPaymentForm({...paymentForm, amount: formatted});
+                    }}
+                    placeholder="1,000.00"
                     required
                     className="text-xs sm:text-sm"
                   />
+                  {paymentForm.amount && (
+                    <p className="text-xs text-gray-500 mt-1">
+                      Formatted: {paymentForm.amount} {paymentForm.currency}
+                    </p>
+                  )}
                 </div>
                 <div>
                   <Label htmlFor="currency" className="text-xs sm:text-sm">Currency</Label>
@@ -1887,13 +1909,21 @@ const CustomerDetail: React.FC = () => {
                   <Label htmlFor="invoice-amount" className="text-xs sm:text-sm">Amount</Label>
                   <Input
                     id="invoice-amount"
-                    type="number"
+                    type="text"
                     value={invoiceForm.amount}
-                    onChange={(e) => setInvoiceForm({...invoiceForm, amount: e.target.value})}
-                    placeholder="0.00"
+                    onChange={(e) => {
+                      const formatted = formatNumber(e.target.value);
+                      setInvoiceForm({...invoiceForm, amount: formatted});
+                    }}
+                    placeholder="1,000.00"
                     required
                     className="text-xs sm:text-sm"
                   />
+                  {invoiceForm.amount && (
+                    <p className="text-xs text-gray-500 mt-1">
+                      Formatted: {invoiceForm.amount} {invoiceForm.currency}
+                    </p>
+                  )}
                 </div>
                 <div>
                   <Label htmlFor="invoice-currency" className="text-xs sm:text-sm">Currency</Label>

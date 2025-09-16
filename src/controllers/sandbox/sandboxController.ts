@@ -210,7 +210,7 @@ export class SandboxController {
         || process.env.FRONTEND_URL 
         || process.env.REACT_APP_FRONTEND_URL 
         || 'https://transactlab-payment-sandbox.vercel.app';
-      const publicUrl = `${frontendBase.replace(/\/$/, '')}/pay/ql/${token}`;
+      const publicUrl = `${frontendBase.replace(/\/$/, '')}/pay/ql/${token}?userId=${userId.toString()}`;
       // If the request explicitly asks for an immediate session (one-time, no override, fixed amount), create and return checkoutUrl directly
       const wantsImmediate = !allowAmountOverride && paymentType !== 'recurring' && typeof amount === 'number';
       if (wantsImmediate) {
@@ -245,7 +245,23 @@ export class SandboxController {
         for (const [k, v] of SandboxController.quickLinkStore.entries()) {
           if (k.endsWith(`:${token}`)) return v;
         }
-        // Try Redis namespace if available (we cannot scan keys reliably; rely on client-side knowing user)
+        
+        // Try Redis namespace if available - try common user patterns
+        if (CacheService.isAvailable()) {
+          // Try to find the key by scanning common user IDs
+          // This is a fallback for when we don't have the userId
+          const commonUserIds = ['68c169100f8a19e81b8ebe98']; // Add common user IDs here
+          for (const userId of commonUserIds) {
+            const cacheKey = `${keyPrefix}${userId}:${token}`;
+            try {
+              const cfg = await CacheService.get('quicklinks', cacheKey);
+              if (cfg) return cfg;
+            } catch (e) {
+              // Continue to next user
+            }
+          }
+        }
+        
         return null;
       };
 
