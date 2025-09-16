@@ -64,30 +64,38 @@ app.use(cors({
 app.use(express.json({ limit: '10mb' }));
 app.use(express.urlencoded({ extended: true, limit: '10mb' }));
 
-// Rate limiting
+// Rate limiting - More generous limits to prevent blocking
 const limiter = rateLimit({
   windowMs: 15 * 60 * 1000, // 15 minutes
-  max: 100, // limit each IP to 100 requests per windowMs
+  max: 500, // Increased from 100 to 500 requests per windowMs
   message: {
     error: 'Too many requests from this IP, please try again later.',
     code: 'RATE_LIMIT_EXCEEDED'
   },
   standardHeaders: true,
   legacyHeaders: false,
+  // Skip rate limiting for localhost in development
+  skip: (req) => {
+    return req.ip === '127.0.0.1' || req.ip === '::1' || req.ip?.startsWith('::ffff:127.0.0.1');
+  }
 });
 
 app.use('/api/', limiter);
 
-// API rate limiting (stricter)
+// API rate limiting (more generous)
 const apiLimiter = rateLimit({
   windowMs: 15 * 60 * 1000, // 15 minutes
-  max: 1000, // limit each IP to 1000 requests per windowMs
+  max: 2000, // Increased from 1000 to 2000 requests per windowMs
   message: {
     error: 'Too many API requests from this IP, please try again later.',
     code: 'API_RATE_LIMIT_EXCEEDED'
   },
   standardHeaders: true,
   legacyHeaders: false,
+  // Skip rate limiting for localhost in development
+  skip: (req) => {
+    return req.ip === '127.0.0.1' || req.ip === '::1' || req.ip?.startsWith('::ffff:127.0.0.1');
+  }
 });
 
 app.use('/api/v1/', apiLimiter);

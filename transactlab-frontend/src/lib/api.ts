@@ -6,6 +6,9 @@ class ApiService {
     options: RequestInit = {},
     retryCount = 0
   ): Promise<T> {
+    // Add timeout to prevent hanging requests
+    const controller = new AbortController();
+    const timeoutId = setTimeout(() => controller.abort(), 30000); // 30 second timeout
     const url = `${API_BASE_URL}${endpoint}`;
     
     const config: RequestInit = {
@@ -13,6 +16,7 @@ class ApiService {
         ...options.headers,
       },
       ...options,
+      signal: controller.signal, // Add abort signal for timeout
     };
 
     // Only set Content-Type for JSON requests
@@ -34,6 +38,7 @@ class ApiService {
 
     try {
       let response = await fetch(url, config);
+      clearTimeout(timeoutId); // Clear timeout on successful response
       
       if (!response.ok) {
         let errorData: any = {};
@@ -77,14 +82,20 @@ class ApiService {
           // Try refresh once, then retry original request
           if (retryCount === 0) {
             try {
+              console.log('Attempting token refresh...');
               await this.refreshToken();
               const newToken = localStorage.getItem('accessToken');
               if (newToken) {
                 config.headers = { ...(config.headers || {}), Authorization: `Bearer ${newToken}` };
+                console.log('Token refreshed, retrying request...');
+                response = await fetch(url, config);
+                if (!response.ok) throw new Error('Unauthorized after refresh');
+                // continue below to parse normally
+                clearTimeout(timeoutId);
+                return await response.json() as T;
+              } else {
+                throw new Error('No new token after refresh');
               }
-              response = await fetch(url, config);
-              if (!response.ok) throw new Error('Unauthorized');
-              // continue below to parse normally
               } catch (refreshError) {
                 // Try to get the actual error response before throwing
                 let errorMessage = 'Please log in to continue.';
@@ -171,7 +182,14 @@ class ApiService {
       
       return await response.json() as T;
     } catch (error) {
+      clearTimeout(timeoutId); // Clear timeout on error
       console.error('API request failed:', error);
+      
+      // Handle timeout errors
+      if (error.name === 'AbortError') {
+        throw new Error('Request timed out. Please check your connection and try again.');
+      }
+      
       throw error;
     }
   }

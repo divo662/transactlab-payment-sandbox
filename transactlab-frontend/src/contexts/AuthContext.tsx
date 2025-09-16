@@ -276,6 +276,7 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
 
   const refreshAuth = async () => {
     try {
+      console.log('AuthContext: Starting token refresh...');
       const response = await apiService.refreshToken();
       
       if (response.success && response.data) {
@@ -287,11 +288,13 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
         // Update stored tokens
         localStorage.setItem('accessToken', authTokens.accessToken);
         localStorage.setItem('refreshToken', authTokens.refreshToken);
+        console.log('AuthContext: Token refresh successful');
       } else {
+        console.error('AuthContext: Token refresh failed - no success response');
         throw new Error('Token refresh failed');
       }
     } catch (error) {
-      console.error('Token refresh error:', error);
+      console.error('AuthContext: Token refresh error:', error);
       // Force logout on refresh failure
       await logout();
       throw error;
