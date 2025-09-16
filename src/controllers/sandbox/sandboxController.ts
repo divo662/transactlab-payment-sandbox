@@ -4188,11 +4188,22 @@ export class SandboxController {
     try {
       const userId = (req as any).user?._id;
       const { invoiceId } = req.params;
+      // Allow lookup by either friendly invoiceId (e.g., inv_...) or Mongo _id
+      let invoice: any = null;
+      try {
+        // First, try by human-friendly invoiceId field
+        invoice = await (SandboxInvoice as any).findOne({ invoiceId, userId });
+      } catch {}
 
-      const invoice = await (SandboxInvoice as any).findOne({ 
-        _id: invoiceId, 
-        userId 
-      });
+      if (!invoice) {
+        // Fallback: if the param looks like a Mongo ObjectId, try by _id
+        const looksLikeObjectId = /^[a-fA-F0-9]{24}$/.test(String(invoiceId));
+        if (looksLikeObjectId) {
+          try {
+            invoice = await (SandboxInvoice as any).findOne({ _id: invoiceId, userId });
+          } catch {}
+        }
+      }
 
       if (!invoice) {
         return res.status(404).json({
