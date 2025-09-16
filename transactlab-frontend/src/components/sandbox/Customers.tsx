@@ -9,7 +9,7 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from '@/components/ui/dialog';
 import { useToast } from '@/hooks/use-toast';
 import Pagination from '@/components/ui/pagination';
-import { Plus, User, Mail, Phone, MapPin, Building } from 'lucide-react';
+import { Plus, User, Mail, Phone, MapPin, Building, Download } from 'lucide-react';
 import { useSandbox } from '@/contexts/SandboxContext';
 
 // Simple fetch via SandboxContext endpoints isn't defined yet for customers,
@@ -31,6 +31,7 @@ const Customers: React.FC = () => {
   const [loading, setLoading] = useState(true);
   const [showCreateModal, setShowCreateModal] = useState(false);
   const [creating, setCreating] = useState(false);
+  const [exporting, setExporting] = useState(false);
   const [formData, setFormData] = useState({
     name: '',
     email: '',
@@ -131,6 +132,103 @@ const Customers: React.FC = () => {
   useEffect(() => { void fetchCustomers(); }, []);
 
   const fmtMoney = (a:number,c:string)=> new Intl.NumberFormat('en-US',{style:'currency',currency:c||'NGN'}).format((a||0)/100);
+
+  const exportAllCustomers = async () => {
+    try {
+      setExporting(true);
+      const allCustomers: any[] = [];
+      let page = 1;
+      // Use a higher limit to reduce number of requests if backend allows
+      const limit = 100;
+      // Safety cap to avoid infinite loops
+      const maxPages = 1000;
+      // Paginate until no next page
+      while (page <= maxPages) {
+        const json = await apiCall(`/customers?page=${page}&limit=${limit}`);
+        const list = Array.isArray(json?.data) ? json.data : [];
+        allCustomers.push(...list);
+        const hasNext = Boolean(json?.pagination?.hasNextPage);
+        if (!hasNext) break;
+        page += 1;
+      }
+
+      // Build CSV
+      const headers = [
+        'Customer ID',
+        'Name',
+        'Email',
+        'Phone',
+        'Address Line 1',
+        'Address Line 2',
+        'City',
+        'State/Province',
+        'Postal Code',
+        'Country',
+        'Description',
+        'Total Transactions',
+        'Transactions By Currency'
+      ];
+
+      const escapeCsv = (value: unknown) => {
+        const str = value === null || value === undefined ? '' : String(value);
+        if (/[",\n]/.test(str)) {
+          return '"' + str.replace(/"/g, '""') + '"';
+        }
+        return str;
+      };
+
+      const rows = allCustomers.map((c: any) => {
+        const addr = c.address || {};
+        const txByCurr = Array.isArray(c.transactionsByCurrency)
+          ? c.transactionsByCurrency
+              .map((t: any) => `${t.currency}:${Number(t.total || 0) / 100} (${t.count || 0})`)
+              .join(' | ')
+          : '';
+        const cols = [
+          c._id || c.customerId || '',
+          c.name || '',
+          c.email || '',
+          c.phone || '',
+          addr.line1 || '',
+          addr.line2 || '',
+          addr.city || '',
+          addr.state || '',
+          addr.postalCode || '',
+          addr.country || '',
+          c.description || '',
+          c.totalTransactions ?? '',
+          txByCurr
+        ];
+        return cols.map(escapeCsv).join(',');
+      });
+
+      const csvContent = '\uFEFF' + [headers.join(','), ...rows].join('\n');
+      const blob = new Blob([csvContent], { type: 'text/csv;charset=utf-8;' });
+      const url = URL.createObjectURL(blob);
+      const link = document.createElement('a');
+      const dateStr = new Date().toISOString().slice(0, 10);
+      link.href = url;
+      link.setAttribute('download', `sandbox-customers-${dateStr}.csv`);
+      document.body.appendChild(link);
+      link.click();
+      document.body.removeChild(link);
+      URL.revokeObjectURL(url);
+
+      toast({
+        title: 'Export complete',
+        description: `Exported ${allCustomers.length} customers to CSV`
+      });
+    } catch (error) {
+      console.error('Error exporting customers:', error);
+      toast({
+        title: 'Error',
+        description: 'Failed to export customers',
+        variant: 'destructive'
+      });
+    } finally {
+      setExporting(false);
+    }
+  };
 
   if (loading) {
     return (
@@ -366,6 +464,10 @@ const Customers: React.FC = () => {
               </div>
             </DialogContent>
           </Dialog>
+          <Button variant="outline" onClick={exportAllCustomers} disabled={exporting} className="w-full sm:w-auto text-xs sm:text-sm">
+            <Download className="h-3 h-4 w-3 w-4 mr-2" />
+            {exporting ? 'Exporting...' : 'Export All'}
+          </Button>
           <Button variant="outline" onClick={() => void fetchCustomers()} className="w-full sm:w-auto text-xs sm:text-sm">
             Refresh
           </Button>

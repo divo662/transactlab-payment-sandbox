@@ -41,10 +41,10 @@ router.get('/customers',
 /**
  * @route   GET /api/v1/analytics/export
  * @desc    Export analytics data
- * @access  Private (Merchant/API Key)
+ * @access  Private (User Token)
  */
 router.get('/export', 
-  authenticateApiKey, 
+  authenticateToken, 
   rateLimiters.analytics, 
   AnalyticsController.exportAnalytics
 );

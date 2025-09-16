@@ -350,31 +350,46 @@ const Analytics: React.FC = () => {
     });
   };
 
-  const handleExport = async (type: string) => {
+  const handleExport = async (type: string, format: string = 'excel') => {
     try {
       // Use the proper analytics export endpoint
-      const response = await apiService.exportAnalytics(type, 'json', timeRange);
+      const response = await apiService.exportAnalytics(type, format, timeRange);
       
-      if ((response as any).success) {
-        // Create and download the file
-        const dataStr = JSON.stringify((response as any).data, null, 2);
-        const dataBlob = new Blob([dataStr], { type: 'application/json' });
-        const url = URL.createObjectURL(dataBlob);
+      if (format === 'excel' || format === 'xlsx' || format === 'csv') {
+        // Handle binary file downloads
+        const blob = new Blob([response as ArrayBuffer], { 
+          type: format === 'csv' ? 'text/csv' : 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet'
+        });
+        const url = URL.createObjectURL(blob);
         const link = document.createElement('a');
         link.href = url;
-        link.download = `${type}-analytics-${timeRange}.json`;
+        link.download = `${type}-analytics-${timeRange}.${format === 'csv' ? 'csv' : 'xlsx'}`;
         document.body.appendChild(link);
         link.click();
         document.body.removeChild(link);
         URL.revokeObjectURL(url);
-        
-        toast({
-          title: 'Export Complete',
-          description: `${type} data has been downloaded successfully.`,
-        });
       } else {
-        throw new Error((response as any).message || 'Export failed');
+        // Handle JSON response
+        if ((response as any).success) {
+          const dataStr = JSON.stringify((response as any).data, null, 2);
+          const dataBlob = new Blob([dataStr], { type: 'application/json' });
+          const url = URL.createObjectURL(dataBlob);
+          const link = document.createElement('a');
+          link.href = url;
+          link.download = `${type}-analytics-${timeRange}.json`;
+          document.body.appendChild(link);
+          link.click();
+          document.body.removeChild(link);
+          URL.revokeObjectURL(url);
+        } else {
+          throw new Error((response as any).message || 'Export failed');
+        }
       }
+      
+      toast({
+        title: 'Export Complete',
+        description: `${type} data has been downloaded successfully as ${format.toUpperCase()}.`,
+      });
     } catch (error) {
       console.error('Error exporting data:', error);
       toast({
@@ -1023,39 +1038,87 @@ const Analytics: React.FC = () => {
           </CardTitle>
         </CardHeader>
         <CardContent className="p-4 sm:p-6 pt-0 sm:pt-0">
-          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-3 sm:gap-4">
-            <Button
-              onClick={() => handleExport('transactions')}
-              variant="outline"
-              className="flex items-center justify-center gap-2 w-full"
-            >
-              <Download className="h-4 w-4" />
-              <span className="text-xs sm:text-sm">Transaction Report</span>
-            </Button>
-            <Button
-              onClick={() => handleExport('customers')}
-              variant="outline"
-              className="flex items-center justify-center gap-2 w-full"
-            >
-              <Download className="h-4 w-4" />
-              <span className="text-xs sm:text-sm">Customer Report</span>
-            </Button>
-            <Button
-              onClick={() => handleExport('revenue')}
-              variant="outline"
-              className="flex items-center justify-center gap-2 w-full"
-            >
-              <Download className="h-4 w-4" />
-              <span className="text-xs sm:text-sm">Revenue Report</span>
-            </Button>
-            <Button
-              onClick={() => handleExport('api')}
-              variant="outline"
-              className="flex items-center justify-center gap-2 w-full"
-            >
-              <Download className="h-4 w-4" />
-              <span className="text-xs sm:text-sm">API Usage Report</span>
-            </Button>
+          <div className="space-y-4">
+            <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-3 sm:gap-4">
+              <div className="space-y-2">
+                <h4 className="text-sm font-medium text-gray-700">Transaction Report</h4>
+                <div className="flex gap-2">
+                  <Button
+                    onClick={() => handleExport('transactions', 'excel')}
+                    variant="outline"
+                    size="sm"
+                    className="flex items-center gap-1 flex-1"
+                  >
+                    <Download className="h-3 w-3" />
+                    <span className="text-xs">Excel</span>
+                  </Button>
+                  <Button
+                    onClick={() => handleExport('transactions', 'csv')}
+                    variant="outline"
+                    size="sm"
+                    className="flex items-center gap-1 flex-1"
+                  >
+                    <Download className="h-3 w-3" />
+                    <span className="text-xs">CSV</span>
+                  </Button>
+                </div>
+              </div>
+              
+              <div className="space-y-2">
+                <h4 className="text-sm font-medium text-gray-700">Customer Report</h4>
+                <div className="flex gap-2">
+                  <Button
+                    onClick={() => handleExport('customers', 'excel')}
+                    variant="outline"
+                    size="sm"
+                    className="flex items-center gap-1 flex-1"
+                  >
+                    <Download className="h-3 w-3" />
+                    <span className="text-xs">Excel</span>
+                  </Button>
+                  <Button
+                    onClick={() => handleExport('customers', 'csv')}
+                    variant="outline"
+                    size="sm"
+                    className="flex items-center gap-1 flex-1"
+                  >
+                    <Download className="h-3 w-3" />
+                    <span className="text-xs">CSV</span>
+                  </Button>
+                </div>
+              </div>
+              
+              <div className="space-y-2">
+                <h4 className="text-sm font-medium text-gray-700">Revenue Report</h4>
+                <div className="flex gap-2">
+                  <Button
+                    onClick={() => handleExport('revenue', 'excel')}
+                    variant="outline"
+                    size="sm"
+                    className="flex items-center gap-1 flex-1"
+                  >
+                    <Download className="h-3 w-3" />
+                    <span className="text-xs">Excel</span>
+                  </Button>
+                  <Button
+                    onClick={() => handleExport('revenue', 'csv')}
+                    variant="outline"
+                    size="sm"
+                    className="flex items-center gap-1 flex-1"
+                  >
+                    <Download className="h-3 w-3" />
+                    <span className="text-xs">CSV</span>
+                  </Button>
+                </div>
+              </div>
+            </div>
+            
+            <div className="pt-3 border-t">
+              <p className="text-xs text-gray-500 mb-2">
+                <strong>Excel files</strong> include multiple sheets with data and export information.
+                <strong>CSV files</strong> are lightweight and compatible with most spreadsheet applications.
+              </p>
+            </div>
           </div>
         </CardContent>
       </Card>

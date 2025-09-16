@@ -85,12 +85,64 @@ class ApiService {
               response = await fetch(url, config);
               if (!response.ok) throw new Error('Unauthorized');
               // continue below to parse normally
-            } catch (_) {
-              throw new Error('Please log in to continue.');
+              } catch (refreshError) {
+                // Try to get the actual error response before throwing
+                let errorMessage = 'Please log in to continue.';
+                let errorData: any = {};
+                
+                try {
+                  // Clone the response to avoid consuming it
+                  const responseClone = response.clone();
+                  errorData = await responseClone.json();
+                  errorMessage = errorData.message || errorMessage;
+                } catch (parseError) {
+                  // If we can't parse JSON, try to get text
+                  try {
+                    const responseClone = response.clone();
+                    const text = await responseClone.text();
+                    if (text) {
+                      errorMessage = text;
+                      errorData = { message: text };
+                    }
+                  } catch {
+                    // Use default message
+                  }
+                }
+                
+                const error = new Error(errorMessage);
+                (error as any).status = response.status;
+                (error as any).response = { data: errorData };
+                throw error;
+              }
+            } else {
+              // Try to get the actual error response before throwing
+              let errorMessage = 'Please log in to continue.';
+              let errorData: any = {};
+              
+              try {
+                // Clone the response to avoid consuming it
+                const responseClone = response.clone();
+                errorData = await responseClone.json();
+                errorMessage = errorData.message || errorMessage;
+              } catch (parseError) {
+                // If we can't parse JSON, try to get text
+                try {
+                  const responseClone = response.clone();
+                  const text = await responseClone.text();
+                  if (text) {
+                    errorMessage = text;
+                    errorData = { message: text };
+                  }
+                } catch {
+                  // Use default message
+                }
+              }
+              
+              const error = new Error(errorMessage);
+              (error as any).status = response.status;
+              (error as any).response = { data: errorData };
+              throw error;
             }
-          } else {
-            throw new Error('Please log in to continue.');
-          }
         } else if (response.status === 403) {
           throw new Error('You don\'t have permission to perform this action.');
         } else if (response.status === 404) {
@@ -596,8 +648,40 @@ class ApiService {
     return this.request(`/analytics/customers?timeRange=${timeRange}`);
   }
 
-  async exportAnalytics(type: string, format: string = 'json', timeRange: string = '30d') {
-    return this.request(`/analytics/export?type=${type}&format=${format}&timeRange=${timeRange}`);
+  async exportAnalytics(type: string, format: string = 'json', timeRange: string = '30d'): Promise<any> {
+    const url = `${API_BASE_URL}/analytics/export?type=${type}&format=${format}&timeRange=${timeRange}`;
+    
+    // For binary formats (Excel/CSV), we need to handle the response differently
+    if (format === 'excel' || format === 'xlsx' || format === 'csv') {
+      const token = localStorage.getItem('accessToken');
+      const headers: Record<string, string> = {
+        'Content-Type': 'application/json',
+      };
+      
+      if (token) {
+        headers['Authorization'] = `Bearer ${token}`;
+      }
+
+      const response = await fetch(url, {
+        method: 'GET',
+        headers,
+      });
+
+      if (!response.ok) {
+        let errorData: any = {};
+        try {
+          errorData = await response.json();
+        } catch {
+          errorData = { message: 'Export failed' };
+        }
+        throw new Error(errorData.message || 'Export failed');
+      }
+
+      return await response.arrayBuffer();
+    } else {
+      // For JSON format, use the regular request method
+      return this.request(`/analytics/export?type=${type}&format=${format}&timeRange=${timeRange}`);
+    }
   }
 
   // Sandbox API methods (used by Dashboard)

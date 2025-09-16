@@ -68,6 +68,7 @@ const TransactionHistory: React.FC = () => {
     hasPrevPage: false
   });
   const [loading, setLoading] = useState(true);
+  const [exporting, setExporting] = useState(false);
 
   const normalizeTx = (res: any) => Array.isArray(res?.data) ? res.data : (res?.data?.transactions || []);
 
@@ -179,6 +180,90 @@ const TransactionHistory: React.FC = () => {
 
   const fmtMoney = (a:number,c:string)=> new Intl.NumberFormat('en-US',{style:'currency',currency:c}).format((a||0)/100);
   const fmtDate = (d?:string)=> d? new Date(d).toLocaleString() : '—';
+
+  const exportAllTransactions = async () => {
+    try {
+      setExporting(true);
+      const allTx: any[] = [];
+      let page = 1;
+      const limit = 100;
+      const maxPages = 1000;
+      while (page <= maxPages) {
+        const res = await getRecentTransactions(page, limit);
+        const list = normalizeTx(res);
+        allTx.push(...list);
+        const hasNext = Boolean(res?.pagination?.hasNextPage);
+        if (!hasNext) break;
+        page += 1;
+      }
+
+      const headers = [
+        'Transaction ID',
+        'Session ID',
+        'Status',
+        'Amount',
+        'Currency',
+        'Customer Email',
+        'Customer Name',
+        'Description',
+        'Created At',
+        'Payment Method',
+        'Type'
+      ];
+
+      const escapeCsv = (value: unknown) => {
+        const str = value === null || value === undefined ? '' : String(value);
+        if (/[",\n]/.test(str)) {
+          return '"' + str.replace(/"/g, '""') + '"';
+        }
+        return str;
+      };
+
+      const rows = allTx.map((t: any) => {
+        const type = isSubscriptionPayment(t) ? 'Subscription' : 'One-time';
+        const cols = [
+          t.transactionId || '',
+          t.sessionId || '',
+          t.status || '',
+          (t.amount ?? 0) / 100,
+          t.currency || '',
+          t.customerEmail || '',
+          t.customerName || '',
+          t.description || '',
+          t.createdAt ? new Date(t.createdAt).toISOString() : '',
+          getFormattedPaymentMethod(t),
+          type
+        ];
+        return cols.map(escapeCsv).join(',');
+      });
+
+      const csvContent = '\uFEFF' + [headers.join(','), ...rows].join('\n');
+      const blob = new Blob([csvContent], { type: 'text/csv;charset=utf-8;' });
+      const url = URL.createObjectURL(blob);
+      const link = document.createElement('a');
+      const dateStr = new Date().toISOString().slice(0, 10);
+      link.href = url;
+      link.setAttribute('download', `sandbox-transactions-${dateStr}.csv`);
+      document.body.appendChild(link);
+      link.click();
+      document.body.removeChild(link);
+      URL.revokeObjectURL(url);
+
+      toast({
+        title: 'Export complete',
+        description: `Exported ${allTx.length} transactions to CSV`
+      });
+    } catch (error) {
+      console.error('Error exporting transactions:', error);
+      toast({
+        title: 'Error',
+        description: 'Failed to export transactions',
+        variant: 'destructive'
+      });
+    } finally {
+      setExporting(false);
+    }
+  };
 
   // Clear all filters
   const clearAllFilters = () => {
@@ -475,6 +560,15 @@ const TransactionHistory: React.FC = () => {
             <Button variant="outline" onClick={() => void fetchTx()} disabled={loading} className="w-full sm:w-auto">
               <RefreshCw className={`w-4 h-4 mr-2 ${loading ? 'animate-spin' : ''}`}/>
               {loading ? 'Refreshing...' : 'Refresh'}
+            </Button>
+            <Button 
+              variant="outline" 
+              onClick={exportAllTransactions}
+              disabled={exporting}
+              className="w-full sm:w-auto"
+            >
+              <Download className="w-4 h-4 mr-2" />
+              {exporting ? 'Exporting...' : 'Export All'}
             </Button>
             <Button 
               variant="outline" 

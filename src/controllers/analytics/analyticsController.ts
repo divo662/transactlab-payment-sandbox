@@ -8,6 +8,7 @@ import ApiKey from '../../models/ApiKey';
 import Webhook from '../../models/Webhook';
 import User from '../../models/User';
 import { CacheService } from '../../services/cache/cacheService';
+import * as XLSX from 'xlsx';
 
 // Helper function to get date range based on timeRange parameter
 const getDateRange = (timeRange: string) => {
@@ -525,13 +526,21 @@ export const exportAnalytics = async (req: Request, res: Response) => {
         });
     }
     
+    // Handle different export formats
     if (format === 'csv') {
       // Convert to CSV format
       const csv = convertToCSV(data);
-      res.setHeader('Content-Type', 'text/csv');
-      res.setHeader('Content-Disposition', `attachment; filename="${type}-${timeRange}.csv"`);
-      res.send(csv);
+      res.setHeader('Content-Type', 'text/csv; charset=utf-8');
+      res.setHeader('Content-Disposition', `attachment; filename="${type}-analytics-${timeRange}.csv"`);
+      res.send('\ufeff' + csv); // Add BOM for proper UTF-8 encoding
+    } else if (format === 'excel' || format === 'xlsx') {
+      // Convert to Excel format
+      const excelBuffer = convertToExcel(data, type);
+      res.setHeader('Content-Type', 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet');
+      res.setHeader('Content-Disposition', `attachment; filename="${type}-analytics-${timeRange}.xlsx"`);
+      res.send(excelBuffer);
     } else {
+      // Default JSON format
       res.json({
         success: true,
         data,
@@ -560,10 +569,111 @@ const convertToCSV = (data: any[]) => {
   const headers = Object.keys(data[0]);
   const csvContent = [
     headers.join(','),
-    ...data.map(row => headers.map(header => `"${row[header] || ''}"`).join(','))
+    ...data.map(row => headers.map(header => {
+      const value = row[header];
+      // Handle special characters and escape quotes
+      if (typeof value === 'string' && (value.includes(',') || value.includes('"') || value.includes('\n'))) {
+        return `"${value.replace(/"/g, '""')}"`;
+      }
+      return `"${value || ''}"`;
+    }).join(','))
   ].join('\n');
   
   return csvContent;
+};
+
+// Helper function to convert data to Excel
+const convertToExcel = (data: any[], type: string) => {
+  if (data.length === 0) {
+    // Create empty workbook with headers
+    const headers = getHeadersForType(type);
+    const worksheet = XLSX.utils.aoa_to_sheet([headers]);
+    const workbook = XLSX.utils.book_new();
+    XLSX.utils.book_append_sheet(workbook, worksheet, `${type.charAt(0).toUpperCase() + type.slice(1)} Data`);
+    return XLSX.write(workbook, { type: 'buffer', bookType: 'xlsx' });
+  }
+
+  // Create worksheet from data
+  const worksheet = XLSX.utils.json_to_sheet(data);
+  
+  // Auto-size columns
+  const colWidths = Object.keys(data[0]).map(key => {
+    const maxLength = Math.max(
+      key.length,
+      ...data.map(row => String(row[key] || '').length)
+    );
+    return { wch: Math.min(maxLength + 2, 50) }; // Cap at 50 characters
+  });
+  worksheet['!cols'] = colWidths;
+  
+  // Create workbook
+  const workbook = XLSX.utils.book_new();
+  XLSX.utils.book_append_sheet(workbook, worksheet, `${type.charAt(0).toUpperCase() + type.slice(1)} Data`);
+  
+  // Add metadata sheet
+  const metadata = [
+    ['Export Information'],
+    ['Type', type],
+    ['Record Count', data.length],
+    ['Exported At', new Date().toISOString()],
+    [''],
+    ['Column Descriptions'],
+    ...getColumnDescriptions(type)
+  ];
+  const metadataSheet = XLSX.utils.aoa_to_sheet(metadata);
+  XLSX.utils.book_append_sheet(workbook, metadataSheet, 'Export Info');
+  
+  return XLSX.write(workbook, { type: 'buffer', bookType: 'xlsx' });
+};
+
+// Helper function to get headers for empty exports
+const getHeadersForType = (type: string) => {
+  switch (type) {
+    case 'transactions':
+      return ['ID', 'Customer Email', 'Amount', 'Currency', 'Status', 'Payment Method', 'Created At'];
+    case 'customers':
+      return ['ID', 'Email', 'Name', 'Phone', 'Total Spent', 'Total Transactions', 'Created At'];
+    case 'revenue':
+      return ['ID', 'Amount', 'Currency', 'Customer Email', 'Created At'];
+    default:
+      return ['ID', 'Data'];
+  }
+};
+
+// Helper function to get column descriptions
+const getColumnDescriptions = (type: string) => {
+  switch (type) {
+    case 'transactions':
+      return [
+        ['ID', 'Unique transaction identifier'],
+        ['Customer Email', 'Email address of the customer'],
+        ['Amount', 'Transaction amount'],
+        ['Currency', 'Currency code (e.g., NGN, USD)'],
+        ['Status', 'Transaction status (completed, pending, failed)'],
+        ['Payment Method', 'Method used for payment'],
+        ['Created At', 'Date and time when transaction was created']
+      ];
+    case 'customers':
+      return [
+        ['ID', 'Unique customer identifier'],
+        ['Email', 'Customer email address'],
+        ['Name', 'Customer name'],
+        ['Phone', 'Customer phone number'],
+        ['Total Spent', 'Total amount spent by customer'],
+        ['Total Transactions', 'Number of transactions made'],
+        ['Created At', 'Date and time when customer was created']
+      ];
+    case 'revenue':
+      return [
+        ['ID', 'Unique transaction identifier'],
+        ['Amount', 'Revenue amount'],
+        ['Currency', 'Currency code'],
+        ['Customer Email', 'Email address of the customer'],
+        ['Created At', 'Date and time when transaction was created']
+      ];
+    default:
+      return [['ID', 'Unique identifier'], ['Data', 'Export data']];
+  }
 };
 
 // Export the controller functions

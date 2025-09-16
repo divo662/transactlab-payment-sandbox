@@ -97,22 +97,22 @@ const Login = () => {
 
   const onSubmit = async (data: FormValues) => {
     try {
-      // If TOTP is required, validate TOTP code
-      if (requiresTotp && loginData) {
-        if (!data.totpCode || data.totpCode.length !== 6) {
-          toast({
-            title: "Invalid Code",
-            description: "Please enter a valid 6-digit code from your authenticator app.",
-            variant: "destructive"
-          });
-          return;
-        }
+        // If TOTP is required, validate TOTP code
+        if (requiresTotp && loginData) {
+          if (!data.totpCode || data.totpCode.length !== 6) {
+            toast({
+              title: "Invalid Code Format",
+              description: "Please enter a valid 6-digit authentication code from your authenticator app.",
+              variant: "destructive"
+            });
+            return;
+          }
         
         const result = await login(loginData.email, loginData.password, loginData.securityAnswer, false, data.totpCode);
         if (result.requiresTotp) {
           toast({
-            title: "Invalid TOTP Code",
-            description: "Please check your authenticator app and try again.",
+            title: "Invalid Authentication Code",
+            description: "The 6-digit code you entered is incorrect. Please check your authenticator app and try again.",
             variant: "destructive"
           });
           return;
@@ -122,7 +122,7 @@ const Login = () => {
         if (!data.securityAnswer) {
           toast({
             title: "Security Answer Required",
-            description: "Please enter your security question answer.",
+            description: "Please enter the answer to your security question to continue.",
             variant: "destructive"
           });
           return;
@@ -157,25 +157,65 @@ const Login = () => {
       const message = payload?.message || payload?.error || String(error?.message || "");
 
       let friendly = "An unexpected error occurred. Please try again.";
+      let title = "Login failed";
 
-      if (status === 0 || /network/i.test(message)) {
+      // Network/connection issues
+      if (status === 0 || /network/i.test(message) || /fetch/i.test(message)) {
         friendly = "Unable to reach the server. Check your internet connection and try again.";
-      } else if (status === 401 && (/invalid credentials/i.test(message) || /incorrect/i.test(message))) {
-        friendly = "Email or password is incorrect. If you recently changed your password, please use the new one or reset it.";
-      } else if (status === 401 && (/verification/i.test(message) || code === 'EMAIL_NOT_VERIFIED')) {
-        friendly = "Your email is not verified yet. Please check your inbox for the verification link or resend it from the banner above.";
-      } else if ((status === 403 && code === 'ACCOUNT_LOCKED') || /locked/i.test(message)) {
+        title = "Connection Error";
+      }
+      // Invalid credentials - catch all 401 errors related to authentication
+      else if (status === 401) {
+        if (/verification/i.test(message) || code === 'EMAIL_NOT_VERIFIED') {
+          friendly = "Your email is not verified yet. Please check your inbox for the verification link or resend it from the banner above.";
+          title = "Email Not Verified";
+        } else if (/security answer/i.test(message) || code === 'INVALID_SECURITY_ANSWER') {
+          friendly = "The security question answer is incorrect. Please try again.";
+          title = "Invalid Security Answer";
+        } else {
+          // Default 401 error - most likely invalid credentials
+          friendly = "Email or password is incorrect. Please check your credentials and try again.";
+          title = "Invalid Credentials";
+        }
+      }
+      // Catch any authentication-related errors even without status code
+      else if (/unauthorized/i.test(message) || /invalid credentials/i.test(message) || /incorrect/i.test(message) || /authentication failed/i.test(message)) {
+        friendly = "Email or password is incorrect. Please check your credentials and try again.";
+        title = "Invalid Credentials";
+      }
+      // Account locked/suspended
+      else if ((status === 403 && code === 'ACCOUNT_LOCKED') || /locked/i.test(message) || /suspended/i.test(message)) {
         friendly = "Your account is temporarily locked due to multiple failed attempts. Please try again later or reset your password.";
-      } else if (status === 429 || /too many/i.test(message)) {
+        title = "Account Locked";
+      }
+      // Rate limiting
+      else if (status === 429 || /too many/i.test(message) || /rate limit/i.test(message)) {
         friendly = "Too many login attempts. Please wait a few minutes and try again.";
-      } else if (/security answer/i.test(message) || code === 'INVALID_SECURITY_ANSWER') {
-        friendly = "The security question answer is incorrect. Please try again.";
-      } else if (message) {
+        title = "Too Many Attempts";
+      }
+      // Server errors
+      else if (status >= 500) {
+        friendly = "Our servers are experiencing issues. Please try again in a few minutes.";
+        title = "Server Error";
+      }
+      // Other specific error codes
+      else if (code === 'USER_NOT_FOUND') {
+        friendly = "No account found with this email address. Please check your email or create a new account.";
+        title = "Account Not Found";
+      } else if (code === 'ACCOUNT_DISABLED') {
+        friendly = "Your account has been disabled. Please contact support for assistance.";
+        title = "Account Disabled";
+      } else if (message && message.length > 0) {
+        // Use the server message if it's available and meaningful
         friendly = message;
+      } else {
+        // Ultimate fallback - if we can't determine the specific error, assume it's credentials
+        friendly = "Email or password is incorrect. Please check your credentials and try again.";
+        title = "Invalid Credentials";
       }
 
       toast({ 
-        title: "Login failed", 
+        title: title, 
         description: friendly,
         variant: "destructive"
       });
