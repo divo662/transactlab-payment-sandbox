@@ -24,11 +24,21 @@ export class CloudinaryService {
   ): Promise<CloudinaryUploadResult> {
     try {
       // Check if Cloudinary is configured
-      if (!process.env.CLOUDINARY_CLOUD_NAME || !process.env.CLOUDINARY_API_KEY || !process.env.CLOUDINARY_API_SECRET) {
-        console.warn('Cloudinary environment variables not configured');
+      const missingVars = [];
+      if (!process.env.CLOUDINARY_CLOUD_NAME) missingVars.push('CLOUDINARY_CLOUD_NAME');
+      if (!process.env.CLOUDINARY_API_KEY) missingVars.push('CLOUDINARY_API_KEY');
+      if (!process.env.CLOUDINARY_API_SECRET) missingVars.push('CLOUDINARY_API_SECRET');
+      
+      if (missingVars.length > 0) {
+        console.warn(`Cloudinary not configured. Missing environment variables: ${missingVars.join(', ')}`);
+        console.warn('Please add the following to your .env file:');
+        console.warn('CLOUDINARY_CLOUD_NAME=your_cloud_name');
+        console.warn('CLOUDINARY_API_KEY=your_api_key');
+        console.warn('CLOUDINARY_API_SECRET=your_api_secret');
+        console.warn('Get your credentials from: https://cloudinary.com/console');
         return {
           success: false,
-          error: 'Cloudinary not configured'
+          error: `Cloudinary not configured. Missing: ${missingVars.join(', ')}`
         };
       }
 
@@ -152,6 +162,34 @@ export class CloudinaryService {
       quality: 'auto',
       format: 'auto'
     });
+  }
+
+  /**
+   * Test Cloudinary configuration
+   */
+  static async testConfiguration(): Promise<{ configured: boolean; error?: string }> {
+    try {
+      const missingVars = [];
+      if (!process.env.CLOUDINARY_CLOUD_NAME) missingVars.push('CLOUDINARY_CLOUD_NAME');
+      if (!process.env.CLOUDINARY_API_KEY) missingVars.push('CLOUDINARY_API_KEY');
+      if (!process.env.CLOUDINARY_API_SECRET) missingVars.push('CLOUDINARY_API_SECRET');
+      
+      if (missingVars.length > 0) {
+        return {
+          configured: false,
+          error: `Missing environment variables: ${missingVars.join(', ')}`
+        };
+      }
+
+      // Test with a simple API call
+      await cloudinary.api.ping();
+      return { configured: true };
+    } catch (error: any) {
+      return {
+        configured: false,
+        error: error.message || 'Cloudinary configuration test failed'
+      };
+    }
   }
 }
 

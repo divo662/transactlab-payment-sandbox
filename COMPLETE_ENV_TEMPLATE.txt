@@ -59,6 +59,11 @@ CORS_ORIGINS=http://localhost:3000,http://localhost:3001,http://localhost:5173
 LOG_LEVEL=info
 LOG_FILE_PATH=./logs
 
+# Cloudinary Configuration (for image uploads)
+CLOUDINARY_CLOUD_NAME=your_cloud_name
+CLOUDINARY_API_KEY=your_api_key
+CLOUDINARY_API_SECRET=your_api_secret
+
 # API Keys (for testing - replace with real keys in production)
 PAYSTACK_SECRET_KEY=sk_test_xxxxxxxxxxxxxxxxxxxxxxxxxxxxx
 FLUTTERWAVE_SECRET_KEY=FLWSECK_TEST-xxxxxxxxxxxxxxxxxxxxxxxxxxxxx
@@ -67,5 +72,6 @@ FLUTTERWAVE_SECRET_KEY=FLWSECK_TEST-xxxxxxxxxxxxxxxxxxxxxxxxxxxxx
 # 1. Copy ALL of these variables to your .env file
 # 2. Replace the JWT secrets with the ones from SECRETS.txt
 # 3. Update SMTP_USER and SMTP_PASS with your email credentials
-# 4. Save the .env file
-# 5. Try running npm run dev again 
+# 4. Get your Cloudinary credentials from https://cloudinary.com/console and update the CLOUDINARY_* variables
+# 5. Save the .env file
+# 6. Try running npm run dev again 

@@ -4408,4 +4408,38 @@ export class SandboxController {
       return res.status(500).json({ success: false, error: 'Internal server error' });
     }
   }
+
+  /**
+   * Test Cloudinary configuration
+   */
+  static async testCloudinaryConfig(req: Request, res: Response) {
+    try {
+      const userId = req.user?._id;
+      if (!userId) {
+        return res.status(401).json({ success: false, error: 'Unauthorized', message: 'User not authenticated' });
+      }
+
+      const testResult = await CloudinaryService.testConfiguration();
+      
+      return res.json({
+        success: true,
+        data: {
+          configured: testResult.configured,
+          error: testResult.error,
+          environment: {
+            hasCloudName: !!process.env.CLOUDINARY_CLOUD_NAME,
+            hasApiKey: !!process.env.CLOUDINARY_API_KEY,
+            hasApiSecret: !!process.env.CLOUDINARY_API_SECRET
+          }
+        }
+      });
+    } catch (error) {
+      logger.error('Error testing Cloudinary configuration:', error);
+      return res.status(500).json({ 
+        success: false, 
+        message: 'Failed to test Cloudinary configuration',
+        error: error instanceof Error ? error.message : 'Unknown error'
+      });
+    }
+  }
 }

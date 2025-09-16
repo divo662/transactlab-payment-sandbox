@@ -131,6 +131,7 @@ router.post('/transactions', SandboxController.createTestTransaction);
 router.post('/subscriptions', SandboxController.createTestSubscription);
 router.post('/transactions/complete', SandboxController.completePendingTransaction);
 router.put('/config', SandboxController.updateSandboxConfig);
+router.get('/test-cloudinary', SandboxController.testCloudinaryConfig);
 
 // Internal proxy routes for workspace-bound hosted checkout
 // These routes bypass normal auth and use server-side sandbox secret

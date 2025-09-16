@@ -21,6 +21,8 @@ export default function SDKSetup() {
   const [bakedFiles, setBakedFiles] = useState<any[]>([]);
   const [loading, setLoading] = useState(false);
   const [initialLoading, setInitialLoading] = useState(true);
+  const [apiKey, setApiKey] = useState<string>("");
+  const [secretKey, setSecretKey] = useState<string>("");
   const { toast } = useToast();
 
   // Helper function to format numbers with commas
@@ -30,8 +32,8 @@ export default function SDKSetup() {
     return numericValue.toLocaleString();
   };
 
-  const exampleConfig = `{
-  "apiKey": "sk_test_secret_...",
+  const generateConfigTemplate = () => `{
+  "apiKey": "${apiKey || 'tk_test_secret_...'}",
   "baseUrl": "https://transactlab-backend.onrender.com/api/v1",
   "urls": {
     "success": "http://localhost:3000/?payment=success",
@@ -48,7 +50,7 @@ export default function SDKSetup() {
       const sandbox = `${base}/sandbox`;
       const env = [
         `TL_BASE=${sandbox}`,
-        `TL_SECRET=${cfg.apiKey || ""}`,
+        `TL_SECRET=${apiKey || cfg.apiKey || ""}`,
         `TL_WEBHOOK_SECRET=${cfg.webhookSecret || ""}`,
         `FRONTEND_URL=${cfg.urls?.frontend || "http://localhost:3000"}`,
         `PORT=3000`
@@ -60,11 +62,17 @@ export default function SDKSetup() {
   }
 
   useEffect(() => {
-    // Load existing defaults from backend settings
+    // Load existing defaults from backend settings and API key
     (async () => {
       try {
+        // Load API key
+        const keyResp = await apiService.getSandboxApiKey() as any;
+        const keyData = keyResp?.data || keyResp;
+        if (keyData?.apiKey) setApiKey(keyData.apiKey);
+        if (keyData?.secretKey) setSecretKey(keyData.secretKey);
+        
         const resp = await apiService.getCheckoutSettings();
-        const d = resp?.data || resp;
+        const d = (resp as any)?.data || resp;
         const sdk = d?.sdkDefaults || {};
         if (sdk.paymentMode) setMode(sdk.paymentMode);
         if (sdk.amount != null) setAmount(String(sdk.amount));
@@ -75,7 +83,7 @@ export default function SDKSetup() {
       } catch (_) {}
       try {
         const productsResp = await apiService.listSandboxProducts();
-        const list = productsResp?.data || productsResp || [];
+        const list = (productsResp as any)?.data || productsResp || [];
         setProducts(Array.isArray(list) ? list : []);
       } catch (_) {}
       setInitialLoading(false);
@@ -87,7 +95,7 @@ export default function SDKSetup() {
       try {
         const product = products.find((p:any) => p.name === productName);
         const r = await apiService.listSandboxPlans(product?._id || product?.id);
-        const list = r?.data || r || [];
+        const list = (r as any)?.data || r || [];
         setPlans(Array.isArray(list) ? list : []);
       } catch (_) {}
     })();
@@ -198,20 +206,18 @@ export default function SDKSetup() {
         <p className="text-xs sm:text-sm text-muted-foreground">Paste the generated SDK config JSON, then copy the .env for your SDK bundle.</p>
       </div>
 
-      {/* 1) Keys & environment first */}
+      {/* 1) API Key Display & Frontend URL */}
       <div className="space-y-2 border rounded-md p-3 sm:p-4">
-        <h3 className="text-sm sm:text-base font-medium">Choose API key and environment</h3>
+        <h3 className="text-sm sm:text-base font-medium">Your API Configuration</h3>
         <div className="grid grid-cols-1 sm:grid-cols-3 gap-3">
           <div className="sm:col-span-2">
-            <Label className="text-xs sm:text-sm">Sandbox Secret (x-sandbox-secret)</Label>
+            <Label className="text-xs sm:text-sm">Your API Key</Label>
             <Input 
-              placeholder="sk_test_secret_..." 
-              value={(JSON.parse(configJson||'{}')?.apiKey)||''} 
-              onChange={e=>{
-                try { const j = JSON.parse(configJson||'{}'); j.apiKey = e.target.value; setConfigJson(JSON.stringify(j, null, 2)); } catch {}
-              }} 
-              className="text-xs sm:text-sm"
+              value={apiKey || 'Loading...'} 
+              readOnly
+              className="text-xs sm:text-sm bg-gray-50"
             />
+            <p className="text-[10px] text-gray-500 mt-1">This is your permanent API key</p>
           </div>
           <div>
             <Label className="text-xs sm:text-sm">Frontend URL</Label>
@@ -354,7 +360,7 @@ export default function SDKSetup() {
           </div>
           <Button 
             variant="outline" 
-            onClick={() => setConfigJson(exampleConfig)}
+            onClick={() => setConfigJson(generateConfigTemplate())}
             className="w-full sm:w-auto text-xs sm:text-sm h-8 sm:h-9"
           >
             Load template
@@ -364,7 +370,7 @@ export default function SDKSetup() {
           value={configJson} 
           onChange={e => setConfigJson(e.target.value)} 
           rows={8} 
-          placeholder={exampleConfig} 
+          placeholder={generateConfigTemplate()} 
           className="text-xs sm:text-sm"
         />
         <div className="flex flex-col sm:flex-row gap-2 sm:gap-3">
@@ -381,13 +387,13 @@ export default function SDKSetup() {
             onClick={async () => {
               try {
                 setLoading(true);
-                const cfg = JSON.parse(configJson || '{}');
-                const resp = await apiService.bakeMagicSdk({
-                  successUrl: cfg.urls?.success,
-                  cancelUrl: cfg.urls?.cancel,
-                  callbackUrl: cfg.urls?.callback,
-                  frontendUrl: cfg.urls?.frontend,
-                  sandboxSecret: cfg.apiKey,
+                  const cfg = JSON.parse(configJson || '{}');
+                  const resp = await apiService.bakeMagicSdk({
+                    successUrl: cfg.urls?.success,
+                    cancelUrl: cfg.urls?.cancel,
+                    callbackUrl: cfg.urls?.callback,
+                    frontendUrl: cfg.urls?.frontend,
+                    sandboxSecret: apiKey || cfg.apiKey,
                   encrypt: false,
                   sdkDefaults: {
                     paymentMode: mode,
@@ -398,7 +404,7 @@ export default function SDKSetup() {
                     interval
                   }
                 });
-                const files = resp?.data?.files || [];
+                const files = (resp as any)?.data?.files || [];
                 setBakedFiles(files);
                 const content = files?.[0]?.contents;
                 if (content) setConfigJson(content);
@@ -423,7 +429,7 @@ export default function SDKSetup() {
                   cancelUrl: cfg.urls?.cancel,
                   callbackUrl: cfg.urls?.callback,
                   frontendUrl: cfg.urls?.frontend,
-                  sandboxSecret: cfg.apiKey,
+                  sandboxSecret: apiKey || cfg.apiKey,
                   encrypt: false,
                   sdkDefaults: {
                     paymentMode: mode,
@@ -509,7 +515,7 @@ export default function SDKSetup() {
                         cancelUrl: cfg.urls?.cancel,
                         callbackUrl: cfg.urls?.callback,
                         frontendUrl: cfg.urls?.frontend,
-                        sandboxSecret: cfg.apiKey,
+                        sandboxSecret: apiKey || cfg.apiKey,
                         encrypt: false,
                         sdkDefaults: {
                           paymentMode: mode,
