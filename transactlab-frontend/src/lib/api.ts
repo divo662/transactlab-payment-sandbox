@@ -453,15 +453,26 @@ class ApiService {
   // Public quick link endpoints (no auth required by server, but we still send token if available)
   async getQuickLinkMeta(token: string, userIdHint?: string): Promise<any> {
     const qs = userIdHint ? `?userId=${encodeURIComponent(userIdHint)}` : '';
-    return this.request(`/sandbox/pay/ql/${encodeURIComponent(token)}${qs}`);
+    const url = `https://transactlab-backend.onrender.com/sandbox/pay/ql/${encodeURIComponent(token)}${qs}`;
+    const resp = await fetch(url, { method: 'GET' });
+    if (!resp.ok) {
+      let msg = 'Failed to fetch quick link meta';
+      try { const j = await resp.json(); msg = j?.message || msg; } catch {}
+      throw new Error(msg);
+    }
+    return await resp.json();
   }
 
   async startPaymentFromQuickLink(token: string, payload: { amount?: number; customerEmail?: string; customerName?: string }, userIdHint?: string): Promise<any> {
     const qs = userIdHint ? `?userId=${encodeURIComponent(userIdHint)}` : '';
-    return this.request(`/sandbox/pay/ql/${encodeURIComponent(token)}/start${qs}`, {
-      method: 'POST',
-      body: JSON.stringify(payload)
-    });
+    const url = `https://transactlab-backend.onrender.com/sandbox/pay/ql/${encodeURIComponent(token)}/start${qs}`;
+    const resp = await fetch(url, { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(payload) });
+    if (!resp.ok) {
+      let msg = 'Failed to start payment from quick link';
+      try { const j = await resp.json(); msg = j?.message || msg; } catch {}
+      throw new Error(msg);
+    }
+    return await resp.json();
   }
 
   // Sandbox catalogs

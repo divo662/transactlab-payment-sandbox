@@ -493,9 +493,6 @@ export class EmailService {
             </div>
             
             <div style="text-align: center; margin-top: 30px;">
-              <a href="{{securityUrl}}" style="background: #0a164d; color: white; padding: 15px 30px; text-decoration: none; border-radius: 25px; display: inline-block; font-weight: bold; margin-right: 10px;">
-                View Security Settings
-              </a>
               <a href="{{dashboardUrl}}" style="background: #6b7280; color: white; padding: 15px 30px; text-decoration: none; border-radius: 25px; display: inline-block; font-weight: bold;">
                 Go to Dashboard
               </a>

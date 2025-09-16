@@ -5,7 +5,7 @@ import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { RadioGroup, RadioGroupItem } from '@/components/ui/radio-group';
 import { Select, SelectTrigger, SelectContent, SelectItem, SelectValue } from '@/components/ui/select';
-import { Copy, Link as LinkIcon, Loader2, Mail, Coins, Repeat, Type, CheckCircle2 } from 'lucide-react';
+import { Copy, Link as LinkIcon, Loader2, Coins, Repeat } from 'lucide-react';
 import api from '@/lib/api';
 import { useToast } from '@/hooks/use-toast';
 
@@ -15,18 +15,32 @@ const PaymentLinkNew: React.FC = () => {
   const [mode, setMode] = useState<'one_time'|'recurring'>('one_time');
   const [title, setTitle] = useState<string>('');
   const [amount, setAmount] = useState<string>('');
+  // Format amount with thousand separators while typing (major units, integers or decimals)
+  const formatAmountForDisplay = (raw: string) => {
+    // keep only digits and optional single dot
+    const cleaned = raw
+      .replace(/[^0-9.]/g, '')
+      .replace(/\.(?=.*\.)/g, ''); // allow only first dot
+    if (cleaned === '') return '';
+    // split integer/decimal
+    const [intPart, decPart] = cleaned.split('.');
+    const intNum = intPart.replace(/^0+(?=\d)/, '');
+    const withSep = intNum ? Number(intNum).toLocaleString() : '0';
+    return typeof decPart === 'string' ? `${withSep}.${decPart}` : withSep;
+  };
+
+  const handleAmountChange = (v: string) => {
+    setAmount(formatAmountForDisplay(v));
+  };
   const [currency, setCurrency] = useState<string>('NGN');
   const [description, setDescription] = useState<string>('');
-  const [email, setEmail] = useState<string>('');
-  const [customers, setCustomers] = useState<Array<{ email: string; name?: string }>>([]);
-  const [filter, setFilter] = useState<string>('');
   const [interval, setInterval] = useState<string>('month');
   const [trialDays, setTrialDays] = useState<string>('0');
   const [chargeNow, setChargeNow] = useState<boolean>(true);
   const [successUrl, setSuccessUrl] = useState<string>('');
   const [cancelUrl, setCancelUrl] = useState<string>('');
   const [loading, setLoading] = useState(false);
-  const [initialLoading, setInitialLoading] = useState(true);
+  const [initialLoading, setInitialLoading] = useState(false);
   const [resultUrl, setResultUrl] = useState<string>('');
   const [sessionId, setSessionId] = useState<string>('');
   // Advanced options
@@ -50,7 +64,8 @@ const PaymentLinkNew: React.FC = () => {
         successUrl: successUrl || undefined,
         cancelUrl: cancelUrl || undefined,
       };
-      const amtNum = parseFloat(amount || '0');
+      const amtRaw = (amount || '').toString().replace(/,/g, '');
+      const amtNum = parseFloat(amtRaw || '0');
       if (!isNaN(amtNum) && amtNum > 0) {
         payload.amount = amtNum;
       }
@@ -89,22 +104,7 @@ const PaymentLinkNew: React.FC = () => {
   };
 
 
-  useEffect(() => {
-    (async () => {
-      try {
-        const resp = await api.listSandboxCustomers({ limit: 100 });
-        const arr = (resp?.data || []).map((c: any) => ({ email: c.email, name: c.name }));
-        setCustomers(arr);
-      } catch (_) {}
-      setInitialLoading(false);
-    })();
-  }, []);
-
-  const filteredCustomers = useMemo(() => {
-    const f = (filter || '').toLowerCase();
-    if (!f) return customers;
-    return customers.filter(c => (c.email?.toLowerCase()?.includes(f) || c.name?.toLowerCase()?.includes(f)));
-  }, [customers, filter]);
+  useEffect(() => { setInitialLoading(false); }, []);
 
   const copy = async () => {
     try {
@@ -275,8 +275,9 @@ const PaymentLinkNew: React.FC = () => {
               <Label className="text-xs text-gray-600">Amount</Label>
               <Input 
                 value={amount} 
-                onChange={(e)=>setAmount(e.target.value)} 
-                placeholder="2500" 
+                onChange={(e)=>handleAmountChange(e.target.value)} 
+                placeholder="2,500" 
+                inputMode="decimal"
                 className="transition-all focus:shadow-sm text-xs sm:text-sm" 
               />
             </div>
@@ -293,42 +294,7 @@ const PaymentLinkNew: React.FC = () => {
                 </SelectContent>
               </Select>
             </div>
-            <div className="sm:col-span-2 lg:col-span-1">
-              <Label className="text-xs text-gray-600">Customer</Label>
-              <div className="relative">
-                <div className="flex items-center gap-2 mb-2">
-                  <Mail className="w-3 h-3 sm:w-4 sm:h-4 text-gray-500" />
-                  <Input 
-                    value={filter} 
-                    onChange={(e)=>setFilter(e.target.value)} 
-                    placeholder="Search customers..." 
-                    className="text-xs sm:text-sm"
-                  />
-                </div>
-                <div className="max-h-32 sm:max-h-40 overflow-auto border rounded-md">
-                  {filteredCustomers.map((c)=> (
-                    <button 
-                      key={c.email} 
-                      type="button" 
-                      onClick={()=>setEmail(c.email)} 
-                      className={`w-full text-left px-2 sm:px-3 py-2 text-xs sm:text-sm hover:bg-gray-50 ${email===c.email ? 'bg-[#0a164d]/5' : ''}`}
-                    >
-                      <div className="font-medium text-gray-900 truncate">{c.name || c.email}</div>
-                      <div className="text-xs text-gray-500 truncate">{c.email}</div>
-                    </button>
-                  ))}
-                  {filteredCustomers.length===0 && (
-                    <div className="px-2 sm:px-3 py-2 text-xs sm:text-sm text-gray-500">No customers</div>
-                  )}
-                </div>
-                {email && (
-                  <div className="mt-1 text-xs text-gray-600 flex items-center gap-1">
-                    <CheckCircle2 className="w-3 h-3 text-green-600" />
-                    <span className="truncate">Selected: {email}</span>
-                  </div>
-                )}
-              </div>
-            </div>
+            {/* Customer selection removed; customer enters info on pay page */}
           </div>
 
           <div>

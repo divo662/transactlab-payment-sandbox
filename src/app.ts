@@ -193,73 +193,79 @@ app.use('/api/v1/feedback', feedbackRoutes);
 app.get('/checkout/:sessionId', async (req, res) => {
   try {
     const { sessionId } = req.params;
-    
+
     // Find session without user authentication (public access)
-    const session = await SandboxSession.findOne({ sessionId, status: { $ne: 'expired' } });
-    
+    const session = await SandboxSession.findOne({ sessionId, status: { $ne: 'expired' } }).lean();
     if (!session) {
-      return res.status(404).json({
-        success: false,
-        error: 'Session not found',
-        message: 'Checkout session not found or expired'
-      });
+      return res.status(404).json({ success: false, message: 'Checkout session not found or expired' });
     }
 
-    // Check if session is expired
-    if (session.isExpired()) {
-      return res.status(410).json({
-        success: false,
-        error: 'Session expired',
-        message: 'This checkout session has expired'
-      });
+    // Check expiration
+    if (new Date(session.expiresAt) <= new Date() || session.status === 'expired') {
+      return res.status(410).json({ success: false, message: 'This checkout session has expired' });
     }
 
-    // Check if this is a subscription session and fetch product details
-    let productImage = null;
-    let productName = null;
-    
-    const metadata = session.metadata as any;
-    if (metadata?.productId || metadata?.subscriptionId) {
+    // Absolutize helper for local paths
+    const absolutize = (pathOrUrl: string | null | undefined): string | null => {
+      if (!pathOrUrl) return null;
       try {
-        const SandboxProduct = (await import('./models/SandboxProduct')).default;
-        const product = await SandboxProduct.findById(metadata.productId || metadata.subscriptionId);
-        if (product) {
-          productImage = product.image;
-          productName = product.name;
+        if (/^https?:\/\//i.test(pathOrUrl)) return pathOrUrl;
+        const base = process.env.TL_BASE || `${req.protocol}://${req.get('host')}`;
+        const normalizedBase = base.replace(/\/$/, '');
+        const p = pathOrUrl.startsWith('/') ? pathOrUrl : `/${pathOrUrl}`;
+        return `${normalizedBase}${p}`;
+      } catch { return pathOrUrl; }
+    };
+
+    // Prefer values stored on session
+    let productName: string | null = (session as any).productName || null;
+    let productImage: string | null = absolutize((session as any).productImage) || null;
+
+    // Hydrate from plan/product if missing
+    if (!productName || !productImage) {
+      try {
+        const meta: any = (session as any).metadata || {};
+        const PlanModel = (await import('./models/SandboxPlan')).default as any;
+        let planDoc = null;
+        if (meta.planId) {
+          planDoc = await PlanModel.findOne({ $or: [{ _id: meta.planId }, { planId: meta.planId }] }).lean();
         }
-      } catch (error) {
-        // If product fetch fails, continue without product info
-        console.warn('Failed to fetch product details for checkout session:', error);
-      }
+        const ProductModel = (await import('./models/SandboxProduct')).default as any;
+        let prodDoc = null;
+        if (planDoc?.productId) {
+          prodDoc = await ProductModel.findOne({ $or: [{ _id: planDoc.productId }, { productId: planDoc.productId }], userId: (session as any).userId }).lean();
+        } else if (meta.productId) {
+          // Fall back: try product by either _id or productId from metadata
+          prodDoc = await ProductModel.findOne({ $or: [{ _id: meta.productId }, { productId: meta.productId }], userId: (session as any).userId }).lean();
+        }
+        if (prodDoc) {
+          productName = prodDoc.name || productName;
+          productImage = absolutize(prodDoc.image) || productImage;
+        }
+      } catch {}
     }
 
-    // Return JSON only; frontend handles UI and bridge processing
     const checkoutUrl = `${req.protocol}://${req.get('host')}/checkout/${sessionId}`;
     res.json({
       success: true,
       data: {
         sessionId: session.sessionId,
         checkoutUrl,
-        amount: session.getFormattedAmount(),
+        amount: typeof (session as any).amount === 'number' ? (session as any).amount : (session as any).getFormattedAmount?.() || (session as any).amount,
         currency: session.currency,
         description: session.description,
-        customerEmail: session.customerEmail,
-        customerName: session.customerName,
-        successUrl: session.successUrl,
-        cancelUrl: session.cancelUrl,
+        customerEmail: (session as any).customerEmail,
         status: session.status,
         expiresAt: session.expiresAt,
         productImage,
-        productName
+        productName,
+        successUrl: (session as any).successUrl,
+        cancelUrl: (session as any).cancelUrl
       }
     });
   } catch (error) {
     logger.error('Error accessing checkout session:', error);
-    res.status(500).json({
-      success: false,
-      error: 'Internal server error',
-      message: 'Failed to access checkout session'
-    });
+    res.status(500).json({ success: false, message: 'Failed to access checkout session' });
   }
 });
 

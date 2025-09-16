@@ -205,7 +205,12 @@ export class SandboxController {
         setTimeout(() => SandboxController.quickLinkStore.delete(cacheKey), Math.max(1000, expiresAt.getTime() - now));
       }
 
-      const publicUrl = `${process.env.REACT_APP_FRONTEND_URL || 'http://localhost:8080'}/pay/ql/${token}`;
+      // Build shareable URL pointing to the public frontend, not localhost
+      const frontendBase = process.env.PUBLIC_FRONTEND_URL 
+        || process.env.FRONTEND_URL 
+        || process.env.REACT_APP_FRONTEND_URL 
+        || 'https://transactlab-payment-sandbox.vercel.app';
+      const publicUrl = `${frontendBase.replace(/\/$/, '')}/pay/ql/${token}`;
       // If the request explicitly asks for an immediate session (one-time, no override, fixed amount), create and return checkoutUrl directly
       const wantsImmediate = !allowAmountOverride && paymentType !== 'recurring' && typeof amount === 'number';
       if (wantsImmediate) {

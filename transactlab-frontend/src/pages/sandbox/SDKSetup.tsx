@@ -23,6 +23,13 @@ export default function SDKSetup() {
   const [initialLoading, setInitialLoading] = useState(true);
   const { toast } = useToast();
 
+  // Helper function to format numbers with commas
+  const formatNumber = (num: number | string) => {
+    const numericValue = typeof num === 'string' ? parseFloat(num) : num;
+    if (isNaN(numericValue)) return '0';
+    return numericValue.toLocaleString();
+  };
+
   const exampleConfig = `{
   "apiKey": "sk_test_secret_...",
   "baseUrl": "https://transactlab-backend.onrender.com/api/v1",
@@ -244,10 +251,19 @@ export default function SDKSetup() {
               <Label className="text-xs sm:text-sm">Amount (major units)</Label>
               <Input 
                 value={amount} 
-                onChange={e => setAmount(e.target.value)} 
+                onChange={e => {
+                  // Remove non-numeric characters except decimal point
+                  const value = e.target.value.replace(/[^0-9.]/g, '');
+                  setAmount(value);
+                }} 
                 placeholder="25000" 
                 className="text-xs sm:text-sm"
               />
+              {amount && (
+                <p className="text-xs text-muted-foreground mt-1">
+                  Formatted: {formatNumber(amount)}
+                </p>
+              )}
             </div>
             <div>
               <Label className="text-xs sm:text-sm">Currency</Label>
@@ -477,6 +493,11 @@ export default function SDKSetup() {
                   }, null, 2)} 
                   className="text-xs sm:text-sm"
                 />
+                {amount && (
+                  <p className="text-xs text-muted-foreground mt-1">
+                    Amount: {formatNumber(amount)} {currency}
+                  </p>
+                )}
               </div>
               <div className="flex flex-col sm:flex-row gap-2 sm:gap-3">
                 <Button 

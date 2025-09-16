@@ -432,7 +432,7 @@ const ApiKeyManagement: React.FC = () => {
               <span className="sm:hidden">New Keys</span>
                 </Button>
                 <Button 
-              onClick={() => window.open('https://docs.transactlab.com/api', '_blank')}
+              onClick={() => window.open('https://transactlab-payment-sandbox.vercel.app/transactlab-docs', '_blank')}
               variant="outline"
               className="w-full sm:w-auto"
             >

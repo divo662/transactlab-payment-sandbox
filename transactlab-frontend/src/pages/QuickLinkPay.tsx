@@ -90,16 +90,15 @@ const QuickLinkPay: React.FC = () => {
 
   if (loading) {
     return (
-      <div className="max-w-xl mx-auto p-4 sm:p-6">
-        <div className="space-y-3">
-          <div className="h-7 bg-gray-200 rounded w-60 animate-pulse" />
-          <div className="h-4 bg-gray-200 rounded w-80 animate-pulse" />
-        </div>
-        <div className="mt-4 border rounded-lg p-4 space-y-3">
-          <div className="h-5 bg-gray-200 rounded w-40 animate-pulse" />
-          <div className="h-10 bg-gray-200 rounded animate-pulse" />
-          <div className="h-10 bg-gray-200 rounded animate-pulse" />
-          <div className="h-10 bg-gray-200 rounded w-32 animate-pulse" />
+      <div className="min-h-screen bg-gradient-to-b from-gray-50 to-white flex items-center justify-center p-4">
+        <div className="w-full max-w-md">
+          <div className="h-8 bg-gray-200 rounded w-48 mx-auto animate-pulse" />
+          <div className="mt-6 border rounded-2xl p-5 shadow-sm bg-white">
+            <div className="h-4 bg-gray-200 rounded w-24 animate-pulse" />
+            <div className="mt-3 h-10 bg-gray-200 rounded animate-pulse" />
+            <div className="mt-3 h-10 bg-gray-200 rounded animate-pulse" />
+            <div className="mt-4 h-10 bg-gray-200 rounded w-32 animate-pulse" />
+          </div>
         </div>
       </div>
     );
@@ -113,48 +112,81 @@ const QuickLinkPay: React.FC = () => {
     );
   }
 
+  const branding = (meta && meta.branding) || {};
+  const primary = branding.primaryColor || '#0a164d';
+  const secondary = branding.secondaryColor || '#1e3a8a';
+
   return (
-    <div className="max-w-xl mx-auto p-3 sm:p-6">
-      <Card className="shadow-sm">
-        <CardHeader>
-          <CardTitle className="text-base sm:text-lg">{meta.title || 'Payment Link'}</CardTitle>
-        </CardHeader>
-        <CardContent className="space-y-4">
-          {meta.description && (
-            <p className="text-xs sm:text-sm text-gray-600">{meta.description}</p>
-          )}
+    <div className="min-h-screen bg-gradient-to-b from-gray-50 to-white flex items-center justify-center p-3 sm:p-6" style={{ ['--tl-primary' as any]: primary, ['--tl-secondary' as any]: secondary }}>
+      <div className="w-full max-w-lg md:max-w-2xl">
+        {/* Header / Brand */}
+        <div className="text-center mb-4 sm:mb-6">
+          <div className="inline-flex items-center gap-2 px-2.5 py-1.5 rounded-full border bg-white shadow-sm">
+            <img src={branding.logoUrl || '/transactlab/1.png'} alt="TransactLab" className="h-5 w-5 rounded" />
+            <span className="text-xs font-semibold" style={{ color: primary }}>TransactLab</span>
+          </div>
+          <h1 className="mt-3 text-2xl sm:text-3xl font-bold text-gray-900 tracking-tight">{meta.title || 'Payment'}</h1>
+          {meta.description ? (
+            <p className="mt-1 text-sm sm:text-base text-gray-600">{meta.description}</p>
+          ) : null}
+        </div>
 
-          {!meta.allowAmountOverride ? (
-            <div className="text-sm text-gray-900">
-              Amount: <span className="font-semibold">{meta.amount} {meta.currency}</span>
-            </div>
-          ) : (
-            <div>
-              <label className="text-xs text-gray-600">Amount</label>
-              <Input value={amount} onChange={(e)=>setAmount(e.target.value)} placeholder={`0.00 (${meta.currency})`} className="text-xs sm:text-sm mt-1" />
-            </div>
-          )}
-
-          {meta.requireCustomerInfo && (
-            <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
-              <div>
-                <label className="text-xs text-gray-600">Email</label>
-                <Input value={customerEmail} onChange={(e)=>setCustomerEmail(e.target.value)} placeholder="customer@example.com" className="text-xs sm:text-sm mt-1" />
+        <Card className="shadow-md border-0 rounded-2xl overflow-hidden">
+          <div className="h-1" style={{ background: `linear-gradient(90deg, ${primary}, ${secondary})` }} />
+          <CardContent className="p-5 sm:p-7 space-y-5">
+            {/* Amount */}
+            {!meta.allowAmountOverride ? (
+              <div className="bg-gray-50 border border-gray-200 rounded-lg p-3 sm:p-4 flex items-center justify-between">
+                <span className="text-sm text-gray-600">Amount</span>
+                <span className="text-lg sm:text-xl font-bold text-gray-900">{meta.currency} {Number(meta.amount).toLocaleString()}</span>
               </div>
+            ) : (
               <div>
-                <label className="text-xs text-gray-600">Name (optional)</label>
-                <Input value={customerName} onChange={(e)=>setCustomerName(e.target.value)} placeholder="John Doe" className="text-xs sm:text-sm mt-1" />
+                <label className="text-xs text-gray-600">Amount</label>
+                <Input value={amount} onChange={(e)=>setAmount(e.target.value)} placeholder={`0.00 (${meta.currency})`} className="text-sm mt-1" />
+                <p className="text-[11px] text-gray-500 mt-1">Enter any amount in {meta.currency}</p>
               </div>
-            </div>
-          )}
+            )}
 
-          <div className="pt-2">
-            <Button disabled={starting || !canSubmit} onClick={startPayment} className="h-9 sm:h-10 text-xs sm:text-sm w-full sm:w-auto">
+            {/* Customer Info */}
+            {meta.requireCustomerInfo && (
+              <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+                <div>
+                  <label className="text-xs text-gray-600">Email</label>
+                  <Input value={customerEmail} onChange={(e)=>setCustomerEmail(e.target.value)} placeholder="customer@example.com" className="text-sm mt-1" />
+                </div>
+                <div>
+                  <label className="text-xs text-gray-600">Name (optional)</label>
+                  <Input value={customerName} onChange={(e)=>setCustomerName(e.target.value)} placeholder="John Doe" className="text-sm mt-1" />
+                </div>
+              </div>
+            )}
+
+            <Button disabled={starting || !canSubmit} onClick={startPayment} className="h-10 text-sm w-full transition-transform hover:scale-[1.01] active:scale-[0.99]" style={{ backgroundColor: primary }}>
               {starting ? 'Starting…' : 'Proceed to pay'}
             </Button>
+
+            <div className="flex flex-wrap items-center justify-center gap-4 pt-1 text-xs text-gray-500">
+              <div className="inline-flex items-center gap-1">
+                <span className="inline-block w-2 h-2 rounded-full" style={{ backgroundColor: primary }} />
+                <span>Secure</span>
+              </div>
+              <div className="inline-flex items-center gap-1">
+                <span className="inline-block w-2 h-2 rounded-full" style={{ backgroundColor: secondary }} />
+                <span>Sandbox Mode</span>
+              </div>
+            </div>
+          </CardContent>
+        </Card>
+
+        {/* Footer brand stripe */}
+        <div className="mt-4 text-center">
+          <div className="inline-flex items-center gap-2 text-[11px] text-gray-500 px-3 py-1.5 rounded-full border bg-white">
+            <img src={branding.logoUrl || '/transactlab/1.png'} alt="TransactLab" className="h-4 w-4 rounded" />
+            <span>Payments powered by TransactLab</span>
           </div>
-        </CardContent>
-      </Card>
+        </div>
+      </div>
     </div>
   );
 };
