@@ -21,7 +21,9 @@ const QuickLinkPay: React.FC = () => {
   const canSubmit = useMemo(() => {
     if (!meta) return false;
     if (meta.allowAmountOverride) {
-      const num = parseFloat(amount || '0');
+      // Remove commas and parse the number
+      const cleanAmount = amount.replace(/,/g, '');
+      const num = parseFloat(cleanAmount || '0');
       if (isNaN(num) || num <= 0) return false;
     }
     if (meta.requireCustomerInfo) {
@@ -29,6 +31,42 @@ const QuickLinkPay: React.FC = () => {
     }
     return true;
   }, [meta, amount, customerEmail]);
+
+  // Helper function to format numbers with commas
+  const formatNumber = (value: string) => {
+    // Remove non-numeric characters except decimal point
+    const numericValue = value.replace(/[^0-9.]/g, '');
+    if (!numericValue) return '';
+    
+    // Split by decimal point
+    const parts = numericValue.split('.');
+    // Add commas to the integer part
+    parts[0] = parts[0].replace(/\B(?=(\d{3})+(?!\d))/g, ',');
+    return parts.join('.');
+  };
+
+  // Prefer frontend checkout: extract a sessionId from any backend URL
+  const extractSessionIdFromUrl = (url?: string): string | null => {
+    if (!url) return null;
+    try {
+      // Try common pattern like sess_xxxxxxxx
+      const match = url.match(/(sess_[a-zA-Z0-9]+)/);
+      if (match && match[1]) return match[1];
+
+      // Parse URL and inspect path/query
+      const parsed = new URL(url, window.location.origin);
+      const segments = parsed.pathname.split('/').filter(Boolean);
+      // Look for checkout/session-like segments
+      const idx = segments.findIndex(s => ['checkout', 'session', 'sessions'].includes(s));
+      if (idx >= 0 && segments[idx + 1]) return segments[idx + 1];
+
+      const qp = parsed.searchParams.get('sessionId') || parsed.searchParams.get('session') || parsed.searchParams.get('id');
+      if (qp) return qp;
+    } catch (_e) {
+      // no-op, fall through
+    }
+    return null;
+  };
 
   useEffect(() => {
     (async () => {
@@ -62,7 +100,9 @@ const QuickLinkPay: React.FC = () => {
       const userIdHint = searchParams.get('userId') || undefined;
       const payload: any = {};
       if (meta?.allowAmountOverride) {
-        const num = parseFloat(amount || '0');
+        // Remove commas and parse the number
+        const cleanAmount = amount.replace(/,/g, '');
+        const num = parseFloat(cleanAmount || '0');
         if (!isNaN(num) && num > 0) payload.amount = num;
       }
       if (meta?.requireCustomerInfo) {
@@ -74,10 +114,17 @@ const QuickLinkPay: React.FC = () => {
       const out = data?.data || data;
       const sessionId = out?.sessionId;
       const checkoutUrl = out?.checkoutUrl;
-      if (checkoutUrl) {
-        window.location.href = checkoutUrl;
-      } else if (sessionId) {
+      // Always prefer navigating to our own frontend route
+      if (sessionId) {
         navigate(`/checkout/${sessionId}`);
+      } else if (checkoutUrl) {
+        const sid = extractSessionIdFromUrl(checkoutUrl);
+        if (sid) {
+          navigate(`/checkout/${sid}`);
+        } else {
+          // Fallback to whatever URL was returned if we cannot parse a session id
+          window.location.href = checkoutUrl;
+        }
       } else {
         toast({ title: 'Start failed', description: 'Could not start payment', variant: 'destructive' });
       }
@@ -143,8 +190,18 @@ const QuickLinkPay: React.FC = () => {
             ) : (
               <div>
                 <label className="text-xs text-gray-600">Amount</label>
-                <Input value={amount} onChange={(e)=>setAmount(e.target.value)} placeholder={`0.00 (${meta.currency})`} className="text-sm mt-1" />
+                <Input 
+                  value={amount} 
+                  onChange={(e) => setAmount(formatNumber(e.target.value))} 
+                  placeholder={`0.00 (${meta.currency})`} 
+                  className="text-sm mt-1" 
+                />
                 <p className="text-[11px] text-gray-500 mt-1">Enter any amount in {meta.currency}</p>
+                {amount && (
+                  <p className="text-[11px] text-gray-400 mt-1">
+                    Formatted: {amount} {meta.currency}
+                  </p>
+                )}
               </div>
             )}
 

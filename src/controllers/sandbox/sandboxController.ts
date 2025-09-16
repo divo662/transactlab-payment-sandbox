@@ -3156,7 +3156,7 @@ export class SandboxController {
       const { subscriptionId } = req.params as any;
       const { atPeriodEnd = true } = req.body as any;
       const update: any = atPeriodEnd ? { cancelAtPeriodEnd: true } : { status: 'canceled', canceledAt: new Date() };
-      const sub = await SandboxSubscription.findOneAndUpdate({ _id: subscriptionId, userId: userId.toString() }, { $set: update }, { new: true }).lean();
+      const sub = await SandboxSubscription.findOneAndUpdate({ subscriptionId: subscriptionId, userId: userId.toString() }, { $set: update }, { new: true }).lean();
       if (!sub) return res.status(404).json({ success: false, message: 'Subscription not found' });
       return res.json({ success: true, data: sub });
     } catch (error) {
@@ -3170,7 +3170,7 @@ export class SandboxController {
       const userId = req.user?._id;
       if (!userId) return res.status(401).json({ success: false, message: 'Unauthorized' });
       const { subscriptionId } = req.params as any;
-      const sub = await SandboxSubscription.findOneAndUpdate({ _id: subscriptionId, userId: userId.toString() }, { $set: { status: 'paused' } }, { new: true }).lean();
+      const sub = await SandboxSubscription.findOneAndUpdate({ subscriptionId: subscriptionId, userId: userId.toString() }, { $set: { status: 'paused' } }, { new: true }).lean();
       if (!sub) return res.status(404).json({ success: false, message: 'Subscription not found' });
       return res.json({ success: true, data: sub });
     } catch (error) {
@@ -3184,7 +3184,7 @@ export class SandboxController {
       const userId = req.user?._id;
       if (!userId) return res.status(401).json({ success: false, message: 'Unauthorized' });
       const { subscriptionId } = req.params as any;
-      const sub = await SandboxSubscription.findOneAndUpdate({ _id: subscriptionId, userId: userId.toString() }, { $set: { status: 'active' } }, { new: true }).lean();
+      const sub = await SandboxSubscription.findOneAndUpdate({ subscriptionId: subscriptionId, userId: userId.toString() }, { $set: { status: 'active' } }, { new: true }).lean();
       if (!sub) return res.status(404).json({ success: false, message: 'Subscription not found' });
       return res.json({ success: true, data: sub });
     } catch (error) {
