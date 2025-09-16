@@ -46,7 +46,7 @@ export class CloudinaryService {
         folder,
         resource_type: 'image' as const,
         quality: options.quality || 'auto',
-        format: options.format || 'auto',
+        ...(options.format && options.format !== 'auto' ? { format: options.format } : {}),
         transformation: [
           ...(options.width || options.height ? [{
             width: options.width,
@@ -144,8 +144,7 @@ export class CloudinaryService {
     return this.uploadImage(file, `transactlab/products/${productId}`, {
       width: 800,
       height: 600,
-      quality: 'auto',
-      format: 'auto'
+      quality: 'auto'
     });
   }
 
@@ -159,8 +158,7 @@ export class CloudinaryService {
     return this.uploadImage(file, `transactlab/avatars/${userId}`, {
       width: 300,
       height: 300,
-      quality: 'auto',
-      format: 'auto'
+      quality: 'auto'
     });
   }
 
