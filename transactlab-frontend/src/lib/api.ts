@@ -783,6 +783,19 @@ class ApiService {
       method: 'POST'
     });
   }
+
+  // Invoice methods
+  async sendInvoice(invoiceId: string): Promise<any> {
+    return this.request(`/sandbox/invoices/${invoiceId}/send`, {
+      method: 'POST',
+    });
+  }
+
+  async sendInvoiceReminder(invoiceId: string): Promise<any> {
+    return this.request(`/sandbox/invoices/${invoiceId}/remind`, {
+      method: 'POST',
+    });
+  }
 }
 
 export const apiService = new ApiService();

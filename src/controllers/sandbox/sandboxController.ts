@@ -3873,20 +3873,73 @@ export class SandboxController {
         });
       }
 
+      if (invoice.status === 'paid') {
+        return res.status(400).json({
+          success: false,
+          error: 'Invoice already paid',
+          message: 'Cannot send paid invoice'
+        });
+      }
+
+      // Import EmailService dynamically to avoid circular dependencies
+      const { EmailService } = await import('../../services/notification/emailService');
+      
+      // Format amount for display
+      const formattedAmount = EmailService.formatAmount(invoice.amount / 100, invoice.currency);
+      
+      // Create payment URL for the invoice
+      const frontendBase = process.env.FRONTEND_URL || 'https://transactlab-payment-sandbox.vercel.app';
+      const paymentUrl = `${frontendBase}/invoice/${invoice.invoiceId}`;
+      
+      // Prepare email data
+      const emailData = {
+        customerName: invoice.customerName || invoice.customerEmail,
+        invoiceId: invoice.invoiceId,
+        amount: formattedAmount,
+        currency: invoice.currency,
+        dueDate: new Date(invoice.dueDate).toLocaleDateString('en-US', {
+          year: 'numeric',
+          month: 'long',
+          day: 'numeric'
+        }),
+        description: invoice.description,
+        paymentUrl,
+        businessName: 'Your Business' // This could be made configurable
+      };
+
+      // Send email to customer
+      const emailResult = await EmailService.sendInvoiceToCustomer(
+        invoice.customerEmail,
+        emailData
+      );
+
+      if (!emailResult.success) {
+        logger.error('Failed to send invoice email:', emailResult.error);
+        return res.status(500).json({ 
+          success: false, 
+          message: 'Failed to send invoice email',
+          error: emailResult.error
+        });
+      }
+
       // Update invoice status to 'sent'
       invoice.status = 'sent';
+      invoice.sentAt = new Date();
       await invoice.save();
 
-      // In a real system, you would:
-      // 1. Generate PDF invoice
-      // 2. Send email to customer with PDF attachment
-      // 3. Log the email delivery
-
-      logger.info(`Invoice ${invoiceId} sent to ${invoice.customerEmail}`);
+      logger.info('Invoice sent successfully', {
+        invoiceId: invoice.invoiceId,
+        customerEmail: invoice.customerEmail,
+        emailMessageId: emailResult.messageId
+      });
 
       res.json({
         success: true,
-        data: invoice,
+        data: {
+          ...invoice.toObject(),
+          emailSent: true,
+          emailMessageId: emailResult.messageId
+        },
         message: 'Invoice sent successfully'
       });
     } catch (error) {
@@ -3895,6 +3948,125 @@ export class SandboxController {
         success: false,
         error: 'Internal server error',
         message: 'Failed to send invoice'
+      });
+    }
+  }
+
+  /**
+   * Send invoice reminder
+   */
+  static async sendInvoiceReminder(req: Request, res: Response) {
+    try {
+      const userId = (req as any).user?._id;
+      const { invoiceId } = req.params;
+
+      const invoice = await (SandboxInvoice as any).findOne({ 
+        _id: invoiceId, 
+        userId 
+      });
+
+      if (!invoice) {
+        return res.status(404).json({
+          success: false,
+          error: 'Invoice not found',
+          message: 'Invoice not found or you do not have permission to access it'
+        });
+      }
+
+      if (invoice.status === 'paid') {
+        return res.status(400).json({
+          success: false,
+          error: 'Invoice already paid',
+          message: 'Cannot send reminder for paid invoice'
+        });
+      }
+
+      // Import EmailService dynamically to avoid circular dependencies
+      const { EmailService } = await import('../../services/notification/emailService');
+      
+      // Calculate days until due
+      const dueDate = new Date(invoice.dueDate);
+      const today = new Date();
+      const timeDiff = dueDate.getTime() - today.getTime();
+      const daysUntilDue = Math.ceil(timeDiff / (1000 * 3600 * 24));
+      
+      // Format amount for display
+      const formattedAmount = EmailService.formatAmount(invoice.amount / 100, invoice.currency);
+      
+      // Create payment URL for the invoice
+      const frontendBase = process.env.FRONTEND_URL || 'https://transactlab-payment-sandbox.vercel.app';
+      const paymentUrl = `${frontendBase}/invoice/${invoice.invoiceId}`;
+      
+      // Prepare email data
+      const emailData = {
+        customerName: invoice.customerName || invoice.customerEmail,
+        invoiceId: invoice.invoiceId,
+        amount: formattedAmount,
+        currency: invoice.currency,
+        dueDate: dueDate.toLocaleDateString('en-US', {
+          year: 'numeric',
+          month: 'long',
+          day: 'numeric'
+        }),
+        description: invoice.description,
+        paymentUrl,
+        businessName: 'Your Business', // This could be made configurable
+        daysUntilDue: Math.max(0, daysUntilDue)
+      };
+
+      // Send appropriate email based on due date
+      let emailResult;
+      if (daysUntilDue <= 0) {
+        // Invoice is overdue
+        const daysOverdue = Math.abs(daysUntilDue);
+        emailResult = await EmailService.sendOverdueInvoiceNotification(
+          invoice.customerEmail,
+          {
+            ...emailData,
+            daysOverdue
+          }
+        );
+      } else {
+        // Invoice is due soon
+        emailResult = await EmailService.sendInvoiceReminder(
+          invoice.customerEmail,
+          emailData
+        );
+      }
+
+      if (!emailResult.success) {
+        logger.error('Failed to send invoice reminder email:', emailResult.error);
+        return res.status(500).json({ 
+          success: false, 
+          message: 'Failed to send invoice reminder email',
+          error: emailResult.error
+        });
+      }
+
+      logger.info('Invoice reminder sent successfully', {
+        invoiceId: invoice.invoiceId,
+        customerEmail: invoice.customerEmail,
+        daysUntilDue,
+        emailMessageId: emailResult.messageId
+      });
+
+      res.json({
+        success: true,
+        data: {
+          invoiceId: invoice.invoiceId,
+          daysUntilDue,
+          emailSent: true,
+          emailMessageId: emailResult.messageId,
+          reminderType: daysUntilDue <= 0 ? 'overdue' : 'reminder'
+        },
+        message: daysUntilDue <= 0 ? 'Overdue invoice notification sent successfully' : 'Invoice reminder sent successfully'
+      });
+    } catch (error) {
+      logger.error('Error sending invoice reminder:', error);
+      res.status(500).json({
+        success: false,
+        error: 'Internal server error',
+        message: 'Failed to send invoice reminder'
       });
     }
   }

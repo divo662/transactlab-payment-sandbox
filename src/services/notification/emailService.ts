@@ -586,6 +586,260 @@ export class EmailService {
         Best regards,
         The TransactLab Security Team
       `
+    },
+    'invoice_sent': {
+      name: 'invoice_sent',
+      subject: 'Invoice #{{invoiceId}} - {{amount}}',
+      html: `
+        <div style="font-family: Arial, sans-serif; max-width: 600px; margin: 0 auto; padding: 20px;">
+          <div style="background: #0a164d; color: white; padding: 30px; text-align: center; border-radius: 10px 10px 0 0;">
+            <h1 style="margin: 0; font-size: 28px;">Invoice</h1>
+            <p style="margin: 10px 0 0 0; opacity: 0.9;">Payment Request</p>
+          </div>
+          <div style="background: white; padding: 30px; border-radius: 0 0 10px 10px; box-shadow: 0 4px 6px rgba(0,0,0,0.1);">
+            <p style="font-size: 16px; color: #333; margin-bottom: 20px;">Hello <strong>{{customerName}}</strong>,</p>
+            <p style="font-size: 16px; color: #555; line-height: 1.6; margin-bottom: 20px;">
+              You have received an invoice for <strong>{{amount}}</strong>. Please review the details below and complete your payment.
+            </p>
+            
+            <div style="background: #f8f9fa; padding: 20px; border-radius: 8px; margin: 20px 0; border-left: 4px solid #0a164d;">
+              <h3 style="color: #333; margin-top: 0;">Invoice Details</h3>
+              <table style="width: 100%; border-collapse: collapse;">
+                <tr>
+                  <td style="padding: 8px 0; color: #666; font-weight: bold;">Invoice ID:</td>
+                  <td style="padding: 8px 0; color: #333;">{{invoiceId}}</td>
+                </tr>
+                <tr>
+                  <td style="padding: 8px 0; color: #666; font-weight: bold;">Amount:</td>
+                  <td style="padding: 8px 0; color: #333; font-size: 18px; font-weight: bold;">{{amount}}</td>
+                </tr>
+                <tr>
+                  <td style="padding: 8px 0; color: #666; font-weight: bold;">Due Date:</td>
+                  <td style="padding: 8px 0; color: #333;">{{dueDate}}</td>
+                </tr>
+                <tr>
+                  <td style="padding: 8px 0; color: #666; font-weight: bold;">Description:</td>
+                  <td style="padding: 8px 0; color: #333;">{{description}}</td>
+                </tr>
+              </table>
+            </div>
+            
+            <div style="text-align: center; margin: 30px 0;">
+              <a href="{{paymentUrl}}" style="background: #0a164d; color: white; padding: 15px 30px; text-decoration: none; border-radius: 25px; display: inline-block; font-weight: bold; font-size: 16px;">
+                Pay Invoice
+              </a>
+            </div>
+            
+            <div style="background: #fff3cd; border: 1px solid #ffeaa7; padding: 15px; border-radius: 5px; margin: 20px 0;">
+              <p style="margin: 0; color: #856404; font-size: 14px;">
+                <strong>Payment Deadline:</strong> This invoice is due on {{dueDate}}. Please ensure payment is completed before the due date to avoid any late fees.
+              </p>
+            </div>
+            
+            <p style="font-size: 14px; color: #666; line-height: 1.6;">
+              If you have any questions about this invoice or need to discuss payment arrangements, please contact us at your earliest convenience.
+            </p>
+            
+            <p style="font-size: 14px; color: #888; text-align: center; margin-top: 30px;">
+              Best regards,<br>{{businessName}}<br>Powered by TransactLab Sandbox
+            </p>
+          </div>
+        </div>
+      `,
+      text: `
+        Invoice #{{invoiceId}} - {{amount}}
+        
+        Hello {{customerName}},
+        
+        You have received an invoice for {{amount}}. Please review the details below and complete your payment.
+        
+        Invoice Details:
+        - Invoice ID: {{invoiceId}}
+        - Amount: {{amount}}
+        - Due Date: {{dueDate}}
+        - Description: {{description}}
+        
+        Payment URL: {{paymentUrl}}
+        
+        Payment Deadline: This invoice is due on {{dueDate}}. Please ensure payment is completed before the due date to avoid any late fees.
+        
+        If you have any questions about this invoice or need to discuss payment arrangements, please contact us at your earliest convenience.
+        
+        Best regards,
+        {{businessName}}
+        Powered by TransactLab Sandbox
+      `
+    },
+    'invoice_reminder': {
+      name: 'invoice_reminder',
+      subject: 'Payment Reminder - Invoice #{{invoiceId}} Due Soon',
+      html: `
+        <div style="font-family: Arial, sans-serif; max-width: 600px; margin: 0 auto; padding: 20px;">
+          <div style="background: #dc2626; color: white; padding: 30px; text-align: center; border-radius: 10px 10px 0 0;">
+            <h1 style="margin: 0; font-size: 28px;">Payment Reminder</h1>
+            <p style="margin: 10px 0 0 0; opacity: 0.9;">Your invoice is due soon</p>
+          </div>
+          <div style="background: white; padding: 30px; border-radius: 0 0 10px 10px; box-shadow: 0 4px 6px rgba(0,0,0,0.1);">
+            <p style="font-size: 16px; color: #333; margin-bottom: 20px;">Hello <strong>{{customerName}}</strong>,</p>
+            <p style="font-size: 16px; color: #555; line-height: 1.6; margin-bottom: 20px;">
+              This is a friendly reminder that your invoice for <strong>{{amount}}</strong> is due <strong>{{daysUntilDue}} day(s)</strong> from now.
+            </p>
+            
+            <div style="background: #fef2f2; padding: 20px; border-radius: 8px; margin: 20px 0; border-left: 4px solid #dc2626;">
+              <h3 style="color: #dc2626; margin-top: 0;">Invoice Details</h3>
+              <table style="width: 100%; border-collapse: collapse;">
+                <tr>
+                  <td style="padding: 8px 0; color: #666; font-weight: bold;">Invoice ID:</td>
+                  <td style="padding: 8px 0; color: #333;">{{invoiceId}}</td>
+                </tr>
+                <tr>
+                  <td style="padding: 8px 0; color: #666; font-weight: bold;">Amount:</td>
+                  <td style="padding: 8px 0; color: #333; font-size: 18px; font-weight: bold;">{{amount}}</td>
+                </tr>
+                <tr>
+                  <td style="padding: 8px 0; color: #666; font-weight: bold;">Due Date:</td>
+                  <td style="padding: 8px 0; color: #dc2626; font-weight: bold;">{{dueDate}}</td>
+                </tr>
+                <tr>
+                  <td style="padding: 8px 0; color: #666; font-weight: bold;">Description:</td>
+                  <td style="padding: 8px 0; color: #333;">{{description}}</td>
+                </tr>
+              </table>
+            </div>
+            
+            <div style="text-align: center; margin: 30px 0;">
+              <a href="{{paymentUrl}}" style="background: #dc2626; color: white; padding: 15px 30px; text-decoration: none; border-radius: 25px; display: inline-block; font-weight: bold; font-size: 16px;">
+                Pay Invoice Now
+              </a>
+            </div>
+            
+            <div style="background: #fff3cd; border: 1px solid #ffeaa7; padding: 15px; border-radius: 5px; margin: 20px 0;">
+              <p style="margin: 0; color: #856404; font-size: 14px;">
+                <strong>Important:</strong> Please complete your payment by {{dueDate}} to avoid any late fees or service interruptions. If you've already made payment, please disregard this reminder.
+              </p>
+            </div>
+            
+            <p style="font-size: 14px; color: #666; line-height: 1.6;">
+              If you have any questions about this invoice or need assistance with payment, please don't hesitate to contact us.
+            </p>
+            
+            <p style="font-size: 14px; color: #888; text-align: center; margin-top: 30px;">
+              Best regards,<br>{{businessName}}<br>Powered by TransactLab Sandbox
+            </p>
+          </div>
+        </div>
+      `,
+      text: `
+        Payment Reminder - Invoice #{{invoiceId}} Due Soon
+        
+        Hello {{customerName}},
+        
+        This is a friendly reminder that your invoice for {{amount}} is due {{daysUntilDue}} day(s) from now.
+        
+        Invoice Details:
+        - Invoice ID: {{invoiceId}}
+        - Amount: {{amount}}
+        - Due Date: {{dueDate}}
+        - Description: {{description}}
+        
+        Payment URL: {{paymentUrl}}
+        
+        Important: Please complete your payment by {{dueDate}} to avoid any late fees or service interruptions. If you've already made payment, please disregard this reminder.
+        
+        If you have any questions about this invoice or need assistance with payment, please don't hesitate to contact us.
+        
+        Best regards,
+        {{businessName}}
+        Powered by TransactLab Sandbox
+      `
+    },
+    'invoice_overdue': {
+      name: 'invoice_overdue',
+      subject: 'Overdue Invoice #{{invoiceId}} - Immediate Action Required',
+      html: `
+        <div style="font-family: Arial, sans-serif; max-width: 600px; margin: 0 auto; padding: 20px;">
+          <div style="background: #dc2626; color: white; padding: 30px; text-align: center; border-radius: 10px 10px 0 0;">
+            <h1 style="margin: 0; font-size: 28px;">Overdue Invoice</h1>
+            <p style="margin: 10px 0 0 0; opacity: 0.9;">Immediate action required</p>
+          </div>
+          <div style="background: white; padding: 30px; border-radius: 0 0 10px 10px; box-shadow: 0 4px 6px rgba(0,0,0,0.1);">
+            <p style="font-size: 16px; color: #333; margin-bottom: 20px;">Hello <strong>{{customerName}}</strong>,</p>
+            <p style="font-size: 16px; color: #555; line-height: 1.6; margin-bottom: 20px;">
+              This invoice for <strong>{{amount}}</strong> is now <strong>{{daysOverdue}} day(s)</strong> overdue. Please make payment immediately to avoid further action.
+            </p>
+            
+            <div style="background: #fef2f2; padding: 20px; border-radius: 8px; margin: 20px 0; border-left: 4px solid #dc2626;">
+              <h3 style="color: #dc2626; margin-top: 0;">Overdue Invoice Details</h3>
+              <table style="width: 100%; border-collapse: collapse;">
+                <tr>
+                  <td style="padding: 8px 0; color: #666; font-weight: bold;">Invoice ID:</td>
+                  <td style="padding: 8px 0; color: #333;">{{invoiceId}}</td>
+                </tr>
+                <tr>
+                  <td style="padding: 8px 0; color: #666; font-weight: bold;">Amount Due:</td>
+                  <td style="padding: 8px 0; color: #dc2626; font-size: 18px; font-weight: bold;">{{amount}}</td>
+                </tr>
+                <tr>
+                  <td style="padding: 8px 0; color: #666; font-weight: bold;">Original Due Date:</td>
+                  <td style="padding: 8px 0; color: #dc2626; font-weight: bold;">{{dueDate}}</td>
+                </tr>
+                <tr>
+                  <td style="padding: 8px 0; color: #666; font-weight: bold;">Days Overdue:</td>
+                  <td style="padding: 8px 0; color: #dc2626; font-weight: bold;">{{daysOverdue}} days</td>
+                </tr>
+                <tr>
+                  <td style="padding: 8px 0; color: #666; font-weight: bold;">Description:</td>
+                  <td style="padding: 8px 0; color: #333;">{{description}}</td>
+                </tr>
+              </table>
+            </div>
+            
+            <div style="text-align: center; margin: 30px 0;">
+              <a href="{{paymentUrl}}" style="background: #dc2626; color: white; padding: 15px 30px; text-decoration: none; border-radius: 25px; display: inline-block; font-weight: bold; font-size: 16px;">
+                Pay Overdue Invoice
+              </a>
+            </div>
+            
+            <div style="background: #fef2f2; border: 1px solid #fca5a5; padding: 15px; border-radius: 5px; margin: 20px 0;">
+              <p style="margin: 0; color: #dc2626; font-size: 14px;">
+                <strong>Urgent:</strong> This invoice is overdue. Please make payment immediately to avoid late fees and potential service interruptions. If you've already made payment, please contact us to update our records.
+              </p>
+            </div>
+            
+            <p style="font-size: 14px; color: #666; line-height: 1.6;">
+              If you're experiencing financial difficulties or need to discuss payment arrangements, please contact us immediately. We're here to help find a solution that works for both parties.
+            </p>
+            
+            <p style="font-size: 14px; color: #888; text-align: center; margin-top: 30px;">
+              Best regards,<br>{{businessName}}<br>Powered by TransactLab Sandbox
+            </p>
+          </div>
+        </div>
+      `,
+      text: `
+        Overdue Invoice #{{invoiceId}} - Immediate Action Required
+        
+        Hello {{customerName}},
+        
+        This invoice for {{amount}} is now {{daysOverdue}} day(s) overdue. Please make payment immediately to avoid further action.
+        
+        Overdue Invoice Details:
+        - Invoice ID: {{invoiceId}}
+        - Amount Due: {{amount}}
+        - Original Due Date: {{dueDate}}
+        - Days Overdue: {{daysOverdue}} days
+        - Description: {{description}}
+        
+        Payment URL: {{paymentUrl}}
+        
+        Urgent: This invoice is overdue. Please make payment immediately to avoid late fees and potential service interruptions.
+        
+        If you're experiencing financial difficulties or need to discuss payment arrangements, please contact us immediately.
+        
+        Best regards,
+        {{businessName}}
+        Powered by TransactLab Sandbox
+      `
     }
   };
 
@@ -1011,6 +1265,65 @@ export class EmailService {
       logger.error('Failed to send team invite', { error });
       return { success: false, error: 'send_failed' };
     }
+  }
+
+  /**
+   * Send invoice to customer
+   */
+  static async sendInvoiceToCustomer(
+    to: string,
+    data: {
+      customerName: string;
+      invoiceId: string;
+      amount: string;
+      currency: string;
+      dueDate: string;
+      description: string;
+      paymentUrl: string;
+      businessName: string;
+    }
+  ): Promise<EmailResult> {
+    return await this.sendTemplatedEmail('invoice_sent', to, data);
+  }
+
+  /**
+   * Send invoice payment reminder
+   */
+  static async sendInvoiceReminder(
+    to: string,
+    data: {
+      customerName: string;
+      invoiceId: string;
+      amount: string;
+      currency: string;
+      dueDate: string;
+      description: string;
+      paymentUrl: string;
+      businessName: string;
+      daysUntilDue: number;
+    }
+  ): Promise<EmailResult> {
+    return await this.sendTemplatedEmail('invoice_reminder', to, data);
+  }
+
+  /**
+   * Send overdue invoice notification
+   */
+  static async sendOverdueInvoiceNotification(
+    to: string,
+    data: {
+      customerName: string;
+      invoiceId: string;
+      amount: string;
+      currency: string;
+      dueDate: string;
+      description: string;
+      paymentUrl: string;
+      businessName: string;
+      daysOverdue: number;
+    }
+  ): Promise<EmailResult> {
+    return await this.sendTemplatedEmail('invoice_overdue', to, data);
   }
 
   /**

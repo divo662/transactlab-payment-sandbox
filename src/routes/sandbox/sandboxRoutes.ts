@@ -103,6 +103,7 @@ router.post('/invoices', SandboxController.createInvoice);
 router.get('/invoices', SandboxController.getInvoices);
 router.get('/invoices/:invoiceId', SandboxController.getInvoice);
 router.post('/invoices/:invoiceId/send', SandboxController.sendInvoice);
+router.post('/invoices/:invoiceId/remind', SandboxController.sendInvoiceReminder);
 router.post('/invoices/:invoiceId/mark-paid', SandboxController.markInvoicePaid);
 
 // Payment Methods
