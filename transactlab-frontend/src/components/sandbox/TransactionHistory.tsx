@@ -81,6 +81,20 @@ const TransactionHistory: React.FC = () => {
       // Update pagination info
       if (res.pagination) {
         setPagination(res.pagination);
+      } else {
+        // Client-side pagination fallback
+        const itemsPerPage = 20;
+        const totalItems = normalizeTx(res).length;
+        const totalPages = Math.max(1, Math.ceil(totalItems / itemsPerPage));
+        setPagination(prev => ({
+          ...prev,
+          currentPage: Math.min(page, totalPages),
+          totalPages,
+          totalItems,
+          itemsPerPage,
+          hasNextPage: page < totalPages,
+          hasPrevPage: page > 1
+        }));
       }
     } catch (error) {
       console.error('Error fetching transactions:', error);
@@ -272,6 +286,7 @@ const TransactionHistory: React.FC = () => {
     setDateRangeFilter({ startDate: '', endDate: '' });
     setAmountRangeFilter({ minAmount: '', maxAmount: '' });
     setCustomerSearchFilter('');
+    setPagination(prev => ({ ...prev, currentPage: 1 }));
   };
 
   // Check if any filters are active
@@ -295,6 +310,11 @@ const TransactionHistory: React.FC = () => {
     if (customerSearchFilter) count++;
     return count;
   };
+
+  // Reset to first page when filters change
+  useEffect(() => {
+    setPagination(prev => ({ ...prev, currentPage: 1 }));
+  }, [paymentTypeFilter, statusFilter, dateRangeFilter.startDate, dateRangeFilter.endDate, amountRangeFilter.minAmount, amountRangeFilter.maxAmount, customerSearchFilter]);
 
   // Check if transaction is subscription-based
   const isSubscriptionPayment = (transaction: any) => {
@@ -744,6 +764,10 @@ const TransactionHistory: React.FC = () => {
         <CardContent className="p-0">
           {(() => {
             const filteredTransactions = getFilteredTransactions();
+            // Client-side slice if backend didn't paginate or filters changed counts
+            const start = (pagination.currentPage - 1) * pagination.itemsPerPage;
+            const end = start + pagination.itemsPerPage;
+            const pageItems = filteredTransactions.slice(start, end);
             return filteredTransactions.length === 0 ? (
               <div className="text-center text-muted-foreground py-8 sm:py-12 px-4">
                 <DollarSign className="w-8 h-8 sm:w-10 sm:h-10 mx-auto mb-2 opacity-40" />
@@ -769,7 +793,7 @@ const TransactionHistory: React.FC = () => {
               <>
                 {/* Desktop View */}
                 <div className="hidden sm:block divide-y divide-gray-200">
-                {filteredTransactions.map((t: any) => (
+                {pageItems.map((t: any) => (
                 <div 
                   key={t.transactionId || t.sessionId} 
                   className="p-4 hover:bg-gray-50 cursor-pointer transition-colors"
@@ -863,7 +887,7 @@ const TransactionHistory: React.FC = () => {
 
                 {/* Mobile View */}
                 <div className="sm:hidden space-y-3 p-3">
-                  {filteredTransactions.map((t: any) => (
+                  {pageItems.map((t: any) => (
                     <div 
                       key={t.transactionId || t.sessionId} 
                       className="bg-white border border-gray-200 rounded-lg p-4 shadow-sm hover:shadow-md transition-shadow cursor-pointer"
@@ -970,7 +994,7 @@ const TransactionHistory: React.FC = () => {
         </CardContent>
         
         {/* Pagination */}
-        {getFilteredTransactions().length > 0 && paymentTypeFilter === 'all' && (
+        {getFilteredTransactions().length > 0 && (
           <Pagination
             currentPage={pagination.currentPage}
             totalPages={pagination.totalPages}

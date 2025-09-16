@@ -29,6 +29,14 @@ const Subscriptions: React.FC = () => {
   // Subscriptions list
   const [subscriptions, setSubscriptions] = useState<any[]>([]);
   const [statusFilter, setStatusFilter] = useState<string>('all');
+  const [subsPagination, setSubsPagination] = useState({
+    currentPage: 1,
+    totalPages: 1,
+    totalItems: 0,
+    itemsPerPage: 10,
+    hasNextPage: false,
+    hasPrevPage: false
+  });
 
   const [form, setForm] = useState({
     customerEmail: '',
@@ -61,6 +69,11 @@ const Subscriptions: React.FC = () => {
   };
 
   useEffect(() => { void loadData(); }, []);
+
+  // Reset to page 1 when filter changes
+  useEffect(() => {
+    setSubsPagination(prev => ({ ...prev, currentPage: 1 }));
+  }, [statusFilter]);
 
   const onSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -302,10 +315,29 @@ const Subscriptions: React.FC = () => {
           <div className="divide-y border rounded">
             {(() => {
               const filtered = subscriptions.filter((s:any)=> statusFilter==='all' || s.status===statusFilter);
+              const itemsPerPage = subsPagination.itemsPerPage;
+              const totalItems = filtered.length;
+              const totalPages = Math.max(1, Math.ceil(totalItems / itemsPerPage));
+              // Keep pagination state in sync
+              if (
+                subsPagination.totalItems !== totalItems ||
+                subsPagination.totalPages !== totalPages
+              ) {
+                setSubsPagination(prev => ({
+                  ...prev,
+                  totalItems,
+                  totalPages,
+                  hasNextPage: prev.currentPage < totalPages,
+                  hasPrevPage: prev.currentPage > 1
+                }));
+              }
               if (filtered.length === 0) {
                 return <div className="p-4 sm:p-6 text-xs sm:text-sm text-gray-500 text-center">No data available</div>;
               }
-              return filtered.map((s:any)=> (
+              const start = (subsPagination.currentPage - 1) * itemsPerPage;
+              const end = start + itemsPerPage;
+              const pageItems = filtered.slice(start, end);
+              return pageItems.map((s:any)=> (
                 <div key={s._id} className="cursor-pointer hover:bg-gray-50" onClick={()=> navigate(`/sandbox/subscriptions/${s.subscriptionId}`)}>
                   {/* Desktop View */}
                   <div className="hidden sm:flex items-center justify-between p-3">
@@ -372,6 +404,23 @@ const Subscriptions: React.FC = () => {
           </div>
         </CardContent>
       </Card>
+      {/* Pagination */}
+      {subsPagination.totalItems > 0 && (
+        <Pagination
+          currentPage={subsPagination.currentPage}
+          totalPages={subsPagination.totalPages}
+          totalItems={subsPagination.totalItems}
+          itemsPerPage={subsPagination.itemsPerPage}
+          onPageChange={(page:number)=> setSubsPagination(prev=> ({
+            ...prev,
+            currentPage: page,
+            hasNextPage: page < prev.totalPages,
+            hasPrevPage: page > 1
+          }))}
+          hasNextPage={subsPagination.hasNextPage}
+          hasPrevPage={subsPagination.hasPrevPage}
+        />
+      )}
       <div className="mt-6">
         <ApiWorkbench
           examples={[

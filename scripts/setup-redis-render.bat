@@ -1,0 +1,42 @@
+@echo off
+echo 🔧 Setting up Redis for Render deployment...
+echo.
+echo 📋 Steps to add Redis to your Render deployment:
+echo.
+echo 1. Go to your Render Dashboard: https://dashboard.render.com
+echo 2. Navigate to your backend service
+echo 3. Click on 'Add-ons' tab
+echo 4. Click 'New Add-on'
+echo 5. Select 'Redis'
+echo 6. Choose a plan:
+echo    - Free: 25MB memory (good for development)
+echo    - Starter: 250MB memory, $7/month (good for production)
+echo    - Standard: 1GB memory, $20/month (high traffic)
+echo.
+echo 7. After adding Redis, Render will automatically set the REDIS_URL environment variable
+echo.
+echo ✅ Your application is already configured to use Redis!
+echo.
+echo 🔍 After deployment, check these endpoints:
+echo    - Health check: https://your-app.onrender.com/health
+echo    - Redis status: https://your-app.onrender.com/health/redis
+echo.
+echo 📊 Expected logs after Redis is working:
+echo    ✅ Redis ready
+echo    🔗 Redis connected
+echo.
+echo ❌ Instead of these warnings:
+echo    [warn]: Redis not available, skipping cache get
+echo    [warn]: Redis not available, skipping cache set
+echo.
+echo 🚀 Benefits of Redis:
+echo    - Faster API responses (cached data)
+echo    - Reduced database load
+echo    - Better user experience
+echo    - Lower latency for repeated requests
+echo.
+echo 💡 Alternative: Use external Redis services like Redis Cloud or Upstash
+echo    - Sign up for free Redis Cloud: https://redis.com/redis-enterprise-cloud/
+echo    - Add the connection string as REDIS_URL in Render environment variables
+echo.
+pause

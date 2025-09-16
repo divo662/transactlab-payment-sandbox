@@ -123,9 +123,30 @@ app.get('/health', (_req, res) => {
     status: 'OK',
     timestamp: new Date().toISOString(),
     uptime: process.uptime(),
-          environment: process.env['NODE_ENV'] || 'development',
+    environment: process.env['NODE_ENV'] || 'development',
     version: process.env['npm_package_version'] || '1.0.0'
   });
+});
+
+// Redis health check endpoint
+app.get('/health/redis', async (_req, res) => {
+  try {
+    const { redisClient } = await import('./config/redis');
+    const isAvailable = redisClient.isAvailable();
+    
+    res.status(isAvailable ? 200 : 503).json({
+      redis: isAvailable ? 'connected' : 'disconnected',
+      status: isAvailable ? 'healthy' : 'unhealthy',
+      timestamp: new Date().toISOString()
+    });
+  } catch (error) {
+    res.status(500).json({
+      redis: 'error',
+      status: 'unhealthy',
+      error: error.message,
+      timestamp: new Date().toISOString()
+    });
+  }
 });
 
 // API documentation endpoint
