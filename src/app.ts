@@ -64,37 +64,41 @@ app.use(cors({
 app.use(express.json({ limit: '10mb' }));
 app.use(express.urlencoded({ extended: true, limit: '10mb' }));
 
-// Rate limiting - More generous limits to prevent blocking
+// Rate limiting - Very generous limits for sandbox/payment testing
 const limiter = rateLimit({
   windowMs: 15 * 60 * 1000, // 15 minutes
-  max: 500, // Increased from 100 to 500 requests per windowMs
+  max: 1000, // Very generous limit for sandbox testing
   message: {
     error: 'Too many requests from this IP, please try again later.',
     code: 'RATE_LIMIT_EXCEEDED'
   },
   standardHeaders: true,
   legacyHeaders: false,
-  // Skip rate limiting for localhost in development
+  // Skip rate limiting for localhost and common development IPs
   skip: (req) => {
-    return req.ip === '127.0.0.1' || req.ip === '::1' || req.ip?.startsWith('::ffff:127.0.0.1');
+    const ip = req.ip;
+    return ip === '127.0.0.1' || ip === '::1' || ip?.startsWith('::ffff:127.0.0.1') ||
+           ip?.startsWith('192.168.') || ip?.startsWith('10.') || ip?.startsWith('172.');
   }
 });
 
 app.use('/api/', limiter);
 
-// API rate limiting (more generous)
+// API rate limiting (very generous for sandbox testing)
 const apiLimiter = rateLimit({
   windowMs: 15 * 60 * 1000, // 15 minutes
-  max: 2000, // Increased from 1000 to 2000 requests per windowMs
+  max: 5000, // Very generous limit for API testing
   message: {
     error: 'Too many API requests from this IP, please try again later.',
     code: 'API_RATE_LIMIT_EXCEEDED'
   },
   standardHeaders: true,
   legacyHeaders: false,
-  // Skip rate limiting for localhost in development
+  // Skip rate limiting for localhost and common development IPs
   skip: (req) => {
-    return req.ip === '127.0.0.1' || req.ip === '::1' || req.ip?.startsWith('::ffff:127.0.0.1');
+    const ip = req.ip;
+    return ip === '127.0.0.1' || ip === '::1' || ip?.startsWith('::ffff:127.0.0.1') ||
+           ip?.startsWith('192.168.') || ip?.startsWith('10.') || ip?.startsWith('172.');
   }
 });
 
