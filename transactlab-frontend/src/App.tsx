@@ -31,6 +31,7 @@ import CheckoutPage from "./pages/CheckoutPage";
 import CheckoutSuccessPage from "./pages/CheckoutSuccessPage";
 import CheckoutErrorPage from "./pages/CheckoutErrorPage";
 import CheckoutDemo from "./pages/CheckoutDemo";
+import InvoicePage from "./pages/InvoicePage";
 import Subscriptions from "./pages/Subscriptions";
 import Products from "./pages/Products";
 import ProductDetail from "./pages/ProductDetail";
@@ -102,6 +103,7 @@ const App = () => (
 
               {/* Checkout (public) */}
               <Route path="/pay/ql/:token" element={<QuickLinkPay />} />
+              <Route path="/invoice/:invoiceId" element={<InvoicePage />} />
               <Route path="/checkout/:sessionId" element={<CheckoutPage />} />
               <Route path="/checkout/success" element={<CheckoutSuccessPage />} />
               <Route path="/checkout/error" element={<CheckoutErrorPage />} />
