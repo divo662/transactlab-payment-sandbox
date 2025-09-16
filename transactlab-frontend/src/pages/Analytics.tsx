@@ -27,7 +27,8 @@ import {
   Webhook,
   Key,
   ArrowUpRight,
-  ArrowDownRight
+  ArrowDownRight,
+  Loader2
 } from 'lucide-react';
 
 interface AnalyticsData {
@@ -85,6 +86,7 @@ const Analytics: React.FC = () => {
   const [loading, setLoading] = useState(true);
   const [timeRange, setTimeRange] = useState('30d');
   const [refreshing, setRefreshing] = useState(false);
+  const [exportingKey, setExportingKey] = useState<string | null>(null);
   const { toast } = useToast();
   const { user } = useAuth();
 
@@ -352,6 +354,7 @@ const Analytics: React.FC = () => {
 
   const handleExport = async (type: string, format: string = 'excel') => {
     try {
+      setExportingKey(`${type}:${format}`);
       // Use the proper analytics export endpoint
       const response = await apiService.exportAnalytics(type, format, timeRange);
       
@@ -397,6 +400,8 @@ const Analytics: React.FC = () => {
         description: 'Failed to export data. Please try again.',
         variant: 'destructive'
       });
+    } finally {
+      setExportingKey(null);
     }
   };
 
@@ -1048,18 +1053,30 @@ const Analytics: React.FC = () => {
                     variant="outline"
                     size="sm"
                     className="flex items-center gap-1 flex-1"
+                    disabled={exportingKey !== null}
+                    aria-busy={exportingKey === 'transactions:excel'}
                   >
-                    <Download className="h-3 w-3" />
-                    <span className="text-xs">Excel</span>
+                    {exportingKey === 'transactions:excel' ? (
+                      <Loader2 className="h-3 w-3 animate-spin" />
+                    ) : (
+                      <Download className="h-3 w-3" />
+                    )}
+                    <span className="text-xs">{exportingKey === 'transactions:excel' ? 'Exporting...' : 'Excel'}</span>
                   </Button>
                   <Button
                     onClick={() => handleExport('transactions', 'csv')}
                     variant="outline"
                     size="sm"
                     className="flex items-center gap-1 flex-1"
+                    disabled={exportingKey !== null}
+                    aria-busy={exportingKey === 'transactions:csv'}
                   >
-                    <Download className="h-3 w-3" />
-                    <span className="text-xs">CSV</span>
+                    {exportingKey === 'transactions:csv' ? (
+                      <Loader2 className="h-3 w-3 animate-spin" />
+                    ) : (
+                      <Download className="h-3 w-3" />
+                    )}
+                    <span className="text-xs">{exportingKey === 'transactions:csv' ? 'Exporting...' : 'CSV'}</span>
                   </Button>
                 </div>
               </div>
@@ -1072,18 +1089,30 @@ const Analytics: React.FC = () => {
                     variant="outline"
                     size="sm"
                     className="flex items-center gap-1 flex-1"
+                    disabled={exportingKey !== null}
+                    aria-busy={exportingKey === 'customers:excel'}
                   >
-                    <Download className="h-3 w-3" />
-                    <span className="text-xs">Excel</span>
+                    {exportingKey === 'customers:excel' ? (
+                      <Loader2 className="h-3 w-3 animate-spin" />
+                    ) : (
+                      <Download className="h-3 w-3" />
+                    )}
+                    <span className="text-xs">{exportingKey === 'customers:excel' ? 'Exporting...' : 'Excel'}</span>
                   </Button>
                   <Button
                     onClick={() => handleExport('customers', 'csv')}
                     variant="outline"
                     size="sm"
                     className="flex items-center gap-1 flex-1"
+                    disabled={exportingKey !== null}
+                    aria-busy={exportingKey === 'customers:csv'}
                   >
-                    <Download className="h-3 w-3" />
-                    <span className="text-xs">CSV</span>
+                    {exportingKey === 'customers:csv' ? (
+                      <Loader2 className="h-3 w-3 animate-spin" />
+                    ) : (
+                      <Download className="h-3 w-3" />
+                    )}
+                    <span className="text-xs">{exportingKey === 'customers:csv' ? 'Exporting...' : 'CSV'}</span>
                   </Button>
                 </div>
               </div>
@@ -1096,18 +1125,30 @@ const Analytics: React.FC = () => {
                     variant="outline"
                     size="sm"
                     className="flex items-center gap-1 flex-1"
+                    disabled={exportingKey !== null}
+                    aria-busy={exportingKey === 'revenue:excel'}
                   >
-                    <Download className="h-3 w-3" />
-                    <span className="text-xs">Excel</span>
+                    {exportingKey === 'revenue:excel' ? (
+                      <Loader2 className="h-3 w-3 animate-spin" />
+                    ) : (
+                      <Download className="h-3 w-3" />
+                    )}
+                    <span className="text-xs">{exportingKey === 'revenue:excel' ? 'Exporting...' : 'Excel'}</span>
                   </Button>
                   <Button
                     onClick={() => handleExport('revenue', 'csv')}
                     variant="outline"
                     size="sm"
                     className="flex items-center gap-1 flex-1"
+                    disabled={exportingKey !== null}
+                    aria-busy={exportingKey === 'revenue:csv'}
                   >
-                    <Download className="h-3 w-3" />
-                    <span className="text-xs">CSV</span>
+                    {exportingKey === 'revenue:csv' ? (
+                      <Loader2 className="h-3 w-3 animate-spin" />
+                    ) : (
+                      <Download className="h-3 w-3" />
+                    )}
+                    <span className="text-xs">{exportingKey === 'revenue:csv' ? 'Exporting...' : 'CSV'}</span>
                   </Button>
                 </div>
               </div>
