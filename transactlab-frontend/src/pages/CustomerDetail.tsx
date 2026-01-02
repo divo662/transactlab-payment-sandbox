@@ -419,10 +419,14 @@ const CustomerDetail: React.FC = () => {
   };
 
   const formatAmount = (amount: number, currency: string) => {
+    // All currencies are stored in their smallest unit (kobo for NGN, cents for USD/EUR/GBP)
+    // So we need to divide by 100 for all currencies
+    const displayAmount = amount / 100;
+    
     return new Intl.NumberFormat('en-US', {
       style: 'currency',
       currency: currency || 'NGN'
-    }).format(amount / 100);
+    }).format(displayAmount);
   };
 
   const formatDate = (dateString: string) => {
@@ -433,6 +437,17 @@ const CustomerDetail: React.FC = () => {
       hour: '2-digit',
       minute: '2-digit'
     });
+  };
+
+  const formatNumber = (value: string): string => {
+    // Remove all non-digit characters except decimal point
+    const cleaned = value.replace(/[^\d.]/g, '');
+    // Split by decimal point
+    const parts = cleaned.split('.');
+    // Format the integer part with commas
+    const integerPart = parts[0].replace(/\B(?=(\d{3})+(?!\d))/g, ',');
+    // Combine with decimal part if exists
+    return parts.length > 1 ? `${integerPart}.${parts[1]}` : integerPart;
   };
 
   const getStatusIcon = (status: string) => {
@@ -481,7 +496,7 @@ const CustomerDetail: React.FC = () => {
           'Content-Type': 'application/json'
         },
         body: JSON.stringify({
-          amount: parseInt(paymentForm.amount) * 100, // Convert to cents
+          amount: parseFloat(paymentForm.amount.replace(/,/g, '')) * 100, // Convert to smallest unit (kobo/cents)
           currency: paymentForm.currency,
           description: paymentForm.description,
           customerEmail: customer?.email,
@@ -526,7 +541,7 @@ const CustomerDetail: React.FC = () => {
           'Content-Type': 'application/json'
         },
         body: JSON.stringify({
-          amount: parseInt(invoiceForm.amount) * 100, // Convert to cents
+          amount: parseFloat(invoiceForm.amount.replace(/,/g, '')) * 100, // Convert to smallest unit (kobo/cents)
           currency: invoiceForm.currency,
           description: invoiceForm.description,
           customerEmail: customer?.email,
@@ -789,6 +804,37 @@ const CustomerDetail: React.FC = () => {
     }
   };
 
+  const handleSendInvoiceReminder = async (invoiceId: string) => {
+    try {
+      const token = localStorage.getItem('accessToken');
+      const response = await fetch(`${API_BASE}/invoices/${invoiceId}/remind`, {
+        method: 'POST',
+        headers: {
+          'Authorization': `Bearer ${token}`,
+          'Content-Type': 'application/json'
+        }
+      });
+
+      if (response.ok) {
+        const data = await response.json();
+        toast({
+          title: 'Success',
+          description: data.message || 'Invoice reminder sent successfully',
+        });
+        fetchCustomerData(); // Refresh data
+      } else {
+        const errorData = await response.json();
+        throw new Error(errorData.message || 'Failed to send invoice reminder');
+      }
+    } catch (error) {
+      toast({
+        title: 'Error',
+        description: error instanceof Error ? error.message : 'Failed to send invoice reminder',
+        variant: 'destructive'
+      });
+    }
+  };
+
   const handleMarkInvoicePaid = async (invoiceId: string) => {
     try {
       const token = localStorage.getItem('accessToken');
@@ -889,7 +935,7 @@ const CustomerDetail: React.FC = () => {
         },
         body: JSON.stringify({
           transactionId: selectedTransaction.sessionId, // Use sessionId as transactionId for sandbox
-          amount: refundForm.amount ? parseInt(refundForm.amount) * 100 : selectedTransaction.amount, // Convert to cents
+          amount: refundForm.amount ? parseFloat(refundForm.amount.replace(/,/g, '')) * 100 : selectedTransaction.amount, // Convert to smallest unit (kobo/cents)
           reason: refundForm.reason,
           customerEmail: selectedTransaction.customerEmail
         })
@@ -1895,14 +1941,24 @@ const CustomerDetail: React.FC = () => {
                     </Button>
                   )}
                   {selectedInvoice.status === 'sent' && (
-                    <Button 
-                      variant="outline" 
-                      className="flex-1"
-                      onClick={() => handleMarkInvoicePaid(selectedInvoice._id)}
-                    >
-                      <CheckCircle className="w-4 h-4 mr-2" />
-                      Mark as Paid
-                    </Button>
+                    <>
+                      <Button 
+                        variant="outline" 
+                        className="flex-1"
+                        onClick={() => handleMarkInvoicePaid(selectedInvoice._id)}
+                      >
+                        <CheckCircle className="w-4 h-4 mr-2" />
+                        Mark as Paid
+                      </Button>
+                      <Button 
+                        variant="outline" 
+                        className="flex-1"
+                        onClick={() => handleSendInvoiceReminder(selectedInvoice._id)}
+                      >
+                        <Mail className="w-4 h-4 mr-2" />
+                        Send Reminder
+                      </Button>
+                    </>
                   )}
                   <Button 
                     variant="outline" 
@@ -2127,13 +2183,20 @@ const CustomerDetail: React.FC = () => {
                   <Label htmlFor="refund-amount">Refund Amount (leave empty for full refund)</Label>
                   <Input
                     id="refund-amount"
-                    type="number"
+                    type="text"
                     value={refundForm.amount}
-                    onChange={(e) => setRefundForm({...refundForm, amount: e.target.value})}
+                    onChange={(e) => {
+                      const formatted = formatNumber(e.target.value);
+                      setRefundForm({...refundForm, amount: formatted});
+                    }}
                     placeholder={`${(selectedTransaction.amount / 100).toFixed(2)}`}
-                    max={selectedTransaction.amount / 100}
-                    step="0.01"
+                    className="text-xs sm:text-sm"
                   />
+                  {refundForm.amount && (
+                    <p className="text-xs text-gray-500 mt-1">
+                      Formatted: {refundForm.amount} {selectedTransaction.currency}
+                    </p>
+                  )}
                   <p className="text-xs text-gray-500 mt-1">
                     Maximum refund: {formatAmount(selectedTransaction.amount, selectedTransaction.currency)}
                   </p>
