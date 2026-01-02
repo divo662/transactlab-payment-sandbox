@@ -13,12 +13,29 @@ export default class KycController {
 
       const providerBase = process.env.KYC_PROVIDER_BASE_URL || 'https://kycplayground.vercel.app';
       const apiKey = process.env.KYC_PROVIDER_API_KEY || 'kyc_mel3jx6r_qhountyxygk';
-      const defaultFrontend = process.env.FRONTEND_BASE || 'https://transactlab-payment-sandbox.vercel.app';
-      const webhookUrl = process.env.KYC_PROVIDER_WEBHOOK_URL || `${process.env.TL_BASE || ''}/api/v1/auth/webhooks/kyc`;
-      // Use caller-provided returnUrl unless it is localhost; otherwise, prefer configured front-end base
-      let returnUrl = req.body?.returnUrl || process.env.KYC_PROVIDER_RETURN_URL || `${defaultFrontend}/auth/kyc/callback`;
-      if (returnUrl && /localhost:\d+/i.test(returnUrl)) {
+      const defaultFrontend = process.env.FRONTEND_BASE || process.env.FRONTEND_URL || 'https://transactlab-payment-sandbox.vercel.app';
+      
+      // Webhook URL needs to be publicly accessible (for server-to-server callbacks)
+      // For local development, you'll need ngrok or similar
+      const webhookUrl = process.env.KYC_PROVIDER_WEBHOOK_URL || 
+        (process.env.NODE_ENV === 'development' 
+          ? `${process.env.BASE_URL || 'http://localhost:5000'}/api/v1/auth/webhooks/kyc`
+          : `${process.env.TL_BASE || process.env.BASE_URL || ''}/api/v1/auth/webhooks/kyc`);
+      
+      // Return URL is where the user's browser will be redirected after KYC
+      // This is a client-side redirect, so localhost works fine for local development
+      let returnUrl = req.body?.returnUrl;
+      
+      // If no returnUrl provided, use environment variable or default
+      if (!returnUrl) {
         returnUrl = process.env.KYC_PROVIDER_RETURN_URL || `${defaultFrontend}/auth/kyc/callback`;
+      }
+      
+      // Allow localhost in development mode (browser redirects work fine)
+      // In production, warn if localhost is used but don't block it (user might have ngrok)
+      const isDevelopment = process.env.NODE_ENV === 'development';
+      if (!isDevelopment && returnUrl && /localhost:\d+/i.test(returnUrl)) {
+        logger.warn('⚠️  Localhost return URL detected in production. Make sure you have ngrok or similar set up.');
       }
 
       // Debug logging

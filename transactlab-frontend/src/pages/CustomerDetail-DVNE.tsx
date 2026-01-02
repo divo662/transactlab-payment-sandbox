@@ -91,7 +91,34 @@ const CustomerDetail: React.FC = () => {
     hasNextPage: false,
     hasPrevPage: false
   });
+  const [invoicesPagination, setInvoicesPagination] = useState({
+    currentPage: 1,
+    totalPages: 1,
+    totalItems: 0,
+    itemsPerPage: 10,
+    hasNextPage: false,
+    hasPrevPage: false
+  });
+  const [subscriptionsPagination, setSubscriptionsPagination] = useState({
+    currentPage: 1,
+    totalPages: 1,
+    totalItems: 0,
+    itemsPerPage: 10,
+    hasNextPage: false,
+    hasPrevPage: false
+  });
+  const [refundsPagination, setRefundsPagination] = useState({
+    currentPage: 1,
+    totalPages: 1,
+    totalItems: 0,
+    itemsPerPage: 10,
+    hasNextPage: false,
+    hasPrevPage: false
+  });
   const [loadingTransactions, setLoadingTransactions] = useState(false);
+  const [loadingInvoices, setLoadingInvoices] = useState(false);
+  const [loadingSubscriptions, setLoadingSubscriptions] = useState(false);
+  const [loadingRefunds, setLoadingRefunds] = useState(false);
   
   // Modal states
   const [showCreatePayment, setShowCreatePayment] = useState(false);
@@ -209,13 +236,16 @@ const CustomerDetail: React.FC = () => {
         if (sessionsData.pagination) {
           setTransactionsPagination(sessionsData.pagination);
         } else {
-          // Fallback pagination info if API doesn't return pagination
+          // Fallback pagination computed from full list
+          const itemsPerPage = 10;
+          const totalItems = sessionTransactions.length;
+          const totalPages = Math.max(1, Math.ceil(totalItems / itemsPerPage));
           setTransactionsPagination({
-            currentPage: page,
-            totalPages: 1,
-            totalItems: sessionTransactions.length,
-            itemsPerPage: 10,
-            hasNextPage: false,
+            currentPage: Math.min(page, totalPages),
+            totalPages,
+            totalItems,
+            itemsPerPage,
+            hasNextPage: page < totalPages,
             hasPrevPage: page > 1
           });
         }
@@ -253,6 +283,183 @@ const CustomerDetail: React.FC = () => {
     }
   };
 
+  const fetchInvoices = async (page: number = 1, customerEmail?: string) => {
+    const email = customerEmail || customer?.email;
+    if (!email) return;
+    try {
+      setLoadingInvoices(true);
+      const token = localStorage.getItem('accessToken');
+      const invoicesRes = await fetch(`${API_BASE}/invoices?customerEmail=${encodeURIComponent(email)}&page=${page}&limit=10`, {
+        headers: {
+          'Authorization': `Bearer ${token}`,
+          'Content-Type': 'application/json'
+        }
+      });
+      if (invoicesRes.ok) {
+        const invoicesData = await invoicesRes.json();
+        const list = invoicesData.data || [];
+        setInvoices(list);
+        if (invoicesData.pagination) {
+          setInvoicesPagination(invoicesData.pagination);
+        } else {
+          const itemsPerPage = 10;
+          const totalItems = list.length;
+          const totalPages = Math.max(1, Math.ceil(totalItems / itemsPerPage));
+          setInvoicesPagination({
+            currentPage: Math.min(page, totalPages),
+            totalPages,
+            totalItems,
+            itemsPerPage,
+            hasNextPage: page < totalPages,
+            hasPrevPage: page > 1
+          });
+        }
+      } else {
+        setInvoices([]);
+        setInvoicesPagination({
+          currentPage: 1,
+          totalPages: 1,
+          totalItems: 0,
+          itemsPerPage: 10,
+          hasNextPage: false,
+          hasPrevPage: false
+        });
+      }
+    } catch (error) {
+      console.error('Error fetching invoices:', error);
+      setInvoices([]);
+      setInvoicesPagination({
+        currentPage: 1,
+        totalPages: 1,
+        totalItems: 0,
+        itemsPerPage: 10,
+        hasNextPage: false,
+        hasPrevPage: false
+      });
+      toast({ title: 'Error', description: 'Failed to fetch invoices', variant: 'destructive' });
+    } finally {
+      setLoadingInvoices(false);
+    }
+  };
+
+  const fetchSubscriptions = async (page: number = 1, customerEmail?: string) => {
+    const email = customerEmail || customer?.email;
+    if (!email) return;
+    try {
+      setLoadingSubscriptions(true);
+      const token = localStorage.getItem('accessToken');
+      const subscriptionsRes = await fetch(`${API_BASE}/subscriptions?customerEmail=${encodeURIComponent(email)}&page=${page}&limit=10`, {
+        headers: {
+          'Authorization': `Bearer ${token}`,
+          'Content-Type': 'application/json'
+        }
+      });
+      if (subscriptionsRes.ok) {
+        const subscriptionsData = await subscriptionsRes.json();
+        const list = subscriptionsData.data || [];
+        setSubscriptions(list);
+        if (subscriptionsData.pagination) {
+          setSubscriptionsPagination(subscriptionsData.pagination);
+        } else {
+          const itemsPerPage = 10;
+          const totalItems = list.length;
+          const totalPages = Math.max(1, Math.ceil(totalItems / itemsPerPage));
+          setSubscriptionsPagination({
+            currentPage: Math.min(page, totalPages),
+            totalPages,
+            totalItems,
+            itemsPerPage,
+            hasNextPage: page < totalPages,
+            hasPrevPage: page > 1
+          });
+        }
+      } else {
+        setSubscriptions([]);
+        setSubscriptionsPagination({
+          currentPage: 1,
+          totalPages: 1,
+          totalItems: 0,
+          itemsPerPage: 10,
+          hasNextPage: false,
+          hasPrevPage: false
+        });
+      }
+    } catch (error) {
+      console.error('Error fetching subscriptions:', error);
+      setSubscriptions([]);
+      setSubscriptionsPagination({
+        currentPage: 1,
+        totalPages: 1,
+        totalItems: 0,
+        itemsPerPage: 10,
+        hasNextPage: false,
+        hasPrevPage: false
+      });
+      toast({ title: 'Error', description: 'Failed to fetch subscriptions', variant: 'destructive' });
+    } finally {
+      setLoadingSubscriptions(false);
+    }
+  };
+
+  const fetchRefunds = async (page: number = 1, customerEmail?: string) => {
+    const email = customerEmail || customer?.email;
+    if (!email) return;
+    try {
+      setLoadingRefunds(true);
+      const token = localStorage.getItem('accessToken');
+      const refundsRes = await fetch(`${API_BASE}/refunds?customerEmail=${encodeURIComponent(email)}&page=${page}&limit=10`, {
+        headers: {
+          'Authorization': `Bearer ${token}`,
+          'Content-Type': 'application/json'
+        }
+      });
+      if (refundsRes.ok) {
+        const refundsData = await refundsRes.json();
+        const list = refundsData.data || refundsData.refunds || [];
+        setRefunds(list);
+        if (refundsData.pagination) {
+          setRefundsPagination(refundsData.pagination);
+        } else {
+          const itemsPerPage = 10;
+          const totalItems = list.length;
+          const totalPages = Math.max(1, Math.ceil(totalItems / itemsPerPage));
+          setRefundsPagination({
+            currentPage: Math.min(page, totalPages),
+            totalPages,
+            totalItems,
+            itemsPerPage,
+            hasNextPage: page < totalPages,
+            hasPrevPage: page > 1
+          });
+        }
+      } else {
+        setRefunds([]);
+        setRefundsPagination({
+          currentPage: 1,
+          totalPages: 1,
+          totalItems: 0,
+          itemsPerPage: 10,
+          hasNextPage: false,
+          hasPrevPage: false
+        });
+      }
+    } catch (error) {
+      console.error('Error fetching refunds:', error);
+      setRefunds([]);
+      setRefundsPagination({
+        currentPage: 1,
+        totalPages: 1,
+        totalItems: 0,
+        itemsPerPage: 10,
+        hasNextPage: false,
+        hasPrevPage: false
+      });
+      toast({ title: 'Error', description: 'Failed to fetch refunds', variant: 'destructive' });
+    } finally {
+      setLoadingRefunds(false);
+    }
+  };
+
   const fetchCustomerData = async () => {
     try {
       const token = localStorage.getItem('accessToken');
@@ -272,49 +479,13 @@ const CustomerDetail: React.FC = () => {
         
         // Now fetch other data using the found customer's email
         if (foundCustomer) {
-          // Fetch initial transactions
-          await fetchTransactions(1, foundCustomer.email);
-
-          // Fetch invoices for this customer
-          const invoicesRes = await fetch(`${API_BASE}/invoices?customerEmail=${encodeURIComponent(foundCustomer.email)}`, {
-            headers: { 
-              'Authorization': `Bearer ${token}`,
-              'Content-Type': 'application/json'
-            }
-          });
-          
-          if (invoicesRes.ok) {
-            const invoicesData = await invoicesRes.json();
-            setInvoices(invoicesData.data || []);
-          }
-
-          // Fetch subscriptions for this customer
-          const subscriptionsRes = await fetch(`${API_BASE}/subscriptions?customerEmail=${encodeURIComponent(foundCustomer.email)}`, {
-            headers: { 
-              'Authorization': `Bearer ${token}`,
-              'Content-Type': 'application/json'
-            }
-          });
-          
-          if (subscriptionsRes.ok) {
-            const subscriptionsData = await subscriptionsRes.json();
-            // Use the data as returned from the backend (already normalized)
-            const normalized = subscriptionsData.data || [];
-            setSubscriptions(normalized);
-          }
-
-          // Fetch refunds for this customer
-          const refundsRes = await fetch(`${API_BASE}/refunds?customerEmail=${encodeURIComponent(foundCustomer.email)}`, {
-            headers: { 
-              'Authorization': `Bearer ${token}`,
-              'Content-Type': 'application/json'
-            }
-          });
-          
-          if (refundsRes.ok) {
-            const refundsData = await refundsRes.json();
-            setRefunds(refundsData.data || []);
-          }
+          // Fetch initial pages for all lists with pagination
+          await Promise.all([
+            fetchTransactions(1, foundCustomer.email),
+            fetchInvoices(1, foundCustomer.email),
+            fetchSubscriptions(1, foundCustomer.email),
+            fetchRefunds(1, foundCustomer.email)
+          ]);
         }
       }
     } catch (error) {
@@ -331,6 +502,18 @@ const CustomerDetail: React.FC = () => {
 
   const handleTransactionPageChange = (page: number) => {
     fetchTransactions(page);
+  };
+
+  const handleInvoicePageChange = (page: number) => {
+    fetchInvoices(page);
+  };
+
+  const handleSubscriptionPageChange = (page: number) => {
+    fetchSubscriptions(page);
+  };
+
+  const handleRefundPageChange = (page: number) => {
+    fetchRefunds(page);
   };
 
   const handleExportCustomer = async () => {
@@ -419,10 +602,22 @@ const CustomerDetail: React.FC = () => {
   };
 
   const formatAmount = (amount: number, currency: string) => {
+    // All currencies are stored in their smallest unit (kobo for NGN, cents for USD/EUR/GBP)
+    // So we need to divide by 100 for all currencies
+    const displayAmount = amount / 100;
+    
     return new Intl.NumberFormat('en-US', {
       style: 'currency',
       currency: currency || 'NGN'
-    }).format(amount / 100);
+    }).format(displayAmount);
+  };
+
+  const formatNumber = (value: string) => {
+    const numericValue = value.replace(/[^0-9.]/g, '');
+    if (!numericValue) return '';
+    const parts = numericValue.split('.');
+    parts[0] = parts[0].replace(/\B(?=(\d{3})+(?!\d))/g, ',');
+    return parts.join('.');
   };
 
   const formatDate = (dateString: string) => {
@@ -481,7 +676,7 @@ const CustomerDetail: React.FC = () => {
           'Content-Type': 'application/json'
         },
         body: JSON.stringify({
-          amount: parseInt(paymentForm.amount) * 100, // Convert to cents
+          amount: parseFloat(paymentForm.amount.replace(/,/g, '')) * 100, // Convert to smallest unit (kobo/cents)
           currency: paymentForm.currency,
           description: paymentForm.description,
           customerEmail: customer?.email,
@@ -526,7 +721,7 @@ const CustomerDetail: React.FC = () => {
           'Content-Type': 'application/json'
         },
         body: JSON.stringify({
-          amount: parseInt(invoiceForm.amount) * 100, // Convert to cents
+          amount: parseFloat(invoiceForm.amount.replace(/,/g, '')) * 100, // Convert to smallest unit (kobo/cents)
           currency: invoiceForm.currency,
           description: invoiceForm.description,
           customerEmail: customer?.email,
@@ -789,6 +984,37 @@ const CustomerDetail: React.FC = () => {
     }
   };
 
+  const handleSendInvoiceReminder = async (invoiceId: string) => {
+    try {
+      const token = localStorage.getItem('accessToken');
+      const response = await fetch(`${API_BASE}/invoices/${invoiceId}/remind`, {
+        method: 'POST',
+        headers: {
+          'Authorization': `Bearer ${token}`,
+          'Content-Type': 'application/json'
+        }
+      });
+
+      if (response.ok) {
+        const data = await response.json();
+        toast({
+          title: 'Success',
+          description: data.message || 'Invoice reminder sent successfully',
+        });
+        fetchCustomerData(); // Refresh data
+      } else {
+        const errorData = await response.json();
+        throw new Error(errorData.message || 'Failed to send invoice reminder');
+      }
+    } catch (error) {
+      toast({
+        title: 'Error',
+        description: error instanceof Error ? error.message : 'Failed to send invoice reminder',
+        variant: 'destructive'
+      });
+    }
+  };
+
   const handleMarkInvoicePaid = async (invoiceId: string) => {
     try {
       const token = localStorage.getItem('accessToken');
@@ -889,7 +1115,7 @@ const CustomerDetail: React.FC = () => {
         },
         body: JSON.stringify({
           transactionId: selectedTransaction.sessionId, // Use sessionId as transactionId for sandbox
-          amount: refundForm.amount ? parseInt(refundForm.amount) * 100 : selectedTransaction.amount, // Convert to cents
+          amount: refundForm.amount ? parseFloat(refundForm.amount.replace(/,/g, '')) * 100 : selectedTransaction.amount, // Convert to smallest unit (kobo/cents)
           reason: refundForm.reason,
           customerEmail: selectedTransaction.customerEmail
         })
@@ -1193,7 +1419,13 @@ const CustomerDetail: React.FC = () => {
                 ) : transactions.length > 0 ? (
                   <>
                     <div className="space-y-3 sm:space-y-4">
-                      {transactions.map((transaction) => (
+                      {(() => {
+                        // Client-side slice in case backend returns full list without pagination enforcement
+                        const start = (transactionsPagination.currentPage - 1) * transactionsPagination.itemsPerPage;
+                        const end = start + transactionsPagination.itemsPerPage;
+                        const pageItems = transactions.slice(start, end);
+                        return pageItems;
+                      })().map((transaction) => (
                         <div 
                           key={transaction.transactionId} 
                           className="flex flex-col sm:flex-row sm:items-center sm:justify-between p-3 sm:p-4 border rounded-lg gap-3 sm:gap-4 cursor-pointer hover:bg-gray-50 transition-colors"
@@ -1251,9 +1483,33 @@ const CustomerDetail: React.FC = () => {
                 </CardTitle>
               </CardHeader>
               <CardContent className="px-3 sm:px-6 pt-0 pb-3 sm:pb-6">
-                {invoices.length > 0 ? (
+                {loadingInvoices ? (
                   <div className="space-y-3 sm:space-y-4">
-                    {invoices.map((invoice) => (
+                    {Array.from({ length: 3 }).map((_, i) => (
+                      <div key={i} className="flex items-center justify-between p-3 sm:p-4 border rounded-lg">
+                        <div className="flex items-center space-x-3 sm:space-x-4">
+                          <div className="w-8 h-8 bg-gray-200 rounded animate-pulse" />
+                          <div className="space-y-2">
+                            <div className="h-4 bg-gray-200 rounded w-24 animate-pulse" />
+                            <div className="h-3 bg-gray-200 rounded w-32 animate-pulse" />
+                          </div>
+                        </div>
+                        <div className="space-y-2 text-right">
+                          <div className="h-4 bg-gray-200 rounded w-16 ml-auto animate-pulse" />
+                          <div className="h-3 bg-gray-200 rounded w-20 ml-auto animate-pulse" />
+                        </div>
+                      </div>
+                    ))}
+                  </div>
+                ) : invoices.length > 0 ? (
+                  <>
+                  <div className="space-y-3 sm:space-y-4">
+                    {(() => {
+                      const start = (invoicesPagination.currentPage - 1) * invoicesPagination.itemsPerPage;
+                      const end = start + invoicesPagination.itemsPerPage;
+                      const pageItems = invoices.slice(start, end);
+                      return pageItems;
+                    })().map((invoice) => (
                       <div 
                         key={invoice._id} 
                         className="flex flex-col sm:flex-row sm:items-center sm:justify-between p-3 sm:p-4 border rounded-lg gap-3 sm:gap-4 cursor-pointer hover:bg-gray-50 transition-colors"
@@ -1282,6 +1538,20 @@ const CustomerDetail: React.FC = () => {
                       </div>
                     ))}
                   </div>
+                  {invoicesPagination.totalPages > 1 && (
+                    <div className="mt-4 pt-4 border-t">
+                      <Pagination
+                        currentPage={invoicesPagination.currentPage}
+                        totalPages={invoicesPagination.totalPages}
+                        totalItems={invoicesPagination.totalItems}
+                        itemsPerPage={invoicesPagination.itemsPerPage}
+                        onPageChange={handleInvoicePageChange}
+                        hasNextPage={invoicesPagination.hasNextPage}
+                        hasPrevPage={invoicesPagination.hasPrevPage}
+                      />
+                    </div>
+                  )}
+                  </>
                 ) : (
                   <div className="text-center py-6 sm:py-8">
                     <FileText className="w-8 h-8 sm:w-10 sm:h-10 lg:w-12 lg:h-12 text-gray-400 mx-auto mb-3 sm:mb-4" />
@@ -1300,9 +1570,33 @@ const CustomerDetail: React.FC = () => {
                 </CardTitle>
               </CardHeader>
               <CardContent className="px-3 sm:px-6 pt-0 pb-3 sm:pb-6">
-                {subscriptions.length > 0 ? (
+                {loadingSubscriptions ? (
                   <div className="space-y-3 sm:space-y-4">
-                    {subscriptions.map((subscription) => (
+                    {Array.from({ length: 3 }).map((_, i) => (
+                      <div key={i} className="flex items-center justify-between p-3 sm:p-4 border rounded-lg">
+                        <div className="flex items-center space-x-3 sm:space-x-4">
+                          <div className="w-8 h-8 bg-gray-200 rounded animate-pulse" />
+                          <div className="space-y-2">
+                            <div className="h-4 bg-gray-200 rounded w-24 animate-pulse" />
+                            <div className="h-3 bg-gray-200 rounded w-32 animate-pulse" />
+                          </div>
+                        </div>
+                        <div className="space-y-2 text-right">
+                          <div className="h-4 bg-gray-200 rounded w-16 ml-auto animate-pulse" />
+                          <div className="h-3 bg-gray-200 rounded w-20 ml-auto animate-pulse" />
+                        </div>
+                      </div>
+                    ))}
+                  </div>
+                ) : subscriptions.length > 0 ? (
+                  <>
+                  <div className="space-y-3 sm:space-y-4">
+                    {(() => {
+                      const start = (subscriptionsPagination.currentPage - 1) * subscriptionsPagination.itemsPerPage;
+                      const end = start + subscriptionsPagination.itemsPerPage;
+                      const pageItems = subscriptions.slice(start, end);
+                      return pageItems;
+                    })().map((subscription) => (
                       <div 
                         key={subscription._id} 
                         className="flex flex-col sm:flex-row sm:items-center sm:justify-between p-3 sm:p-4 border rounded-lg gap-3 sm:gap-4 cursor-pointer hover:bg-gray-50 transition-colors"
@@ -1340,6 +1634,20 @@ const CustomerDetail: React.FC = () => {
                       </div>
                     ))}
                   </div>
+                  {subscriptionsPagination.totalPages > 1 && (
+                    <div className="mt-4 pt-4 border-t">
+                      <Pagination
+                        currentPage={subscriptionsPagination.currentPage}
+                        totalPages={subscriptionsPagination.totalPages}
+                        totalItems={subscriptionsPagination.totalItems}
+                        itemsPerPage={subscriptionsPagination.itemsPerPage}
+                        onPageChange={handleSubscriptionPageChange}
+                        hasNextPage={subscriptionsPagination.hasNextPage}
+                        hasPrevPage={subscriptionsPagination.hasPrevPage}
+                      />
+                    </div>
+                  )}
+                  </>
                 ) : (
                   <div className="text-center py-6 sm:py-8">
                     <TrendingUp className="w-8 h-8 sm:w-10 sm:h-10 lg:w-12 lg:h-12 text-gray-400 mx-auto mb-3 sm:mb-4" />
@@ -1363,11 +1671,30 @@ const CustomerDetail: React.FC = () => {
               <CardHeader className="px-3 sm:px-6 pt-3 sm:pt-6 pb-3 sm:pb-6">
                 <CardTitle className="flex items-center text-sm sm:text-lg lg:text-xl">
                   <XCircle className="w-4 h-4 sm:w-5 sm:h-5 mr-2" />
-                  Refunds
+                  Refunds ({refunds.length})
                 </CardTitle>
               </CardHeader>
               <CardContent className="px-3 sm:px-6 pt-0 pb-3 sm:pb-6">
-                {refunds.length > 0 ? (
+                {loadingRefunds ? (
+                  <div className="space-y-3 sm:space-y-4">
+                    {Array.from({ length: 3 }).map((_, i) => (
+                      <div key={i} className="flex items-center justify-between p-3 sm:p-4 border rounded-lg">
+                        <div className="flex items-center space-x-3 sm:space-x-4">
+                          <div className="w-8 h-8 bg-gray-200 rounded animate-pulse" />
+                          <div className="space-y-2">
+                            <div className="h-4 bg-gray-200 rounded w-24 animate-pulse" />
+                            <div className="h-3 bg-gray-200 rounded w-32 animate-pulse" />
+                          </div>
+                        </div>
+                        <div className="space-y-2 text-right">
+                          <div className="h-4 bg-gray-200 rounded w-16 ml-auto animate-pulse" />
+                          <div className="h-3 bg-gray-200 rounded w-20 ml-auto animate-pulse" />
+                        </div>
+                      </div>
+                    ))}
+                  </div>
+                ) : refunds.length > 0 ? (
+                  <>
                   <div className="space-y-3 sm:space-y-4">
                     {refunds.map((refund) => (
                       <div 
@@ -1383,7 +1710,7 @@ const CustomerDetail: React.FC = () => {
                               {formatAmount(refund.amount, refund.currency)}
                             </p>
                             <p className="text-xs sm:text-sm text-gray-600 truncate">
-                              Transaction: {refund.transactionId}
+                              Transaction: {refund.transactionId || refund.refundId}
                             </p>
                             <p className="text-xs text-gray-500">
                               Reason: {refund.reason?.replace(/_/g, ' ').replace(/\b\w/g, l => l.toUpperCase())}
@@ -1406,6 +1733,20 @@ const CustomerDetail: React.FC = () => {
                       </div>
                     ))}
                   </div>
+                  {refundsPagination.totalPages > 1 && (
+                    <div className="mt-4 pt-4 border-t">
+                      <Pagination
+                        currentPage={refundsPagination.currentPage}
+                        totalPages={refundsPagination.totalPages}
+                        totalItems={refundsPagination.totalItems}
+                        itemsPerPage={refundsPagination.itemsPerPage}
+                        onPageChange={handleRefundPageChange}
+                        hasNextPage={refundsPagination.hasNextPage}
+                        hasPrevPage={refundsPagination.hasPrevPage}
+                      />
+                    </div>
+                  )}
+                  </>
                 ) : (
                   <div className="text-center py-6 sm:py-8">
                     <XCircle className="w-8 h-8 sm:w-10 sm:h-10 lg:w-12 lg:h-12 text-gray-400 mx-auto mb-3 sm:mb-4" />
@@ -1421,7 +1762,18 @@ const CustomerDetail: React.FC = () => {
             {/* Customer Details */}
             <Card>
               <CardHeader className="px-3 sm:px-6 pt-3 sm:pt-6 pb-3 sm:pb-6">
-                <CardTitle className="text-sm sm:text-base lg:text-lg">Customer Details</CardTitle>
+                <div className="flex items-center justify-between">
+                  <CardTitle className="text-sm sm:text-base lg:text-lg">Customer Details</CardTitle>
+                  <Button
+                    variant="outline"
+                    size="sm"
+                    onClick={handleOpenEdit}
+                    className="text-xs sm:text-sm"
+                  >
+                    <User className="w-3 h-3 sm:w-4 sm:h-4 mr-1 sm:mr-2" />
+                    <span className="hidden sm:inline">Edit</span>
+                  </Button>
+                </div>
               </CardHeader>
               <CardContent className="px-3 sm:px-6 pb-3 sm:pb-6 space-y-3 sm:space-y-4">
                 <div>
@@ -1517,13 +1869,21 @@ const CustomerDetail: React.FC = () => {
                   <Label htmlFor="amount" className="text-xs sm:text-sm">Amount</Label>
                   <Input
                     id="amount"
-                    type="number"
+                    type="text"
                     value={paymentForm.amount}
-                    onChange={(e) => setPaymentForm({...paymentForm, amount: e.target.value})}
-                    placeholder="0.00"
+                    onChange={(e) => {
+                      const formatted = formatNumber(e.target.value);
+                      setPaymentForm({...paymentForm, amount: formatted});
+                    }}
+                    placeholder="1,000.00"
                     required
                     className="text-xs sm:text-sm"
                   />
+                  {paymentForm.amount && (
+                    <p className="text-xs text-gray-500 mt-1">
+                      Formatted: {paymentForm.amount} {paymentForm.currency}
+                    </p>
+                  )}
                 </div>
                 <div>
                   <Label htmlFor="currency" className="text-xs sm:text-sm">Currency</Label>
@@ -1584,13 +1944,21 @@ const CustomerDetail: React.FC = () => {
                   <Label htmlFor="invoice-amount" className="text-xs sm:text-sm">Amount</Label>
                   <Input
                     id="invoice-amount"
-                    type="number"
+                    type="text"
                     value={invoiceForm.amount}
-                    onChange={(e) => setInvoiceForm({...invoiceForm, amount: e.target.value})}
-                    placeholder="0.00"
+                    onChange={(e) => {
+                      const formatted = formatNumber(e.target.value);
+                      setInvoiceForm({...invoiceForm, amount: formatted});
+                    }}
+                    placeholder="1,000.00"
                     required
                     className="text-xs sm:text-sm"
                   />
+                  {invoiceForm.amount && (
+                    <p className="text-xs text-gray-500 mt-1">
+                      Formatted: {invoiceForm.amount} {invoiceForm.currency}
+                    </p>
+                  )}
                 </div>
                 <div>
                   <Label htmlFor="invoice-currency" className="text-xs sm:text-sm">Currency</Label>
@@ -1895,14 +2263,24 @@ const CustomerDetail: React.FC = () => {
                     </Button>
                   )}
                   {selectedInvoice.status === 'sent' && (
-                    <Button 
-                      variant="outline" 
-                      className="flex-1"
-                      onClick={() => handleMarkInvoicePaid(selectedInvoice._id)}
-                    >
-                      <CheckCircle className="w-4 h-4 mr-2" />
-                      Mark as Paid
-                    </Button>
+                    <>
+                      <Button 
+                        variant="outline" 
+                        className="flex-1"
+                        onClick={() => handleMarkInvoicePaid(selectedInvoice._id)}
+                      >
+                        <CheckCircle className="w-4 h-4 mr-2" />
+                        Mark as Paid
+                      </Button>
+                      <Button 
+                        variant="outline" 
+                        className="flex-1"
+                        onClick={() => handleSendInvoiceReminder(selectedInvoice._id)}
+                      >
+                        <Mail className="w-4 h-4 mr-2" />
+                        Send Reminder
+                      </Button>
+                    </>
                   )}
                   <Button 
                     variant="outline" 
@@ -2127,13 +2505,20 @@ const CustomerDetail: React.FC = () => {
                   <Label htmlFor="refund-amount">Refund Amount (leave empty for full refund)</Label>
                   <Input
                     id="refund-amount"
-                    type="number"
+                    type="text"
                     value={refundForm.amount}
-                    onChange={(e) => setRefundForm({...refundForm, amount: e.target.value})}
+                    onChange={(e) => {
+                      const formatted = formatNumber(e.target.value);
+                      setRefundForm({...refundForm, amount: formatted});
+                    }}
                     placeholder={`${(selectedTransaction.amount / 100).toFixed(2)}`}
-                    max={selectedTransaction.amount / 100}
-                    step="0.01"
+                    className="text-xs sm:text-sm"
                   />
+                  {refundForm.amount && (
+                    <p className="text-xs text-gray-500 mt-1">
+                      Formatted: {refundForm.amount} {selectedTransaction.currency}
+                    </p>
+                  )}
                   <p className="text-xs text-gray-500 mt-1">
                     Maximum refund: {formatAmount(selectedTransaction.amount, selectedTransaction.currency)}
                   </p>

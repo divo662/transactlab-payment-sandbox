@@ -11,7 +11,7 @@ $env:BASE_URL = "http://localhost:5000"
 $env:FRONTEND_URL = "http://localhost:8081"
 
 # Database Configuration
-$env:MONGODB_URI = "mongodb://localhost:27017/transactlab"
+$env:MONGODB_URI = "mongodb+srv://divo:divo135790@cluster0.tx34lud.mongodb.net/transactlab?appName=Cluster0"
 $env:REDIS_URL = "redis://localhost:6379"
 
 # JWT Configuration (SECURE)

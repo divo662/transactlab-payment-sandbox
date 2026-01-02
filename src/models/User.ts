@@ -446,6 +446,16 @@ userSchema.methods.comparePassword = async function (candidatePassword: string):
 // Instance method to compare security question answer
 userSchema.methods.compareSecurityAnswer = async function (candidateAnswer: string): Promise<boolean> {
   try {
+    // Check if securityQuestion and answer exist
+    if (!this.securityQuestion || !this.securityQuestion.answer) {
+      console.log('🔍 Security Answer Comparison Debug:');
+      console.log('  Candidate Answer:', `"${candidateAnswer}"`);
+      console.log('  Stored Answer: MISSING (securityQuestion or answer is undefined)');
+      console.log('  Security Question Object:', this.securityQuestion);
+      console.log('  ❌ Security answer not available in user object');
+      return false;
+    }
+
     // Add debug logging
     console.log('🔍 Security Answer Comparison Debug:');
     console.log('  Candidate Answer:', `"${candidateAnswer}"`);

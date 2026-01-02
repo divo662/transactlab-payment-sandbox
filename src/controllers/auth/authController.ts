@@ -154,15 +154,54 @@ export class AuthController {
       const { email, password, securityAnswer, rememberMe = false, totpCode, deviceId }: LoginRequest = req.body;
 
       // Find user by email - explicitly select password and security question fields
-      const user = await User.findOne({ email: email.toLowerCase() }).select('+password +securityQuestion.answer +totpEnabled +securitySettings');
+      // Note: password and securityQuestion.answer are marked as select: false in schema
+      const normalizedEmail = email.toLowerCase().trim();
+      
+      // Find user with password and security answer selected
+      // For nested fields with select: false, we need to explicitly select the nested path
+      // Note: +securityQuestion.answer is required because answer has select: false
+      let user = await User.findOne({ email: normalizedEmail })
+        .select('+password')
+        .select('+securityQuestion.answer')  // Explicitly select nested answer field
+        .select('+securityQuestion')          // Also select parent object
+        .select('+totpEnabled')
+        .select('+securitySettings');
+      
+      // If not found, try without select to see if user exists at all
+      if (!user) {
+        const userExists = await User.findOne({ email: normalizedEmail });
+        if (userExists) {
+          // User exists but select failed - try again with findById
+          logger.warn('🔍 User exists but select failed, retrying with findById...', {
+            emailSearched: normalizedEmail,
+            userId: userExists._id?.toString()
+          });
+          // Try selecting all fields first, then access nested
+          user = await User.findById(userExists._id)
+            .select('+password')
+            .select('+securityQuestion.answer')  // Explicitly select nested answer field
+            .select('+securityQuestion')          // Also select parent object
+            .select('+totpEnabled')
+            .select('+securitySettings');
+        } else {
+          logger.warn('🔍 User not found in database:', {
+            emailSearched: normalizedEmail
+          });
+        }
+      }
       
       // Debug: Log the user object to see what we're getting
-      console.log('🔍 User Object Debug:');
-      console.log('  User ID:', user?._id);
-      console.log('  Email:', user?.email);
-      console.log('  Security Question:', user?.securityQuestion);
-      console.log('  Security Answer:', user?.securityQuestion?.answer);
-      console.log('  Has Password:', !!user?.password);
+      if (user) {
+        logger.info('🔍 User found:', {
+          emailSearched: normalizedEmail,
+          userId: user._id?.toString(),
+          userEmail: user.email,
+          hasPassword: !!user.password,
+          hasSecurityQuestion: !!user.securityQuestion,
+          hasSecurityAnswer: !!user.securityQuestion?.answer,
+          isVerified: user.isVerified
+        });
+      }
       
       if (!user) {
         res.status(401).json({
@@ -207,7 +246,9 @@ export class AuthController {
         return;
       }
 
-      // Check if email is verified
+      // Check if email is verified (DISABLED FOR DEVELOPMENT - allow unverified logins)
+      // In production, uncomment this to require email verification
+      /*
       if (!user.isVerified) {
         res.status(403).json({
           success: false,
@@ -220,6 +261,7 @@ export class AuthController {
         });
         return;
       }
+      */
 
       // Extract device information
       const deviceInfo = SecurityService.extractDeviceInfo(req);

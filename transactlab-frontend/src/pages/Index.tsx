@@ -695,30 +695,6 @@ const Index = () => {
         </div>
       </section>
 
-      {/* CTA Section (redesigned) */}
-      <section className="py-12 sm:py-16 lg:py-20 bg-gradient-to-r from-[#0a164d] to-blue-700">
-        <div className="max-w-4xl mx-auto text-center px-4 sm:px-6 lg:px-8">
-          <h2 className="text-2xl sm:text-3xl lg:text-4xl font-bold text-white mb-4 sm:mb-6">
-            Ready to Test Your Payment Integration?
-          </h2>
-          <p className="text-base sm:text-lg lg:text-xl text-blue-100 mb-6 sm:mb-8">
-            Join thousands of developers who trust TransactLab for their payment testing needs. Start building with confidence today.
-          </p>
-          <div className="flex flex-col sm:flex-row gap-3 sm:gap-4 justify-center">
-            <Link to="/auth/register">
-              <Button size="lg" className="w-full sm:w-auto bg-white hover:bg-gray-100 hover:text-black text-[#0a164d] px-6 sm:px-8 py-2 sm:py-3 text-sm sm:text-lg font-semibold">
-                Get Started Free
-              </Button>
-            </Link>
-            <Link to="/sandbox">
-              <Button size="lg" variant="outline" className="w-full sm:w-auto border-white/30 text-white hover:bg-white/10 hover:text-white px-6 sm:px-8 py-2 sm:py-3 text-sm sm:text-lg">
-                Explore Sandbox
-              </Button>
-            </Link>
-          </div>
-        </div>
-      </section>
-
       {/* How It Works Section (redesigned) */}
       <section id="how-it-works" className="py-12 sm:py-16 lg:py-20 bg-gradient-to-br from-gray-50 to-blue-50">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">

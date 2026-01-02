@@ -64,30 +64,42 @@ app.use(cors({
 app.use(express.json({ limit: '10mb' }));
 app.use(express.urlencoded({ extended: true, limit: '10mb' }));
 
-// Rate limiting
+// Rate limiting - Very generous limits for sandbox/payment testing
 const limiter = rateLimit({
   windowMs: 15 * 60 * 1000, // 15 minutes
-  max: 100, // limit each IP to 100 requests per windowMs
+  max: 1000, // Very generous limit for sandbox testing
   message: {
     error: 'Too many requests from this IP, please try again later.',
     code: 'RATE_LIMIT_EXCEEDED'
   },
   standardHeaders: true,
   legacyHeaders: false,
+  // Skip rate limiting for localhost and common development IPs
+  skip: (req) => {
+    const ip = req.ip;
+    return ip === '127.0.0.1' || ip === '::1' || ip?.startsWith('::ffff:127.0.0.1') ||
+           ip?.startsWith('192.168.') || ip?.startsWith('10.') || ip?.startsWith('172.');
+  }
 });
 
 app.use('/api/', limiter);
 
-// API rate limiting (stricter)
+// API rate limiting (very generous for sandbox testing)
 const apiLimiter = rateLimit({
   windowMs: 15 * 60 * 1000, // 15 minutes
-  max: 1000, // limit each IP to 1000 requests per windowMs
+  max: 5000, // Very generous limit for API testing
   message: {
     error: 'Too many API requests from this IP, please try again later.',
     code: 'API_RATE_LIMIT_EXCEEDED'
   },
   standardHeaders: true,
   legacyHeaders: false,
+  // Skip rate limiting for localhost and common development IPs
+  skip: (req) => {
+    const ip = req.ip;
+    return ip === '127.0.0.1' || ip === '::1' || ip?.startsWith('::ffff:127.0.0.1') ||
+           ip?.startsWith('192.168.') || ip?.startsWith('10.') || ip?.startsWith('172.');
+  }
 });
 
 app.use('/api/v1/', apiLimiter);
@@ -115,9 +127,30 @@ app.get('/health', (_req, res) => {
     status: 'OK',
     timestamp: new Date().toISOString(),
     uptime: process.uptime(),
-          environment: process.env['NODE_ENV'] || 'development',
+    environment: process.env['NODE_ENV'] || 'development',
     version: process.env['npm_package_version'] || '1.0.0'
   });
+});
+
+// Redis health check endpoint
+app.get('/health/redis', async (_req, res) => {
+  try {
+    const { redisClient } = await import('./config/redis');
+    const isAvailable = redisClient.isAvailable();
+    
+    res.status(isAvailable ? 200 : 503).json({
+      redis: isAvailable ? 'connected' : 'disconnected',
+      status: isAvailable ? 'healthy' : 'unhealthy',
+      timestamp: new Date().toISOString()
+    });
+  } catch (error) {
+    res.status(500).json({
+      redis: 'error',
+      status: 'unhealthy',
+      error: error.message,
+      timestamp: new Date().toISOString()
+    });
+  }
 });
 
 // API documentation endpoint
