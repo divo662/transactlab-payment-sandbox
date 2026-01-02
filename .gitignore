@@ -168,7 +168,7 @@ docker-compose.yml
 .dockerignore
 
 # Documentation
-README.md
+# README.md - Keep in git (project documentation)
 TRANSACTLAB_SANDBOX_SETUP_GUIDE.md
 SANDBOX_FEATURES.md
 
