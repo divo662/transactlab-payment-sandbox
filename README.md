@@ -7,20 +7,20 @@
 
 **TransactLab** is a comprehensive developer sandbox platform that simulates real payment gateways for testing, development, and learning purposes. Built specifically for developers who need to test payment integrations without the risk of real transactions or the complexity of setting up multiple payment gateway test environments.
 
-## 🎯 Current Status
+## Current Status
 
-✅ **Authentication System** - Complete user registration and login with security questions  
-✅ **Sandbox Dashboard** - Full-featured testing environment  
-✅ **API Key Management** - Generate and manage test API keys  
-✅ **Webhook Simulation** - Real-time webhook testing and delivery  
-✅ **Transaction Testing** - Complete payment flow simulation  
-✅ **Customer Management** - Test customer data and profiles  
-✅ **Product Management** - Sample product catalog for testing  
-✅ **Session Management** - Checkout session simulation  
-✅ **Subscription Testing** - Recurring payment simulation  
-✅ **Modern UI/UX** - Responsive design with Tailwind CSS and shadcn/ui
+- **Authentication System** - Complete user registration and login with security questions  
+- **Sandbox Dashboard** - Full-featured testing environment  
+- **API Key Management** - Generate and manage test API keys  
+- **Webhook Simulation** - Real-time webhook testing and delivery  
+- **Transaction Testing** - Complete payment flow simulation  
+- **Customer Management** - Test customer data and profiles  
+- **Product Management** - Sample product catalog for testing  
+- **Session Management** - Checkout session simulation  
+- **Subscription Testing** - Recurring payment simulation  
+- **Modern UI/UX** - Responsive design with Tailwind CSS and shadcn/ui
 
-## 🚀 What is TransactLab?
+## What is TransactLab?
 
 TransactLab provides a production-ready sandbox environment that emulates popular payment processors like:
 - **Paystack** - Nigerian payment gateway
@@ -29,16 +29,16 @@ TransactLab provides a production-ready sandbox environment that emulates popula
 - **PayPal** - International payment service
 - **Square** - Point-of-sale solutions
 
-## ✨ Key Features
+## Key Features
 
-### 🔐 **Developer Authentication & Security**
+### **Developer Authentication & Security**
 - **Multi-step Registration** - 5-step developer onboarding with personal info, contact details, password setup, security questions, and review
 - **Security Questions** - Additional account protection with customizable security questions for developer accounts
 - **Email Verification** - Account activation through email verification for sandbox access
 - **Password Security** - Strong password requirements with real-time validation
 - **Phone Validation** - International phone number support with country code validation
 
-### 🔑 **API Testing & Management**
+### **API Testing & Management**
 - **Canonical Redirect Contract** - Standardized session responses with absolute checkout URLs
 - **Workspace-Bound Checkout** - Public `/checkout/:sessionId` route for secure customer access
 - **Server-to-Server Auth** - Recommended `x-sandbox-secret` header for API calls
@@ -49,35 +49,35 @@ TransactLab provides a production-ready sandbox environment that emulates popula
 - Comprehensive API logging and debugging tools
 - API key rotation and management
 
-### 📡 **Webhook Simulation**
+### **Webhook Simulation**
 - Real-time webhook delivery testing with configurable endpoints
 - Event simulation for all payment types (transactions, subscriptions, refunds)
 - Retry logic and error handling testing
 - Webhook payload customization and validation
 - Delivery status tracking and monitoring
 
-### 💳 **Payment Testing**
+### **Payment Testing**
 - **Checkout Sessions** - Complete payment flow simulation
 - **Transaction Management** - Create, view, and manage test transactions
 - **Subscription Testing** - Recurring payment simulation with different billing cycles
 - **Refund Processing** - Test partial and full refund scenarios
 - **Multiple Payment Methods** - Cards, bank transfers, mobile money, etc.
 
-### 👥 **Customer & Product Management**
+### **Customer & Product Management**
 - Pre-generated customer profiles with realistic data
 - Customer creation and management tools
 - Sample product catalog for testing
 - Product creation and pricing simulation
 - Customer transaction history tracking
 
-### 🛡️ **Sandbox Security**
+### **Sandbox Security**
 - Zero risk testing environment with no real money involved
 - Isolated testing instances per user
 - Secure API key management and storage
 - Data encryption and secure file handling
 - Role-based access control
 
-## 🏗️ Architecture
+## Architecture
 
 ```
 TransactLab/
@@ -115,7 +115,7 @@ TransactLab/
 └── Documentation & Guides
 ```
 
-## 🚀 Quick Start
+## Quick Start
 
 ### Prerequisites
 - Node.js 18+
@@ -124,8 +124,8 @@ TransactLab/
 
 ### 1. Clone the Repository
 ```bash
-git clone https://github.com/yourusername/transactlab.git
-cd transactlab
+git clone https://github.com/divo662/transactlab-payment-sandbox.git
+cd transactlab-payment-sandbox
 ```
 
 ### 2. Install Dependencies
@@ -159,10 +159,10 @@ npm run dev
 
 ### 5. Access the Platform
 - **Frontend**: http://localhost:8080
-- **Backend API**: http://localhost:3000
-- **API Documentation**: http://localhost:3000/docs
+- **Backend API**: http://localhost:5000
+- **API Documentation**: http://localhost:5000/docs
 
-## 🎨 User Interface
+## User Interface
 
 ### **Modern Design System**
 - **Primary Color**: `#0a164d` (Deep Blue) used consistently throughout
@@ -187,7 +187,7 @@ npm run dev
 - **Sessions**: Checkout session simulation and testing
 - **Subscriptions**: Recurring payment simulation and testing
 
-## 🧪 Testing Your Integration
+## Testing Your Integration
 
 ### 1. Generate API Keys
 1. Navigate to `/sandbox/api-keys`
@@ -206,7 +206,7 @@ npm run dev
 
 ### 4. Sample API Request
 ```bash
-curl -X POST http://localhost:3000/api/v1/sandbox/transactions \
+curl -X POST http://localhost:5000/api/v1/sandbox/transactions \
   -H "Authorization: Bearer YOUR_TEST_API_KEY" \
   -H "Content-Type: application/json" \
   -d '{
@@ -218,7 +218,7 @@ curl -X POST http://localhost:3000/api/v1/sandbox/transactions \
   }'
 ```
 
-## 📚 API Documentation
+## API Documentation
 
 ### Sandbox Endpoints
 
@@ -255,7 +255,7 @@ GET /api/v1/sandbox/sample-data
 Authorization: Bearer {api_key}
 ```
 
-## 🛠️ Development
+## Development
 
 ### Backend Project Structure
 ```
@@ -336,29 +336,29 @@ npm test
 npm run test:e2e
 ```
 
-## 🚀 Recent Updates
+## Recent Updates
 
 ### **v1.0.0 - Current Release**
-- ✅ Complete authentication system with 5-step registration
-- ✅ Modern UI/UX with shadcn/ui components
-- ✅ Comprehensive sandbox testing environment
-- ✅ API key management and testing tools
-- ✅ Webhook simulation and delivery testing
-- ✅ Transaction and subscription testing
-- ✅ Customer and product management
-- ✅ Responsive design with Tailwind CSS
-- ✅ TypeScript throughout for type safety
-- ✅ Email verification and security features
+- Complete authentication system with 5-step registration
+- Modern UI/UX with shadcn/ui components
+- Comprehensive sandbox testing environment
+- API key management and testing tools
+- Webhook simulation and delivery testing
+- Transaction and subscription testing
+- Customer and product management
+- Responsive design with Tailwind CSS
+- TypeScript throughout for type safety
+- Email verification and security features
 
 ### **Upcoming Features**
-- 🔄 Real-time collaboration tools
-- 🔄 Advanced analytics dashboard
-- 🔄 Team management and permissions
-- 🔄 Custom webhook templates
-- 🔄 API rate limiting simulation
-- 🔄 Integration with more payment gateways
+- Real-time collaboration tools
+- Advanced analytics dashboard
+- Team management and permissions
+- Custom webhook templates
+- API rate limiting simulation
+- Integration with more payment gateways
 
-## 🌟 Contributing
+## Contributing
 
 We welcome contributions! Please see our [Contributing Guide](CONTRIBUTING.md) for details.
 
@@ -380,18 +380,18 @@ We welcome contributions! Please see our [Contributing Guide](CONTRIBUTING.md) f
 - **Tailwind CSS** for styling
 - **shadcn/ui** for consistent UI components
 
-## 📄 License
+## License
 
 This project is licensed under the MIT License - see the [LICENSE](LICENSE) file for details.
 
-## 🤝 Support
+## Support
 
 - **Documentation**: [docs.transactlab.dev](https://docs.transactlab.dev)
-- **Issues**: [GitHub Issues](https://github.com/yourusername/transactlab/issues)
-- **Discussions**: [GitHub Discussions](https://github.com/yourusername/transactlab/discussions)
+- **Issues**: [GitHub Issues](https://github.com/divo662/transactlab-payment-sandbox/issues)
+- **Discussions**: [GitHub Discussions](https://github.com/divo662/transactlab-payment-sandbox/discussions)
 - **Email**: support@transactlab.dev
 
-## 🚀 Quick Start - API Integration
+## Quick Start - API Integration
 
 ### **Canonical Redirect Flow (Recommended)**
 
@@ -487,7 +487,7 @@ The API provides detailed error information to help with debugging:
 }
 ```
 
-## 🎯 Use Cases
+## Use Cases
 
 ### **For Developers**
 - Test payment integrations before going live with real payment gateways
@@ -513,9 +513,9 @@ The API provides detailed error information to help with debugging:
 - Experiment with subscription billing and recurring payments
 - Master payment security and compliance requirements
 
-## 🙏 Acknowledgments
+## Acknowledgments
 
-- Built with ❤️ for the developer community
+- Built with love for the developer community
 - Inspired by the need for better payment testing tools
 - Thanks to all contributors and users
 
@@ -523,4 +523,4 @@ The API provides detailed error information to help with debugging:
 
 **TransactLab** - Empowering developers to build better payment integrations through comprehensive testing and simulation.
 
-*Built for developers, by developers.* 
+*Built for developers, by developers.*
