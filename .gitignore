@@ -19,6 +19,12 @@ build/
 .env.test.local
 .env.production.local
 
+# Environment setup scripts (may contain sensitive data)
+set-env.ps1
+set-env.bat
+*.env.ps1
+*.env.bat
+
 # Logs
 logs/
 *.log
