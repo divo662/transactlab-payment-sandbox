@@ -75,11 +75,9 @@ export class EmailService {
       return this.transporter;
     }
 
-    // Only use SMTP if Resend is not configured
-    const resendApiKey = process.env.RESEND_API_KEY;
-    if (resendApiKey) {
-      return null; // Use Resend instead
-    }
+    // Allow SMTP even if Resend is configured (as fallback)
+    // Resend requires domain verification for production emails
+    // So SMTP can be used as a fallback when Resend fails
 
     try {
       // Check if SMTP credentials are configured
@@ -893,9 +891,45 @@ export class EmailService {
    */
   static async sendEmail(options: EmailOptions): Promise<EmailResult> {
     try {
-      // Try Resend first (preferred)
-      const resendClient = this.getResendClient();
-      if (resendClient) {
+      // Check which email service to use (SMTP or Resend)
+      // SMTP is primary if USE_SMTP is true or RESEND_API_KEY is not set
+      const useSMTP = process.env.USE_SMTP === 'true' || !process.env.RESEND_API_KEY;
+      const useResend = !useSMTP && process.env.RESEND_API_KEY;
+      
+      // Try SMTP first if configured (primary method)
+      if (useSMTP) {
+        const transporter = await this.getTransporter();
+        if (transporter) {
+          const emailData = {
+            from: options.from || this.DEFAULT_FROM,
+            to: Array.isArray(options.to) ? options.to.join(', ') : options.to,
+            subject: options.subject,
+            html: options.html,
+            text: options.text,
+            replyTo: options.replyTo,
+            attachments: options.attachments
+          };
+
+          const info = await transporter.sendMail(emailData);
+
+          logger.info('Email sent successfully via SMTP', {
+            messageId: info.messageId,
+            to: emailData.to,
+            subject: emailData.subject
+          });
+
+          return {
+            success: true,
+            messageId: info.messageId,
+            message: 'Email sent successfully via SMTP'
+          };
+        }
+      }
+      
+      // Try Resend as fallback (if configured and SMTP not used)
+      if (useResend) {
+        const resendClient = this.getResendClient();
+        if (resendClient) {
         try {
           const toEmails = Array.isArray(options.to) ? options.to : [options.to];
           const result = await resendClient.emails.send({
@@ -960,8 +994,9 @@ export class EmailService {
           // Check for common Resend errors
           if (errorMessage.includes('Invalid API key') || errorMessage.includes('invalid_api_key')) {
             logger.error('Resend API key is invalid. Please check your RESEND_API_KEY in environment variables.');
-          } else if (errorMessage.includes('domain') || errorMessage.includes('Domain')) {
-            logger.error('Resend domain not verified. Please verify your domain in Resend dashboard.');
+          } else if (errorMessage.includes('domain') || errorMessage.includes('Domain') || errorMessage.includes('verify a domain') || errorMessage.includes('testing emails')) {
+            logger.error('Resend domain not verified. Falling back to SMTP. To use Resend, verify a domain at resend.com/domains');
+            logger.info('Using SMTP fallback - make sure SMTP credentials are configured in your .env file');
           } else if (errorMessage.includes('rate limit') || errorMessage.includes('429')) {
             logger.error('Resend rate limit exceeded. Please wait before sending more emails.');
           }
