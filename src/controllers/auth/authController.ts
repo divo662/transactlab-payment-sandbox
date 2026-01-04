@@ -93,6 +93,7 @@ export class AuthController {
       await user.save();
 
       // Send verification email
+      let emailError: string | null = null;
       try {
         logger.info('[AUTH] Sending verification email during registration', {
           email: user.email,
@@ -111,17 +112,19 @@ export class AuthController {
             message: emailResult.message
           });
         } else {
+          emailError = emailResult.message || emailResult.error || 'Failed to send verification email';
           logger.error('[AUTH] ❌ Failed to send verification email during registration', {
             email: user.email,
             error: emailResult.error,
             message: emailResult.message
           });
         }
-      } catch (emailError) {
+      } catch (emailErrorException) {
+        emailError = emailErrorException instanceof Error ? emailErrorException.message : 'Unknown error occurred while sending verification email';
         logger.error('[AUTH] ❌ Exception while sending verification email during registration', {
           email: user.email,
-          error: emailError instanceof Error ? emailError.message : 'Unknown error',
-          stack: emailError instanceof Error ? emailError.stack : undefined
+          error: emailError,
+          stack: emailErrorException instanceof Error ? emailErrorException.stack : undefined
         });
         // Don't fail registration if email fails
       }
@@ -146,7 +149,7 @@ export class AuthController {
 
       logger.info(`New user registered: ${user.email}`);
 
-      res.status(201).json({
+      const response: any = {
         success: true,
         message: 'User registered successfully',
         data: {
@@ -158,7 +161,24 @@ export class AuthController {
             refreshExpiresIn: tokens.refreshExpiresIn
           }
         }
-      });
+      };
+
+      // Include email error warning if verification email failed
+      if (emailError) {
+        response.warning = {
+          emailVerification: {
+            sent: false,
+            message: emailError,
+            note: 'Your account was created successfully, but the verification email could not be sent. Please use the resend verification feature or contact support.'
+          }
+        };
+        logger.warn('[AUTH] Registration succeeded but verification email failed', {
+          email: user.email,
+          error: emailError
+        });
+      }
+
+      res.status(201).json(response);
     } catch (error) {
       logger.error('Registration error:', error);
       res.status(500).json({

@@ -122,17 +122,50 @@ export class EmailService {
         },
         tls: {
           rejectUnauthorized: false
-        }
+        },
+        connectionTimeout: 10000, // 10 seconds
+        greetingTimeout: 5000, // 5 seconds
+        socketTimeout: 10000, // 10 seconds
+        // Don't verify on creation - verify on first use instead
+        pool: true,
+        maxConnections: 1,
+        maxMessages: 3
       });
 
-      logger.info('[SMTP] Verifying SMTP connection...');
-      // Verify connection
-      await this.transporter.verify();
-      logger.info('[SMTP] ✅ SMTP connection established and verified successfully', {
-        host: smtpHost,
-        port: smtpPort,
-        user: smtpUser
-      });
+      logger.info('[SMTP] Transporter created (connection will be verified on first use)');
+      
+      // Try to verify connection with timeout, but don't fail if it times out
+      // The connection will be established when actually sending
+      try {
+        logger.info('[SMTP] Attempting to verify SMTP connection (with timeout)...');
+        const verifyPromise = this.transporter.verify();
+        const timeoutPromise = new Promise((_, reject) => 
+          setTimeout(() => reject(new Error('Connection verification timeout')), 5000)
+        );
+        
+        await Promise.race([verifyPromise, timeoutPromise]);
+        logger.info('[SMTP] ✅ SMTP connection verified successfully', {
+          host: smtpHost,
+          port: smtpPort,
+          user: smtpUser
+        });
+      } catch (verifyError: any) {
+        // Don't fail if verification times out - connection will be established on send
+        if (verifyError.message?.includes('timeout')) {
+          logger.warn('[SMTP] ⚠️ Connection verification timed out (will connect on first send)', {
+            host: smtpHost,
+            port: smtpPort,
+            error: verifyError.message
+          });
+        } else {
+          logger.warn('[SMTP] ⚠️ Connection verification failed (will retry on first send)', {
+            host: smtpHost,
+            port: smtpPort,
+            error: verifyError instanceof Error ? verifyError.message : 'Unknown error'
+          });
+        }
+        // Continue anyway - connection will be established when sending
+      }
 
       return this.transporter;
     } catch (error) {
@@ -988,8 +1021,12 @@ export class EmailService {
               message: 'Email sent successfully via SMTP'
             };
           } catch (sendError: any) {
+            const errorMessage = sendError instanceof Error ? sendError.message : 'Unknown error';
+            const isTimeout = errorMessage.includes('timeout') || errorMessage.includes('Timeout') || sendError?.code === 'ETIMEDOUT';
+            const isConnectionError = errorMessage.includes('Connection') || sendError?.code === 'ECONNREFUSED' || sendError?.code === 'ECONNRESET';
+            
             logger.error('[SMTP] ❌ Failed to send email via SMTP', {
-              error: sendError instanceof Error ? sendError.message : 'Unknown error',
+              error: errorMessage,
               stack: sendError instanceof Error ? sendError.stack : undefined,
               code: sendError?.code,
               command: sendError?.command,
@@ -997,15 +1034,45 @@ export class EmailService {
               responseCode: sendError?.responseCode,
               to: emailData.to,
               subject: emailData.subject,
-              from: emailData.from
+              from: emailData.from,
+              isTimeout,
+              isConnectionError
             });
-            throw sendError;
+            
+            // Return detailed error instead of throwing
+            let userFriendlyError = 'Failed to send email via SMTP';
+            if (isTimeout) {
+              userFriendlyError = 'SMTP connection timeout. Please check your SMTP server settings and network connection.';
+            } else if (isConnectionError) {
+              userFriendlyError = 'SMTP connection failed. Please verify your SMTP_HOST and SMTP_PORT settings.';
+            } else if (sendError?.responseCode) {
+              userFriendlyError = `SMTP server error (${sendError.responseCode}): ${errorMessage}`;
+            } else {
+              userFriendlyError = `SMTP error: ${errorMessage}`;
+            }
+            
+            return {
+              success: false,
+              message: userFriendlyError,
+              error: errorMessage
+            };
           }
         } else {
+          const errorMsg = 'SMTP transporter could not be initialized. Please check your SMTP configuration.';
           logger.error('[SMTP] ❌ Transporter is null - cannot send email', {
             to: Array.isArray(options.to) ? options.to.join(', ') : options.to,
-            subject: options.subject
+            subject: options.subject,
+            hasSMTPHost: !!process.env.SMTP_HOST,
+            hasSMTPUser: !!process.env.SMTP_USER,
+            hasSMTPPass: !!process.env.SMTP_PASS
           });
+          
+          // Return detailed error instead of generic message
+          return {
+            success: false,
+            message: errorMsg,
+            error: 'SMTP configuration error: Transporter initialization failed. Please check your SMTP_HOST, SMTP_USER, and SMTP_PASS environment variables.'
+          };
         }
       }
       
@@ -1126,23 +1193,41 @@ export class EmailService {
                   message: 'Email sent successfully via SMTP'
                 };
               } catch (fallbackError: any) {
+                const errorMessage = fallbackError instanceof Error ? fallbackError.message : 'Unknown error';
+                const isTimeout = errorMessage.includes('timeout') || errorMessage.includes('Timeout') || fallbackError?.code === 'ETIMEDOUT';
+                
                 logger.error('[SMTP] ❌ SMTP fallback also failed', {
-                  error: fallbackError instanceof Error ? fallbackError.message : 'Unknown error',
+                  error: errorMessage,
                   stack: fallbackError instanceof Error ? fallbackError.stack : undefined,
                   code: fallbackError?.code,
                   command: fallbackError?.command,
                   response: fallbackError?.response,
                   responseCode: fallbackError?.responseCode,
                   to: emailData.to,
-                  subject: emailData.subject
+                  subject: emailData.subject,
+                  isTimeout
                 });
-                throw fallbackError;
+                
+                // Return error instead of throwing
+                return {
+                  success: false,
+                  message: isTimeout 
+                    ? 'SMTP connection timeout. Please check your SMTP server settings.'
+                    : `SMTP fallback failed: ${errorMessage}`,
+                  error: errorMessage
+                };
               }
             } else {
               logger.error('[SMTP] ❌ Fallback transporter is null - cannot send email', {
                 to: Array.isArray(options.to) ? options.to.join(', ') : options.to,
                 subject: options.subject
               });
+              
+              return {
+                success: false,
+                message: 'SMTP fallback transporter could not be initialized',
+                error: 'SMTP configuration error: Fallback transporter initialization failed'
+              };
             }
           }
         }
@@ -1166,20 +1251,31 @@ export class EmailService {
       };
 
     } catch (error) {
+      const errorMessage = error instanceof Error ? error.message : 'Unknown error';
+      const isTimeout = errorMessage.includes('timeout') || errorMessage.includes('Timeout');
+      
       logger.error('[EMAIL] ❌ Failed to send email - Top level catch', {
-        error: error instanceof Error ? error.message : 'Unknown error',
+        error: errorMessage,
         stack: error instanceof Error ? error.stack : undefined,
         errorName: error instanceof Error ? error.name : undefined,
         to: Array.isArray(options.to) ? options.to.join(', ') : options.to,
         subject: options.subject,
         from: options.from || this.DEFAULT_FROM,
+        isTimeout,
         fullError: error
       });
 
+      let userFriendlyMessage = 'Failed to send email';
+      if (isTimeout) {
+        userFriendlyMessage = 'Email service timeout. Please check your email service configuration and try again.';
+      } else if (errorMessage.includes('Connection')) {
+        userFriendlyMessage = 'Email service connection failed. Please verify your email service settings.';
+      }
+
       return {
         success: false,
-        message: 'Failed to send email',
-        error: error instanceof Error ? error.message : 'Unknown error'
+        message: userFriendlyMessage,
+        error: errorMessage
       };
     }
   }
