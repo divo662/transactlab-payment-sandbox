@@ -930,104 +930,105 @@ export class EmailService {
       if (useResend) {
         const resendClient = this.getResendClient();
         if (resendClient) {
-        try {
-          const toEmails = Array.isArray(options.to) ? options.to : [options.to];
-          const result = await resendClient.emails.send({
-            from: options.from || this.DEFAULT_FROM,
-            to: toEmails,
-            subject: options.subject,
-            html: options.html,
-            text: options.text,
-            replyTo: options.replyTo,
-            // Resend doesn't support attachments in the same way, but we can add them if needed
-          });
-
-          // Check if the email was actually sent
-          if (result.error) {
-            logger.error('Resend API returned an error:', {
-              error: result.error,
-              to: toEmails,
-              subject: options.subject
-            });
-            throw new Error(result.error.message || 'Resend API error');
-          }
-
-          // Check if we have a valid response
-          if (!result.data || !result.data.id) {
-            logger.error('Resend API response missing data.id:', {
-              result,
-              to: toEmails,
-              subject: options.subject
-            });
-            throw new Error('Invalid response from Resend API');
-          }
-
-          logger.info('Email sent successfully via Resend', {
-            messageId: result.data.id,
-            to: toEmails,
-            subject: options.subject
-          });
-
-          return {
-            success: true,
-            messageId: result.data.id,
-            message: 'Email sent successfully via Resend'
-          };
-        } catch (resendError: any) {
-          // Log full error details for debugging
-          const errorMessage = resendError?.message || resendError?.error?.message || String(resendError);
-          const errorDetails = {
-            message: errorMessage,
-            name: resendError?.name,
-            code: resendError?.code || resendError?.error?.code,
-            status: resendError?.status || resendError?.response?.status,
-            fullError: resendError
-          };
-          
-          logger.error('Resend email failed, trying SMTP fallback', {
-            error: errorDetails,
-            to: Array.isArray(options.to) ? options.to : [options.to],
-            subject: options.subject,
-            from: options.from || this.DEFAULT_FROM
-          });
-          
-          // Check for common Resend errors
-          if (errorMessage.includes('Invalid API key') || errorMessage.includes('invalid_api_key')) {
-            logger.error('Resend API key is invalid. Please check your RESEND_API_KEY in environment variables.');
-          } else if (errorMessage.includes('domain') || errorMessage.includes('Domain') || errorMessage.includes('verify a domain') || errorMessage.includes('testing emails')) {
-            logger.error('Resend domain not verified. Falling back to SMTP. To use Resend, verify a domain at resend.com/domains');
-            logger.info('Using SMTP fallback - make sure SMTP credentials are configured in your .env file');
-          } else if (errorMessage.includes('rate limit') || errorMessage.includes('429')) {
-            logger.error('Resend rate limit exceeded. Please wait before sending more emails.');
-          }
-          
-          // Fall through to SMTP fallback (if Resend fails)
-          // Try SMTP as fallback when Resend fails
-          const fallbackTransporter = await this.getTransporter();
-          if (fallbackTransporter) {
-            const emailData = {
+          try {
+            const toEmails = Array.isArray(options.to) ? options.to : [options.to];
+            const result = await resendClient.emails.send({
               from: options.from || this.DEFAULT_FROM,
-              to: Array.isArray(options.to) ? options.to.join(', ') : options.to,
+              to: toEmails,
               subject: options.subject,
               html: options.html,
               text: options.text,
               replyTo: options.replyTo,
-              attachments: options.attachments
-            };
+              // Resend doesn't support attachments in the same way, but we can add them if needed
+            });
 
-            const info = await fallbackTransporter.sendMail(emailData);
+            // Check if the email was actually sent
+            if (result.error) {
+              logger.error('Resend API returned an error:', {
+                error: result.error,
+                to: toEmails,
+                subject: options.subject
+              });
+              throw new Error(result.error.message || 'Resend API error');
+            }
 
-            logger.info('Email sent successfully via SMTP (Resend fallback)', {
-              messageId: info.messageId,
-              to: emailData.to,
-              subject: emailData.subject
+            // Check if we have a valid response
+            if (!result.data || !result.data.id) {
+              logger.error('Resend API response missing data.id:', {
+                result,
+                to: toEmails,
+                subject: options.subject
+              });
+              throw new Error('Invalid response from Resend API');
+            }
+
+            logger.info('Email sent successfully via Resend', {
+              messageId: result.data.id,
+              to: toEmails,
+              subject: options.subject
             });
 
             return {
               success: true,
-              messageId: info.messageId,
-              message: 'Email sent successfully via SMTP'
+              messageId: result.data.id,
+              message: 'Email sent successfully via Resend'
             };
+          } catch (resendError: any) {
+            // Log full error details for debugging
+            const errorMessage = resendError?.message || resendError?.error?.message || String(resendError);
+            const errorDetails = {
+              message: errorMessage,
+              name: resendError?.name,
+              code: resendError?.code || resendError?.error?.code,
+              status: resendError?.status || resendError?.response?.status,
+              fullError: resendError
+            };
+            
+            logger.error('Resend email failed, trying SMTP fallback', {
+              error: errorDetails,
+              to: Array.isArray(options.to) ? options.to : [options.to],
+              subject: options.subject,
+              from: options.from || this.DEFAULT_FROM
+            });
+            
+            // Check for common Resend errors
+            if (errorMessage.includes('Invalid API key') || errorMessage.includes('invalid_api_key')) {
+              logger.error('Resend API key is invalid. Please check your RESEND_API_KEY in environment variables.');
+            } else if (errorMessage.includes('domain') || errorMessage.includes('Domain') || errorMessage.includes('verify a domain') || errorMessage.includes('testing emails')) {
+              logger.error('Resend domain not verified. Falling back to SMTP. To use Resend, verify a domain at resend.com/domains');
+              logger.info('Using SMTP fallback - make sure SMTP credentials are configured in your .env file');
+            } else if (errorMessage.includes('rate limit') || errorMessage.includes('429')) {
+              logger.error('Resend rate limit exceeded. Please wait before sending more emails.');
+            }
+            
+            // Fall through to SMTP fallback (if Resend fails)
+            // Try SMTP as fallback when Resend fails
+            const fallbackTransporter = await this.getTransporter();
+            if (fallbackTransporter) {
+              const emailData = {
+                from: options.from || this.DEFAULT_FROM,
+                to: Array.isArray(options.to) ? options.to.join(', ') : options.to,
+                subject: options.subject,
+                html: options.html,
+                text: options.text,
+                replyTo: options.replyTo,
+                attachments: options.attachments
+              };
+
+              const info = await fallbackTransporter.sendMail(emailData);
+
+              logger.info('Email sent successfully via SMTP (Resend fallback)', {
+                messageId: info.messageId,
+                to: emailData.to,
+                subject: emailData.subject
+              });
+
+              return {
+                success: true,
+                messageId: info.messageId,
+                message: 'Email sent successfully via SMTP'
+              };
+            }
           }
         }
       }
