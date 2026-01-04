@@ -42,11 +42,12 @@ const ForgotPassword = () => {
           variant: "destructive"
         });
       }
-    } catch (error) {
+    } catch (error: any) {
       console.error('Forgot password error:', error);
+      const errorMessage = formatApiError(error);
       toast({ 
-        title: "Error", 
-        description: "Failed to send password reset link. Please try again.",
+        title: errorMessage.includes('waking up') || errorMessage.includes('60 seconds') ? "Server Waking Up" : "Error", 
+        description: errorMessage,
         variant: "destructive"
       });
     } finally {

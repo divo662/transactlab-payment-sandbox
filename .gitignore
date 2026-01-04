@@ -169,8 +169,24 @@ docker-compose.yml
 
 # Documentation
 # README.md - Keep in git (project documentation)
-TRANSACTLAB_SANDBOX_SETUP_GUIDE.md
-SANDBOX_FEATURES.md
+# All other .md files should be ignored
+*.md
+!README.md
+
+# Scripts folder
+scripts/
+
+# Generate favicon files
+generate-favicon.js
+generate-favicon.bat
+**/generate-favicon.js
+**/generate-favicon.bat
+
+# Batch and PowerShell scripts (except set-env files which are already ignored)
+*.bat
+*.ps1
+!set-env.bat
+!set-env.ps1
 
 # Test files
 jest.config.js

@@ -155,6 +155,9 @@ class ApiService {
           throw new Error('You don\'t have permission to perform this action.');
         } else if (response.status === 404) {
           throw new Error('The requested resource was not found.');
+        } else if (response.status === 502 || response.status === 503 || response.status === 504) {
+          // Handle Render cold start (server sleeping) - 502/503/504 indicate server unavailable
+          throw new Error('RENDER_COLD_START: Server is waking up. Please wait about 60 seconds and try again.');
         } else if (response.status === 500) {
           // For 500 errors, try to extract more specific error information
           console.error('Server error details:', errorData);
@@ -183,12 +186,14 @@ class ApiService {
       console.error('API request failed:', error);
       
       // Handle specific error types with better messages
+      // Detect Render cold start (timeout after 15 seconds)
       if (error.name === 'AbortError' || error.message?.includes('aborted')) {
-        throw new Error('Request timed out. Please check your connection and try again.');
+        throw new Error('RENDER_COLD_START: Request timed out - server may be waking up. Please wait about 60 seconds and try again.');
       }
       
+      // Detect network errors that might be Render cold start
       if (error.message?.includes('Failed to fetch') || error.message?.includes('NetworkError')) {
-        throw new Error('Network error. Please check your internet connection and try again.');
+        throw new Error('RENDER_COLD_START: Server may be waking up. Please wait about 60 seconds and try again.');
       }
       
       // For production, be more lenient with certain errors

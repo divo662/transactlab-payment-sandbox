@@ -159,8 +159,18 @@ const Login = () => {
       let friendly = "An unexpected error occurred. Please try again.";
       let title = "Login failed";
 
+      // Render cold start (server sleeping) - check for specific indicators
+      if (
+        message.includes('RENDER_COLD_START') ||
+        message.includes('waking up') ||
+        message.includes('wait about 60 seconds') ||
+        status === 502 || status === 503 || status === 504
+      ) {
+        friendly = "The server is waking up from sleep mode. This takes about 60 seconds on free hosting. Please wait a moment and try again - this is completely normal and nothing is wrong! 😊";
+        title = "Server Waking Up";
+      }
       // Network/connection issues
-      if (status === 0 || /network/i.test(message) || /fetch/i.test(message)) {
+      else if (status === 0 || /network/i.test(message) || /fetch/i.test(message)) {
         friendly = "Unable to reach the server. Check your internet connection and try again.";
         title = "Connection Error";
       }

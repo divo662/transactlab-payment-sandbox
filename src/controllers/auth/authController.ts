@@ -95,8 +95,18 @@ export class AuthController {
       // Send verification email
       try {
         const EmailService = (await import('../../services/notification/emailService')).default;
-        await EmailService.sendVerificationEmail(user.email, user.firstName, verificationToken);
-        logger.info(`Verification email sent to: ${user.email}`);
+        const emailResult = await EmailService.sendVerificationEmail(user.email, user.firstName, verificationToken);
+        if (emailResult.success) {
+          logger.info(`Verification email sent to: ${user.email}`, {
+            messageId: emailResult.messageId
+          });
+        } else {
+          logger.error('Failed to send verification email:', {
+            email: user.email,
+            error: emailResult.error,
+            message: emailResult.message
+          });
+        }
       } catch (emailError) {
         logger.error('Failed to send verification email:', emailError);
         // Don't fail registration if email fails
@@ -739,8 +749,24 @@ export class AuthController {
       // Send verification email
       try {
         const EmailService = (await import('../../services/notification/emailService')).default;
-        await EmailService.sendVerificationEmail(user.email, user.firstName, verificationToken);
-        logger.info(`Verification email resent to: ${user.email}`);
+        const emailResult = await EmailService.sendVerificationEmail(user.email, user.firstName, verificationToken);
+        if (emailResult.success) {
+          logger.info(`Verification email resent to: ${user.email}`, {
+            messageId: emailResult.messageId
+          });
+        } else {
+          logger.error('Failed to send verification email:', {
+            email: user.email,
+            error: emailResult.error,
+            message: emailResult.message
+          });
+          res.status(500).json({
+            success: false,
+            error: 'Failed to send verification email',
+            message: emailResult.message || 'An error occurred while sending verification email'
+          });
+          return;
+        }
       } catch (emailError) {
         logger.error('Failed to send verification email:', emailError);
         res.status(500).json({

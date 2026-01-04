@@ -7,6 +7,7 @@ import { Checkbox } from "@/components/ui/checkbox";
 import { Eye, EyeOff, ChevronRight, ChevronLeft } from "lucide-react";
 import { useAuth } from "@/contexts/AuthContext";
 import { useToast } from "@/hooks/use-toast";
+import { formatApiError } from "@/lib/utils";
 import PhoneInput, { isValidPhoneNumber } from 'react-phone-number-input';
 import 'react-phone-number-input/style.css';
 import './PhoneInputCustom.css';
@@ -144,9 +145,10 @@ const Register = () => {
       // Always send user to login for email verification before they can sign in
       navigate("/auth/login?verification=required");
     } catch (error: any) {
+      const errorMessage = formatApiError(error);
       toast({
-        title: "Registration failed",
-        description: error.message || "Something went wrong. Please try again.",
+        title: errorMessage.includes('waking up') || errorMessage.includes('60 seconds') ? "Server Waking Up" : "Registration failed",
+        description: errorMessage,
         variant: "destructive"
       });
     }

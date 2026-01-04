@@ -908,20 +908,42 @@ export class EmailService {
             // Resend doesn't support attachments in the same way, but we can add them if needed
           });
 
+          // Check if the email was actually sent
+          if (result.error) {
+            logger.error('Resend API returned an error:', {
+              error: result.error,
+              to: toEmails,
+              subject: options.subject
+            });
+            throw new Error(result.error.message || 'Resend API error');
+          }
+
+          // Check if we have a valid response
+          if (!result.data || !result.data.id) {
+            logger.error('Resend API response missing data.id:', {
+              result,
+              to: toEmails,
+              subject: options.subject
+            });
+            throw new Error('Invalid response from Resend API');
+          }
+
           logger.info('Email sent successfully via Resend', {
-            messageId: result.data?.id,
+            messageId: result.data.id,
             to: toEmails,
             subject: options.subject
           });
 
           return {
             success: true,
-            messageId: result.data?.id,
+            messageId: result.data.id,
             message: 'Email sent successfully via Resend'
           };
         } catch (resendError) {
           logger.error('Resend email failed, trying SMTP fallback', {
-            error: resendError instanceof Error ? resendError.message : 'Unknown error'
+            error: resendError instanceof Error ? resendError.message : 'Unknown error',
+            to: Array.isArray(options.to) ? options.to : [options.to],
+            subject: options.subject
           });
           // Fall through to SMTP
         }
