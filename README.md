@@ -20,14 +20,11 @@
 - **Subscription Testing** - Recurring payment simulation  
 - **Modern UI/UX** - Responsive design with Tailwind CSS and shadcn/ui
 
-## What is TransactLab?
+## Transactlab Access for Demo
 
-TransactLab provides a production-ready sandbox environment that emulates popular payment processors like:
-- **Paystack** - Nigerian payment gateway
-- **Stripe** - Global payment platform
-- **Flutterwave** - African fintech platform
-- **PayPal** - International payment service
-- **Square** - Point-of-sale solutions
+- **email** - divzeh001@gmail.com
+- **password** - Divo135790!
+- **questions answer** - tiger
 
 ## Key Features
 
