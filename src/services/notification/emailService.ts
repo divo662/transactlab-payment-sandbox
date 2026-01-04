@@ -1001,36 +1001,35 @@ export class EmailService {
             logger.error('Resend rate limit exceeded. Please wait before sending more emails.');
           }
           
-          // Fall through to SMTP
+          // Fall through to SMTP fallback (if Resend fails)
+          // Try SMTP as fallback when Resend fails
+          const fallbackTransporter = await this.getTransporter();
+          if (fallbackTransporter) {
+            const emailData = {
+              from: options.from || this.DEFAULT_FROM,
+              to: Array.isArray(options.to) ? options.to.join(', ') : options.to,
+              subject: options.subject,
+              html: options.html,
+              text: options.text,
+              replyTo: options.replyTo,
+              attachments: options.attachments
+            };
+
+            const info = await fallbackTransporter.sendMail(emailData);
+
+            logger.info('Email sent successfully via SMTP (Resend fallback)', {
+              messageId: info.messageId,
+              to: emailData.to,
+              subject: emailData.subject
+            });
+
+            return {
+              success: true,
+              messageId: info.messageId,
+              message: 'Email sent successfully via SMTP'
+            };
+          }
         }
-      }
-
-      // Fallback to SMTP
-      const transporter = await this.getTransporter();
-      if (transporter) {
-        const emailData = {
-          from: options.from || this.DEFAULT_FROM,
-          to: Array.isArray(options.to) ? options.to.join(', ') : options.to,
-          subject: options.subject,
-          html: options.html,
-          text: options.text,
-          replyTo: options.replyTo,
-          attachments: options.attachments
-        };
-
-        const info = await transporter.sendMail(emailData);
-
-        logger.info('Email sent successfully via SMTP', {
-          messageId: info.messageId,
-          to: emailData.to,
-          subject: emailData.subject
-        });
-
-        return {
-          success: true,
-          messageId: info.messageId,
-          message: 'Email sent successfully via SMTP'
-        };
       }
 
       // No email service configured
