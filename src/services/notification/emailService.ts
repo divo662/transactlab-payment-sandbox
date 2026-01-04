@@ -72,6 +72,7 @@ export class EmailService {
    */
   private static async getTransporter(): Promise<nodemailer.Transporter | null> {
     if (this.transporter) {
+      logger.info('[SMTP] Using existing transporter instance');
       return this.transporter;
     }
 
@@ -84,17 +85,37 @@ export class EmailService {
       const smtpHost = process.env.SMTP_HOST;
       const smtpUser = process.env.SMTP_USER;
       const smtpPass = process.env.SMTP_PASS;
+      const smtpPort = process.env.SMTP_PORT || '587';
+
+      logger.info('[SMTP] Initializing SMTP transporter...', {
+        host: smtpHost,
+        port: smtpPort,
+        user: smtpUser,
+        hasPassword: !!smtpPass
+      });
 
       if (!smtpHost || !smtpUser || !smtpPass) {
-        logger.warn('SMTP credentials not configured. Email functionality will be disabled.');
+        logger.warn('[SMTP] SMTP credentials not configured. Email functionality will be disabled.');
+        logger.warn('[SMTP] Missing:', {
+          host: !smtpHost,
+          user: !smtpUser,
+          password: !smtpPass
+        });
         logger.warn('To enable emails, set RESEND_API_KEY (recommended) or SMTP credentials in your .env file');
         return null;
       }
 
+      logger.info('[SMTP] Creating nodemailer transporter with config:', {
+        host: smtpHost,
+        port: parseInt(smtpPort),
+        secure: smtpPort === '465',
+        user: smtpUser
+      });
+
       this.transporter = nodemailer.createTransport({
         host: smtpHost,
-        port: parseInt(process.env.SMTP_PORT || '587'),
-        secure: process.env.SMTP_PORT === '465', // true for 465, false for other ports
+        port: parseInt(smtpPort),
+        secure: smtpPort === '465', // true for 465, false for other ports
         auth: {
           user: smtpUser,
           pass: smtpPass
@@ -104,14 +125,23 @@ export class EmailService {
         }
       });
 
+      logger.info('[SMTP] Verifying SMTP connection...');
       // Verify connection
       await this.transporter.verify();
-      logger.info('SMTP connection established successfully');
+      logger.info('[SMTP] ✅ SMTP connection established and verified successfully', {
+        host: smtpHost,
+        port: smtpPort,
+        user: smtpUser
+      });
 
       return this.transporter;
     } catch (error) {
-      logger.error('Failed to create SMTP transporter', {
-        error: error instanceof Error ? error.message : 'Unknown error'
+      logger.error('[SMTP] ❌ Failed to create SMTP transporter', {
+        error: error instanceof Error ? error.message : 'Unknown error',
+        stack: error instanceof Error ? error.stack : undefined,
+        host: process.env.SMTP_HOST,
+        port: process.env.SMTP_PORT || '587',
+        user: process.env.SMTP_USER
       });
       return null;
     }
@@ -896,10 +926,30 @@ export class EmailService {
       const useSMTP = process.env.USE_SMTP === 'true' || !process.env.RESEND_API_KEY;
       const useResend = !useSMTP && process.env.RESEND_API_KEY;
       
+      logger.info('[EMAIL] Starting email send process', {
+        useSMTP,
+        useResend,
+        USE_SMTP: process.env.USE_SMTP,
+        hasResendKey: !!process.env.RESEND_API_KEY,
+        to: Array.isArray(options.to) ? options.to.join(', ') : options.to,
+        subject: options.subject
+      });
+      
       // Try SMTP first if configured (primary method)
       if (useSMTP) {
+        logger.info('[SMTP] Attempting to send email via SMTP (primary method)');
+        logger.info('[SMTP] Email details:', {
+          to: Array.isArray(options.to) ? options.to.join(', ') : options.to,
+          subject: options.subject,
+          from: options.from || this.DEFAULT_FROM,
+          hasHtml: !!options.html,
+          hasText: !!options.text,
+          hasAttachments: !!(options.attachments && options.attachments.length > 0)
+        });
+
         const transporter = await this.getTransporter();
         if (transporter) {
+          logger.info('[SMTP] Transporter obtained, preparing email data...');
           const emailData = {
             from: options.from || this.DEFAULT_FROM,
             to: Array.isArray(options.to) ? options.to.join(', ') : options.to,
@@ -910,19 +960,52 @@ export class EmailService {
             attachments: options.attachments
           };
 
-          const info = await transporter.sendMail(emailData);
-
-          logger.info('Email sent successfully via SMTP', {
-            messageId: info.messageId,
+          logger.info('[SMTP] Sending email via SMTP...', {
+            from: emailData.from,
             to: emailData.to,
-            subject: emailData.subject
+            subject: emailData.subject,
+            htmlLength: emailData.html?.length || 0,
+            textLength: emailData.text?.length || 0
           });
 
-          return {
-            success: true,
-            messageId: info.messageId,
-            message: 'Email sent successfully via SMTP'
-          };
+          try {
+            const info = await transporter.sendMail(emailData);
+
+            logger.info('[SMTP] ✅ Email sent successfully via SMTP!', {
+              messageId: info.messageId,
+              response: info.response,
+              accepted: info.accepted,
+              rejected: info.rejected,
+              pending: info.pending,
+              to: emailData.to,
+              subject: emailData.subject,
+              from: emailData.from
+            });
+
+            return {
+              success: true,
+              messageId: info.messageId,
+              message: 'Email sent successfully via SMTP'
+            };
+          } catch (sendError: any) {
+            logger.error('[SMTP] ❌ Failed to send email via SMTP', {
+              error: sendError instanceof Error ? sendError.message : 'Unknown error',
+              stack: sendError instanceof Error ? sendError.stack : undefined,
+              code: sendError?.code,
+              command: sendError?.command,
+              response: sendError?.response,
+              responseCode: sendError?.responseCode,
+              to: emailData.to,
+              subject: emailData.subject,
+              from: emailData.from
+            });
+            throw sendError;
+          }
+        } else {
+          logger.error('[SMTP] ❌ Transporter is null - cannot send email', {
+            to: Array.isArray(options.to) ? options.to.join(', ') : options.to,
+            subject: options.subject
+          });
         }
       }
       
@@ -1003,8 +1086,10 @@ export class EmailService {
             
             // Fall through to SMTP fallback (if Resend fails)
             // Try SMTP as fallback when Resend fails
+            logger.info('[SMTP] Attempting SMTP fallback after Resend failure...');
             const fallbackTransporter = await this.getTransporter();
             if (fallbackTransporter) {
+              logger.info('[SMTP] Fallback transporter obtained, preparing email data...');
               const emailData = {
                 from: options.from || this.DEFAULT_FROM,
                 to: Array.isArray(options.to) ? options.to.join(', ') : options.to,
@@ -1015,27 +1100,65 @@ export class EmailService {
                 attachments: options.attachments
               };
 
-              const info = await fallbackTransporter.sendMail(emailData);
-
-              logger.info('Email sent successfully via SMTP (Resend fallback)', {
-                messageId: info.messageId,
+              logger.info('[SMTP] Sending email via SMTP (fallback)...', {
+                from: emailData.from,
                 to: emailData.to,
                 subject: emailData.subject
               });
 
-              return {
-                success: true,
-                messageId: info.messageId,
-                message: 'Email sent successfully via SMTP'
-              };
+              try {
+                const info = await fallbackTransporter.sendMail(emailData);
+
+                logger.info('[SMTP] ✅ Email sent successfully via SMTP (Resend fallback)!', {
+                  messageId: info.messageId,
+                  response: info.response,
+                  accepted: info.accepted,
+                  rejected: info.rejected,
+                  pending: info.pending,
+                  to: emailData.to,
+                  subject: emailData.subject,
+                  from: emailData.from
+                });
+
+                return {
+                  success: true,
+                  messageId: info.messageId,
+                  message: 'Email sent successfully via SMTP'
+                };
+              } catch (fallbackError: any) {
+                logger.error('[SMTP] ❌ SMTP fallback also failed', {
+                  error: fallbackError instanceof Error ? fallbackError.message : 'Unknown error',
+                  stack: fallbackError instanceof Error ? fallbackError.stack : undefined,
+                  code: fallbackError?.code,
+                  command: fallbackError?.command,
+                  response: fallbackError?.response,
+                  responseCode: fallbackError?.responseCode,
+                  to: emailData.to,
+                  subject: emailData.subject
+                });
+                throw fallbackError;
+              }
+            } else {
+              logger.error('[SMTP] ❌ Fallback transporter is null - cannot send email', {
+                to: Array.isArray(options.to) ? options.to.join(', ') : options.to,
+                subject: options.subject
+              });
             }
           }
         }
       }
 
       // No email service configured
-      logger.warn(`Email not sent (no email service configured): ${options.subject} to ${Array.isArray(options.to) ? options.to.join(', ') : options.to}`);
-      logger.warn('To enable emails, configure RESEND_API_KEY (recommended) or SMTP credentials in your .env file');
+      logger.warn('[EMAIL] ❌ Email not sent - no email service configured', {
+        subject: options.subject,
+        to: Array.isArray(options.to) ? options.to.join(', ') : options.to,
+        USE_SMTP: process.env.USE_SMTP,
+        hasResendKey: !!process.env.RESEND_API_KEY,
+        hasSMTPHost: !!process.env.SMTP_HOST,
+        hasSMTPUser: !!process.env.SMTP_USER,
+        hasSMTPPass: !!process.env.SMTP_PASS
+      });
+      logger.warn('[EMAIL] To enable emails, configure RESEND_API_KEY (recommended) or SMTP credentials in your .env file');
       return {
         success: false,
         message: 'Email service not configured',
@@ -1043,9 +1166,14 @@ export class EmailService {
       };
 
     } catch (error) {
-      logger.error('Failed to send email', {
+      logger.error('[EMAIL] ❌ Failed to send email - Top level catch', {
         error: error instanceof Error ? error.message : 'Unknown error',
-        options
+        stack: error instanceof Error ? error.stack : undefined,
+        errorName: error instanceof Error ? error.name : undefined,
+        to: Array.isArray(options.to) ? options.to.join(', ') : options.to,
+        subject: options.subject,
+        from: options.from || this.DEFAULT_FROM,
+        fullError: error
       });
 
       return {

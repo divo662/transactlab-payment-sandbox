@@ -94,21 +94,35 @@ export class AuthController {
 
       // Send verification email
       try {
+        logger.info('[AUTH] Sending verification email during registration', {
+          email: user.email,
+          firstName: user.firstName,
+          hasToken: !!verificationToken,
+          tokenLength: verificationToken?.length
+        });
+
         const EmailService = (await import('../../services/notification/emailService')).default;
         const emailResult = await EmailService.sendVerificationEmail(user.email, user.firstName, verificationToken);
+        
         if (emailResult.success) {
-          logger.info(`Verification email sent to: ${user.email}`, {
-            messageId: emailResult.messageId
+          logger.info('[AUTH] ✅ Verification email sent successfully during registration', {
+            email: user.email,
+            messageId: emailResult.messageId,
+            message: emailResult.message
           });
         } else {
-          logger.error('Failed to send verification email:', {
+          logger.error('[AUTH] ❌ Failed to send verification email during registration', {
             email: user.email,
             error: emailResult.error,
             message: emailResult.message
           });
         }
       } catch (emailError) {
-        logger.error('Failed to send verification email:', emailError);
+        logger.error('[AUTH] ❌ Exception while sending verification email during registration', {
+          email: user.email,
+          error: emailError instanceof Error ? emailError.message : 'Unknown error',
+          stack: emailError instanceof Error ? emailError.stack : undefined
+        });
         // Don't fail registration if email fails
       }
 
@@ -689,11 +703,33 @@ export class AuthController {
 
       // Send welcome email
       try {
+        logger.info('[AUTH] Sending welcome email after verification', {
+          email: user.email,
+          firstName: user.firstName
+        });
+
         const EmailService = (await import('../../services/notification/emailService')).default;
-        await EmailService.sendWelcomeEmail(user.email, user.firstName);
-        logger.info(`Welcome email sent to: ${user.email}`);
+        const welcomeEmailResult = await EmailService.sendWelcomeEmail(user.email, user.firstName);
+        
+        if (welcomeEmailResult.success) {
+          logger.info('[AUTH] ✅ Welcome email sent successfully', {
+            email: user.email,
+            messageId: welcomeEmailResult.messageId,
+            message: welcomeEmailResult.message
+          });
+        } else {
+          logger.error('[AUTH] ❌ Failed to send welcome email', {
+            email: user.email,
+            error: welcomeEmailResult.error,
+            message: welcomeEmailResult.message
+          });
+        }
       } catch (emailError) {
-        logger.error('Failed to send welcome email:', emailError);
+        logger.error('[AUTH] ❌ Exception while sending welcome email', {
+          email: user.email,
+          error: emailError instanceof Error ? emailError.message : 'Unknown error',
+          stack: emailError instanceof Error ? emailError.stack : undefined
+        });
         // Don't fail verification if welcome email fails
       }
 
@@ -748,14 +784,24 @@ export class AuthController {
 
       // Send verification email
       try {
+        logger.info('[AUTH] Sending verification email (resend)', {
+          email: user.email,
+          firstName: user.firstName,
+          hasToken: !!verificationToken,
+          tokenLength: verificationToken?.length
+        });
+
         const EmailService = (await import('../../services/notification/emailService')).default;
         const emailResult = await EmailService.sendVerificationEmail(user.email, user.firstName, verificationToken);
+        
         if (emailResult.success) {
-          logger.info(`Verification email resent to: ${user.email}`, {
-            messageId: emailResult.messageId
+          logger.info('[AUTH] ✅ Verification email resent successfully', {
+            email: user.email,
+            messageId: emailResult.messageId,
+            message: emailResult.message
           });
         } else {
-          logger.error('Failed to send verification email:', {
+          logger.error('[AUTH] ❌ Failed to send verification email (resend)', {
             email: user.email,
             error: emailResult.error,
             message: emailResult.message
@@ -768,7 +814,11 @@ export class AuthController {
           return;
         }
       } catch (emailError) {
-        logger.error('Failed to send verification email:', emailError);
+        logger.error('[AUTH] ❌ Exception while sending verification email (resend)', {
+          email: user.email,
+          error: emailError instanceof Error ? emailError.message : 'Unknown error',
+          stack: emailError instanceof Error ? emailError.stack : undefined
+        });
         res.status(500).json({
           success: false,
           error: 'Failed to send verification email',
