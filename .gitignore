@@ -199,3 +199,16 @@ jest.config.js
 *.tmp
 *.temp
 .cache/ 
+# Test files
+test-api.js
+test-avatar-upload.html
+
+# Uploads folder (user-uploaded content)
+uploads/
+
+# Cursor IDE
+.cursorignore
+
+# Environment setup scripts (already there, but make sure)
+set-env.bat
+set-env.ps1
