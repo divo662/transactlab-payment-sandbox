@@ -939,12 +939,33 @@ export class EmailService {
             messageId: result.data.id,
             message: 'Email sent successfully via Resend'
           };
-        } catch (resendError) {
+        } catch (resendError: any) {
+          // Log full error details for debugging
+          const errorMessage = resendError?.message || resendError?.error?.message || String(resendError);
+          const errorDetails = {
+            message: errorMessage,
+            name: resendError?.name,
+            code: resendError?.code || resendError?.error?.code,
+            status: resendError?.status || resendError?.response?.status,
+            fullError: resendError
+          };
+          
           logger.error('Resend email failed, trying SMTP fallback', {
-            error: resendError instanceof Error ? resendError.message : 'Unknown error',
+            error: errorDetails,
             to: Array.isArray(options.to) ? options.to : [options.to],
-            subject: options.subject
+            subject: options.subject,
+            from: options.from || this.DEFAULT_FROM
           });
+          
+          // Check for common Resend errors
+          if (errorMessage.includes('Invalid API key') || errorMessage.includes('invalid_api_key')) {
+            logger.error('Resend API key is invalid. Please check your RESEND_API_KEY in environment variables.');
+          } else if (errorMessage.includes('domain') || errorMessage.includes('Domain')) {
+            logger.error('Resend domain not verified. Please verify your domain in Resend dashboard.');
+          } else if (errorMessage.includes('rate limit') || errorMessage.includes('429')) {
+            logger.error('Resend rate limit exceeded. Please wait before sending more emails.');
+          }
+          
           // Fall through to SMTP
         }
       }
