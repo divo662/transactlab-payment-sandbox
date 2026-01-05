@@ -5,7 +5,7 @@ import { zodResolver } from "@hookform/resolvers/zod";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { useToast } from "@/hooks/use-toast";
-import { Link, useNavigate, useSearchParams } from "react-router-dom";
+import { Link, useNavigate } from "react-router-dom";
 import { useAuth } from "@/contexts/AuthContext";
 import { LoginRequest } from "@/types";
 import { formatApiError } from "@/lib/utils";
@@ -42,9 +42,6 @@ const Login = () => {
   const { login, isLoading, isAuthenticated } = useAuth();
   const navigate = useNavigate();
   const [showPassword, setShowPassword] = useState(false);
-  const [searchParams] = useSearchParams();
-  const [resendLoading, setResendLoading] = useState(false);
-  const [emailForResend, setEmailForResend] = useState("");
   const [requiresTotp, setRequiresTotp] = useState(false);
   const [loginData, setLoginData] = useState<{ email: string; password: string; securityAnswer: string } | null>(null);
 
@@ -64,36 +61,6 @@ const Login = () => {
     }
   }, [isAuthenticated, navigate]);
 
-  const handleResendVerification = async () => {
-    if (!emailForResend) {
-      toast({
-        title: "Email required",
-        description: "Please enter your email address to resend verification.",
-        variant: "destructive"
-      });
-      return;
-    }
-
-    setResendLoading(true);
-    try {
-      const apiService = (await import("@/lib/api")).default;
-      await apiService.resendVerification({ email: emailForResend });
-      
-      toast({
-        title: "Verification email sent!",
-        description: "Please check your email for the verification link.",
-        variant: "default"
-      });
-    } catch (error: any) {
-      toast({
-        title: "Failed to resend verification",
-        description: formatApiError(error),
-        variant: "destructive"
-      });
-    } finally {
-      setResendLoading(false);
-    }
-  };
 
   const onSubmit = async (data: FormValues) => {
     try {
@@ -176,10 +143,7 @@ const Login = () => {
       }
       // Invalid credentials - catch all 401 errors related to authentication
       else if (status === 401) {
-        if (/verification/i.test(message) || code === 'EMAIL_NOT_VERIFIED') {
-          friendly = "Your email is not verified yet. Please check your inbox for the verification link or resend it from the banner above.";
-          title = "Email Not Verified";
-        } else if (/security answer/i.test(message) || code === 'INVALID_SECURITY_ANSWER') {
+        if (/security answer/i.test(message) || code === 'INVALID_SECURITY_ANSWER') {
           friendly = "The security question answer is incorrect. Please try again.";
           title = "Invalid Security Answer";
         } else {
@@ -263,62 +227,6 @@ const Login = () => {
               </p>
             </div>
 
-          {/* Verification Alert */}
-          {searchParams.get("verification") === "required" && (
-            <div className="bg-[#0a164d]/10 border border-[#0a164d]/20 text-[#0a164d] px-4 py-3 rounded-lg relative mb-6" role="alert">
-              <div className="flex items-start">
-                <div className="flex-shrink-0">
-                  <svg className="h-5 w-5 text-[#0a164d]" viewBox="0 0 20 20" fill="currentColor">
-                    <path fillRule="evenodd" d="M18 10a8 8 0 11-16 0 8 8 0 0116 0zm-7-4a1 1 0 11-2 0 1 1 0 012 0zM9 9a1 1 0 000 2v3a1 1 0 001 1h1a1 1 0 100-2v-3a1 1 0 00-1-1H9z" clipRule="evenodd" />
-                  </svg>
-                </div>
-                <div className="ml-3 flex-1">
-                  <h3 className="text-sm font-medium text-[#0a164d]">Account Created Successfully!</h3>
-                  <div className="mt-2 text-sm text-[#0a164d]/80">
-                    <p>Please check your email for a verification link to activate your account.</p>
-                    <p className="mt-1">Once verified, you can sign in below.</p>
-                  </div>
-                </div>
-                <div className="ml-auto pl-3">
-                  <button 
-                    onClick={() => navigate("/auth/login")} 
-                    className="inline-flex text-[#0a164d] hover:text-[#0a164d]/80"
-                  >
-                    <svg className="h-5 w-5" viewBox="0 0 20 20" fill="currentColor">
-                      <path fillRule="evenodd" d="M4.293 4.293a1 1 0 011.414 0L10 8.586l4.293-4.293a1 1 0 111.414 1.414L11.414 10l4.293 4.293a1 1 0 01-1.414 1.414L10 11.414l-4.293 4.293a1 1 0 01-1.414-1.414L8.586 10 4.293 5.707a1 1 0 010-1.414z" clipRule="evenodd" />
-                    </svg>
-                  </button>
-                </div>
-              </div>
-              
-              {/* Resend verification section */}
-              <div className="mt-4 pt-4 border-t border-[#0a164d]/20">
-                <p className="text-sm text-[#0a164d]/80 mb-3">Didn't receive the email?</p>
-                <div className="flex gap-2">
-                  <Input
-                    type="email"
-                    placeholder="Enter your email"
-                    value={emailForResend}
-                    onChange={(e) => setEmailForResend(e.target.value)}
-                    className="flex-1 text-sm"
-                  />
-                  <Button
-                    onClick={handleResendVerification}
-                    disabled={resendLoading || !emailForResend}
-                    size="sm"
-                    variant="outline"
-                    className="text-[#0a164d] border-[#0a164d]/30 hover:bg-[#0a164d]/10"
-                  >
-                    {resendLoading ? (
-                      <div className="w-4 h-4 border-2 border-[#0a164d] border-t-transparent rounded-full animate-spin"></div>
-                    ) : (
-                      "Resend"
-                    )}
-                  </Button>
-                </div>
-              </div>
-            </div>
-          )}
 
             {/* Login Form */}
             <form onSubmit={handleSubmit(onSubmit)} className="space-y-3 sm:space-y-4">

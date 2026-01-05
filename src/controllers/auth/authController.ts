@@ -242,22 +242,18 @@ export class AuthController {
         return;
       }
 
-      // Check if email is verified (DISABLED FOR DEVELOPMENT - allow unverified logins)
-      // In production, uncomment this to require email verification
-      /*
+      // EMAIL VERIFICATION DISABLED - Auto-verify users if not already verified
+      // This handles old accounts created before email verification was suspended
       if (!user.isVerified) {
-        res.status(403).json({
-          success: false,
-          error: 'Email not verified',
-          message: 'Please verify your email address before logging in. Check your inbox for a verification email or request a new one.',
-          data: {
-            email: user.email,
-            needsVerification: true
-          }
+        logger.info('[AUTH] Auto-verifying unverified user during login (email verification suspended)', {
+          email: user.email,
+          userId: user._id.toString()
         });
-        return;
+        user.isVerified = true;
+        user.emailVerificationToken = undefined;
+        user.emailVerificationExpires = undefined;
+        await user.save();
       }
-      */
 
       // Extract device information
       const deviceInfo = SecurityService.extractDeviceInfo(req);

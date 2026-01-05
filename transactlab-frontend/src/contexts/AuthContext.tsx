@@ -187,8 +187,7 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
       const response = await apiService.register(userData);
       
       if (response.success && response.data) {
-        // Do NOT auto-login after registration.
-        // Ensure any possible tokens are cleared and send user to login with verification notice.
+        // Registration successful - redirect to login
         setUser(null);
         setTokens(null);
         localStorage.removeItem('accessToken');
@@ -196,7 +195,7 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
         
         try {
           if (typeof window !== 'undefined') {
-            window.location.href = '/auth/login?verification=required';
+            window.location.href = '/auth/login';
           }
         } catch (_) {
           // no-op

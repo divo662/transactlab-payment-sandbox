@@ -139,11 +139,11 @@ const Register = () => {
       
       toast({
         title: "Account created successfully!",
-        description: "Welcome to TransactLab. Please check your email for verification.",
+        description: "Registration completed successfully! You can now sign in.",
         variant: "default"
       });
-      // Always send user to login for email verification before they can sign in
-      navigate("/auth/login?verification=required");
+      // Redirect to login page
+      navigate("/auth/login");
     } catch (error: any) {
       const errorMessage = formatApiError(error);
       toast({
