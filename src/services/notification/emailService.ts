@@ -43,6 +43,9 @@ export class EmailService {
   private static resend: Resend | null = null;
   private static transporterLastError: Date | null = null;
   private static readonly TRANSPORTER_RESET_INTERVAL = 60000; // Reset transporter after 1 minute of errors
+  
+  // EMAIL SERVICES COMPLETELY DISABLED - Set to true to disable ALL email functionality
+  private static readonly EMAIL_DISABLED = true; // Force disable all emails - change to false to re-enable
 
   /**
    * Initialize Resend client (preferred method)
@@ -1110,6 +1113,19 @@ export class EmailService {
    * Send email using EmailJS, Resend, or SMTP (in priority order)
    */
   static async sendEmail(options: EmailOptions): Promise<EmailResult> {
+    // EMAIL SERVICES COMPLETELY DISABLED
+    if (this.EMAIL_DISABLED) {
+      logger.info('[EMAIL] ⚠️ Email services are disabled - email not sent', {
+        to: Array.isArray(options.to) ? options.to.join(', ') : options.to,
+        subject: options.subject
+      });
+      return {
+        success: true, // Return success to not break calling code
+        message: 'Email service is disabled',
+        messageId: 'disabled'
+      };
+    }
+    
     try {
       // Check which email service to use (priority: EmailJS > Resend > SMTP)
       const hasEmailJS = !!(process.env.EMAILJS_PUBLIC_KEY && process.env.EMAILJS_SERVICE_ID && process.env.EMAILJS_TEMPLATE_ID);
@@ -1863,6 +1879,16 @@ export class EmailService {
    * Send team invite email (simple HTML)
    */
   static async sendTeamInvite(to: string, acceptUrl: string): Promise<EmailResult> {
+    // EMAIL SERVICES DISABLED
+    if (this.EMAIL_DISABLED) {
+      logger.info('[EMAIL] ⚠️ Email services are disabled - team invite not sent', { to });
+      return {
+        success: true,
+        message: 'Email service is disabled',
+        messageId: 'disabled'
+      };
+    }
+    
     try {
       const transporter = await this.getTransporter();
       const info = await transporter.sendMail({

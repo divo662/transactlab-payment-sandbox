@@ -7,6 +7,19 @@
 
 **TransactLab** is a comprehensive developer sandbox platform that simulates real payment gateways for testing, development, and learning purposes. Built specifically for developers who need to test payment integrations without the risk of real transactions or the complexity of setting up multiple payment gateway test environments.
 
+## Important Note About Email Services
+
+Email services are currently disabled in this project. This is a personal development project, and email functionality can be unreliable or may not work properly depending on the hosting environment, network configuration, or email service provider setup. 
+
+To keep the project simple and avoid complications, all email-related features have been temporarily suspended. This means:
+
+- Users are automatically verified upon registration (no email verification required)
+- No verification emails are sent
+- No notification emails are sent (new device alerts, payment receipts, etc.)
+- All email functionality is bypassed to ensure smooth operation
+
+If you need email functionality, you can re-enable it by modifying the `EMAIL_DISABLED` flag in `src/services/notification/emailService.ts` and configuring your preferred email service provider (SMTP, Resend, EmailJS, etc.). See the email setup guides in the project for configuration options.
+
 ## Current Status
 
 - **Authentication System** - Complete user registration and login with security questions  
@@ -31,9 +44,10 @@
 ### **Developer Authentication & Security**
 - **Multi-step Registration** - 5-step developer onboarding with personal info, contact details, password setup, security questions, and review
 - **Security Questions** - Additional account protection with customizable security questions for developer accounts
-- **Email Verification** - Account activation through email verification for sandbox access
+- **Instant Account Activation** - Accounts are automatically verified upon registration (email verification disabled for simplicity)
 - **Password Security** - Strong password requirements with real-time validation
 - **Phone Validation** - International phone number support with country code validation
+- **Rate Limiting** - IP-based rate limiting for registration (3 accounts per hour) and login (5 attempts per 15 minutes) to prevent abuse
 
 ### **API Testing & Management**
 - **Canonical Redirect Contract** - Standardized session responses with absolute checkout URLs

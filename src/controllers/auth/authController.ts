@@ -286,7 +286,10 @@ export class AuthController {
         }
       }
 
+      // EMAIL SERVICES DISABLED - Skip new device alerts
       // Check if this is a new device and send alert if configured
+      // DISABLED: All email services are suspended
+      /*
       const shouldNotify = !isDeviceTrusted && (
         (user as any).securitySettings?.notifyOnNewDevice !== false // Default to true if not set
       );
@@ -323,6 +326,13 @@ export class AuthController {
           notifyOnNewDevice: (user as any).securitySettings?.notifyOnNewDevice
         });
       }
+      */
+      
+      logger.info('[AUTH] Email services disabled - skipping new device alert', {
+        userId: user._id.toString(),
+        email: user.email,
+        deviceId: deviceInfo.deviceId
+      });
 
       // Add device to trusted devices
       if (!isDeviceTrusted) {
