@@ -35,9 +35,9 @@ If you need email functionality, you can re-enable it by modifying the `EMAIL_DI
 
 ## Transactlab Access for Demo
 
-- **email** - divzeh001@gmail.com
-- **password** - Divo135790!
-- **questions answer** - tiger
+- **email** - infotezma@gmail.com
+- **password** - Test12345!
+- **questions answer** - dog
 
 ## Key Features
 
