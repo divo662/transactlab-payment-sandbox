@@ -40,6 +40,8 @@ export class EmailService {
   private static readonly DEFAULT_FROM = process.env.EMAIL_FROM || 'onboarding@resend.dev';
   private static transporter: nodemailer.Transporter | null = null;
   private static resend: Resend | null = null;
+  private static transporterLastError: Date | null = null;
+  private static readonly TRANSPORTER_RESET_INTERVAL = 60000; // Reset transporter after 1 minute of errors
 
   /**
    * Initialize Resend client (preferred method)
@@ -68,9 +70,34 @@ export class EmailService {
   }
 
   /**
+   * Reset SMTP transporter (call when connection fails)
+   */
+  private static resetTransporter(): void {
+    if (this.transporter) {
+      logger.info('[SMTP] Resetting transporter due to connection issues');
+      try {
+        this.transporter.close();
+      } catch (error) {
+        // Ignore errors when closing
+      }
+      this.transporter = null;
+      this.transporterLastError = new Date();
+    }
+  }
+
+  /**
    * Initialize SMTP transporter (fallback method)
    */
   private static async getTransporter(): Promise<nodemailer.Transporter | null> {
+    // Reset transporter if it's been failing for too long
+    if (this.transporter && this.transporterLastError) {
+      const timeSinceError = Date.now() - this.transporterLastError.getTime();
+      if (timeSinceError > this.TRANSPORTER_RESET_INTERVAL) {
+        logger.info('[SMTP] Resetting stale transporter after error period');
+        this.resetTransporter();
+      }
+    }
+
     if (this.transporter) {
       logger.info('[SMTP] Using existing transporter instance');
       return this.transporter;
@@ -112,7 +139,11 @@ export class EmailService {
         user: smtpUser
       });
 
-      this.transporter = nodemailer.createTransport({
+      // Gmail-specific optimizations
+      const isGmail = smtpHost?.toLowerCase().includes('gmail') || false;
+      
+      // Create transporter configuration
+      const transporterConfig: any = {
         host: smtpHost,
         port: parseInt(smtpPort),
         secure: smtpPort === '465', // true for 465, false for other ports
@@ -123,14 +154,21 @@ export class EmailService {
         tls: {
           rejectUnauthorized: false
         },
-        connectionTimeout: 10000, // 10 seconds
-        greetingTimeout: 5000, // 5 seconds
-        socketTimeout: 10000, // 10 seconds
-        // Don't verify on creation - verify on first use instead
-        pool: true,
-        maxConnections: 1,
-        maxMessages: 3
-      });
+        connectionTimeout: isGmail ? 20000 : 15000, // Longer timeout for Gmail
+        greetingTimeout: isGmail ? 10000 : 5000,
+        socketTimeout: isGmail ? 20000 : 15000
+      };
+
+      // Only add pool settings if not using Gmail (Gmail doesn't support pooling well)
+      if (!isGmail) {
+        transporterConfig.pool = false;
+        transporterConfig.maxConnections = 1;
+        transporterConfig.maxMessages = 1;
+        transporterConfig.rateDelta = 1000;
+        transporterConfig.rateLimit = 5;
+      }
+      
+      this.transporter = nodemailer.createTransport(transporterConfig);
 
       logger.info('[SMTP] Transporter created (connection will be verified on first use)');
       
@@ -1001,61 +1039,105 @@ export class EmailService {
             textLength: emailData.text?.length || 0
           });
 
-          try {
-            const info = await transporter.sendMail(emailData);
+          // Retry logic for SMTP sending
+          const maxRetries = 2;
+          let lastError: any = null;
+          let currentTransporter = transporter;
+          
+          for (let attempt = 1; attempt <= maxRetries; attempt++) {
+            try {
+              // Reset transporter if this is a retry after a connection error
+              if (attempt > 1 && lastError) {
+                const isConnectionError = lastError?.message?.includes('timeout') || 
+                                        lastError?.message?.includes('Connection') ||
+                                        lastError?.code === 'ETIMEDOUT' ||
+                                        lastError?.code === 'ECONNREFUSED';
+                
+                if (isConnectionError) {
+                  logger.info(`[SMTP] Retry attempt ${attempt}: Resetting transporter and creating new connection`);
+                  this.resetTransporter();
+                  // Get a fresh transporter
+                  const freshTransporter = await this.getTransporter();
+                  if (!freshTransporter) {
+                    throw new Error('Could not create fresh transporter for retry');
+                  }
+                  currentTransporter = freshTransporter;
+                }
+              }
 
-            logger.info('[SMTP] ✅ Email sent successfully via SMTP!', {
-              messageId: info.messageId,
-              response: info.response,
-              accepted: info.accepted,
-              rejected: info.rejected,
-              pending: info.pending,
-              to: emailData.to,
-              subject: emailData.subject,
-              from: emailData.from
-            });
+              const info = await currentTransporter.sendMail(emailData);
 
-            return {
-              success: true,
-              messageId: info.messageId,
-              message: 'Email sent successfully via SMTP'
-            };
-          } catch (sendError: any) {
-            const errorMessage = sendError instanceof Error ? sendError.message : 'Unknown error';
-            const isTimeout = errorMessage.includes('timeout') || errorMessage.includes('Timeout') || sendError?.code === 'ETIMEDOUT';
-            const isConnectionError = errorMessage.includes('Connection') || sendError?.code === 'ECONNREFUSED' || sendError?.code === 'ECONNRESET';
-            
-            logger.error('[SMTP] ❌ Failed to send email via SMTP', {
-              error: errorMessage,
-              stack: sendError instanceof Error ? sendError.stack : undefined,
-              code: sendError?.code,
-              command: sendError?.command,
-              response: sendError?.response,
-              responseCode: sendError?.responseCode,
-              to: emailData.to,
-              subject: emailData.subject,
-              from: emailData.from,
-              isTimeout,
-              isConnectionError
-            });
-            
-            // Return detailed error instead of throwing
-            let userFriendlyError = 'Failed to send email via SMTP';
-            if (isTimeout) {
-              userFriendlyError = 'SMTP connection timeout. Please check your SMTP server settings and network connection.';
-            } else if (isConnectionError) {
-              userFriendlyError = 'SMTP connection failed. Please verify your SMTP_HOST and SMTP_PORT settings.';
-            } else if (sendError?.responseCode) {
-              userFriendlyError = `SMTP server error (${sendError.responseCode}): ${errorMessage}`;
-            } else {
-              userFriendlyError = `SMTP error: ${errorMessage}`;
+              logger.info('[SMTP] ✅ Email sent successfully via SMTP!', {
+                attempt,
+                messageId: info.messageId,
+                response: info.response,
+                accepted: info.accepted,
+                rejected: info.rejected,
+                pending: info.pending,
+                to: emailData.to,
+                subject: emailData.subject,
+                from: emailData.from
+              });
+
+              // Clear error timestamp on success
+              this.transporterLastError = null;
+
+              return {
+                success: true,
+                messageId: info.messageId,
+                message: 'Email sent successfully via SMTP'
+              };
+            } catch (sendError: any) {
+              lastError = sendError;
+              const errorMessage = sendError instanceof Error ? sendError.message : 'Unknown error';
+              const isTimeout = errorMessage.includes('timeout') || errorMessage.includes('Timeout') || sendError?.code === 'ETIMEDOUT';
+              const isConnectionError = errorMessage.includes('Connection') || sendError?.code === 'ECONNREFUSED' || sendError?.code === 'ECONNRESET';
+              
+              logger.error(`[SMTP] ❌ Failed to send email via SMTP (attempt ${attempt}/${maxRetries})`, {
+                error: errorMessage,
+                code: sendError?.code,
+                command: sendError?.command,
+                response: sendError?.response,
+                responseCode: sendError?.responseCode,
+                to: emailData.to,
+                subject: emailData.subject,
+                isTimeout,
+                isConnectionError
+              });
+
+              // Mark transporter as having errors
+              this.transporterLastError = new Date();
+
+              // If this is the last attempt, return error
+              if (attempt === maxRetries) {
+                // Reset transporter for next time
+                if (isTimeout || isConnectionError) {
+                  this.resetTransporter();
+                }
+
+                let userFriendlyError = 'Failed to send email via SMTP';
+                if (isTimeout) {
+                  userFriendlyError = 'SMTP connection timeout after retries. Please check your SMTP server settings, network connection, and ensure Gmail "Less secure app access" is enabled or use an App Password.';
+                } else if (isConnectionError) {
+                  userFriendlyError = 'SMTP connection failed. Please verify your SMTP_HOST and SMTP_PORT settings.';
+                } else if (sendError?.responseCode) {
+                  userFriendlyError = `SMTP server error (${sendError.responseCode}): ${errorMessage}`;
+                } else {
+                  userFriendlyError = `SMTP error: ${errorMessage}`;
+                }
+                
+                return {
+                  success: false,
+                  message: userFriendlyError,
+                  error: errorMessage
+                };
+              }
+
+              // Wait before retry (exponential backoff)
+              const waitTime = attempt * 1000; // 1s, 2s
+              logger.info(`[SMTP] Waiting ${waitTime}ms before retry...`);
+              await new Promise(resolve => setTimeout(resolve, waitTime));
             }
-            
-            return {
-              success: false,
-              message: userFriendlyError,
-              error: errorMessage
-            };
           }
         } else {
           const errorMsg = 'SMTP transporter could not be initialized. Please check your SMTP configuration.';
