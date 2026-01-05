@@ -45,6 +45,36 @@ export const RATE_LIMIT_CONFIG = {
     }
   },
 
+  // Registration endpoints (very strict - prevent spam accounts)
+  REGISTRATION: {
+    windowMs: 60 * 60 * 1000, // 1 hour
+    max: 3, // 3 registrations per hour per IP
+    message: {
+      error: 'Too many registration attempts from this IP, please try again later.',
+      retryAfter: '1 hour'
+    },
+    standardHeaders: true,
+    legacyHeaders: false,
+    keyGenerator: (req: any) => {
+      // Use IP address for rate limiting
+      return req.ip || req.connection.remoteAddress || 'unknown';
+    },
+    handler: (req: any, res: any) => {
+      const ip = req.ip || req.connection.remoteAddress || 'unknown';
+      logger.warn(`Registration rate limit exceeded for IP: ${ip}`, {
+        ip,
+        userAgent: req.get('User-Agent'),
+        email: req.body?.email
+      });
+      res.status(429).json({
+        success: false,
+        error: 'Too many registration attempts',
+        message: 'Too many registration attempts from this IP address. Please try again in 1 hour.',
+        retryAfter: 3600
+      });
+    }
+  },
+
   // Payment endpoints (very strict)
   PAYMENT: {
     windowMs: 60 * 1000, // 1 minute
@@ -165,6 +195,9 @@ export const createRateLimiters = () => {
         return `${req.ip}-${req.get('User-Agent') || 'unknown'}`;
       }
     }),
+
+    // Registration rate limiter (very strict - IP-based)
+    registration: rateLimit(RATE_LIMIT_CONFIG.REGISTRATION),
 
     // Payment rate limiter
     payment: rateLimit({

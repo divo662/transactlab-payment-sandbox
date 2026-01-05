@@ -12,8 +12,9 @@ const router = Router();
  * @route   POST /api/v1/auth/register
  * @desc    Register a new user
  * @access  Public
+ * @note    Rate limited: 3 registrations per hour per IP address
  */
-router.post('/register', rateLimiters.auth, AuthController.register);
+router.post('/register', rateLimiters.registration, AuthController.register);
 
 /**
  * @route   POST /api/v1/auth/login

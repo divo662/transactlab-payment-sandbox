@@ -1,5 +1,6 @@
 import nodemailer from 'nodemailer';
 import { Resend } from 'resend';
+import axios from 'axios';
 import { logger } from '../../utils/helpers/logger';
 
 export interface EmailOptions {
@@ -34,7 +35,7 @@ export interface EmailTemplate {
 
 /**
  * Email Service
- * Handles email notifications and templating using Resend (preferred) or SMTP (fallback)
+ * Handles email notifications and templating using EmailJS, Resend, or SMTP
  */
 export class EmailService {
   private static readonly DEFAULT_FROM = process.env.EMAIL_FROM || 'onboarding@resend.dev';
@@ -66,6 +67,124 @@ export class EmailService {
         error: error instanceof Error ? error.message : 'Unknown error'
       });
       return null;
+    }
+  }
+
+  /**
+   * Send email via EmailJS REST API
+   */
+  private static async sendViaEmailJS(options: EmailOptions): Promise<EmailResult> {
+    try {
+      const publicKey = process.env.EMAILJS_PUBLIC_KEY;
+      const serviceId = process.env.EMAILJS_SERVICE_ID;
+      const templateId = process.env.EMAILJS_TEMPLATE_ID;
+      const userId = process.env.EMAILJS_USER_ID;
+
+      if (!publicKey || !serviceId || !templateId) {
+        logger.warn('[EMAILJS] EmailJS credentials not fully configured', {
+          hasPublicKey: !!publicKey,
+          hasServiceId: !!serviceId,
+          hasTemplateId: !!templateId
+        });
+        return {
+          success: false,
+          message: 'EmailJS not configured',
+          error: 'Missing EMAILJS_PUBLIC_KEY, EMAILJS_SERVICE_ID, or EMAILJS_TEMPLATE_ID'
+        };
+      }
+
+      logger.info('[EMAILJS] Sending email via EmailJS', {
+        serviceId,
+        templateId,
+        to: Array.isArray(options.to) ? options.to.join(', ') : options.to,
+        subject: options.subject
+      });
+
+      // Prepare template parameters
+      // EmailJS templates use {{variable_name}} format
+      const templateParams: Record<string, any> = {
+        to_email: Array.isArray(options.to) ? options.to[0] : options.to,
+        to_name: options.data?.name || options.data?.customerName || 'User',
+        from_name: options.data?.businessName || 'TransactLab',
+        subject: options.subject,
+        message: options.html || options.text || '',
+        reply_to: options.replyTo || options.from || this.DEFAULT_FROM,
+        ...options.data // Include all template data
+      };
+
+      // EmailJS REST API endpoint
+      // Try with access token in URL (newer method), fallback to user_id only (older method)
+      const emailjsUrl = userId 
+        ? `https://api.emailjs.com/api/v1.0/email/send?accessToken=${publicKey}`
+        : `https://api.emailjs.com/api/v1.0/email/send`;
+
+      const requestData: any = {
+        service_id: serviceId,
+        template_id: templateId,
+        user_id: userId || publicKey, // User ID (required) or Public Key as fallback
+        template_params: templateParams
+      };
+
+      // EmailJS API call
+      const response = await axios.post(emailjsUrl, requestData, {
+        headers: {
+          'Content-Type': 'application/json'
+        },
+        timeout: 15000 // 15 second timeout
+      });
+
+      if (response.status === 200) {
+        logger.info('[EMAILJS] ✅ Email sent successfully via EmailJS', {
+          status: response.status,
+          statusText: response.statusText,
+          to: templateParams.to_email,
+          subject: options.subject
+        });
+
+        return {
+          success: true,
+          messageId: response.data?.messageId || `emailjs-${Date.now()}`,
+          message: 'Email sent successfully via EmailJS'
+        };
+      } else {
+        logger.error('[EMAILJS] ❌ EmailJS returned non-200 status', {
+          status: response.status,
+          statusText: response.statusText,
+          data: response.data
+        });
+
+        return {
+          success: false,
+          message: `EmailJS error: ${response.statusText}`,
+          error: `HTTP ${response.status}`
+        };
+      }
+    } catch (error: any) {
+      const errorMessage = error instanceof Error ? error.message : 'Unknown error';
+      logger.error('[EMAILJS] ❌ Failed to send email via EmailJS', {
+        error: errorMessage,
+        response: error.response?.data,
+        status: error.response?.status,
+        to: Array.isArray(options.to) ? options.to.join(', ') : options.to,
+        subject: options.subject
+      });
+
+      let userFriendlyError = 'Failed to send email via EmailJS';
+      if (error.response?.data?.error) {
+        userFriendlyError = `EmailJS error: ${error.response.data.error}`;
+      } else if (errorMessage.includes('timeout')) {
+        userFriendlyError = 'EmailJS request timeout. Please try again.';
+      } else if (error.response?.status === 400) {
+        userFriendlyError = 'EmailJS template or service configuration error. Please check your template parameters.';
+      } else if (error.response?.status === 401 || error.response?.status === 403) {
+        userFriendlyError = 'EmailJS authentication failed. Please check your API keys.';
+      }
+
+      return {
+        success: false,
+        message: userFriendlyError,
+        error: errorMessage
+      };
     }
   }
 
@@ -988,23 +1107,41 @@ export class EmailService {
   };
 
   /**
-   * Send email using Resend (preferred) or SMTP (fallback)
+   * Send email using EmailJS, Resend, or SMTP (in priority order)
    */
   static async sendEmail(options: EmailOptions): Promise<EmailResult> {
     try {
-      // Check which email service to use (SMTP or Resend)
-      // SMTP is primary if USE_SMTP is true or RESEND_API_KEY is not set
-      const useSMTP = process.env.USE_SMTP === 'true' || !process.env.RESEND_API_KEY;
-      const useResend = !useSMTP && process.env.RESEND_API_KEY;
+      // Check which email service to use (priority: EmailJS > Resend > SMTP)
+      const hasEmailJS = !!(process.env.EMAILJS_PUBLIC_KEY && process.env.EMAILJS_SERVICE_ID && process.env.EMAILJS_TEMPLATE_ID);
+      const hasResend = !!process.env.RESEND_API_KEY;
+      const useSMTP = process.env.USE_SMTP === 'true' || (!hasEmailJS && !hasResend);
+      const useResend = !useSMTP && hasResend && !hasEmailJS;
+      const useEmailJS = hasEmailJS && process.env.USE_EMAILJS !== 'false';
       
       logger.info('[EMAIL] Starting email send process', {
-        useSMTP,
+        useEmailJS,
         useResend,
+        useSMTP,
+        hasEmailJS,
+        hasResend,
         USE_SMTP: process.env.USE_SMTP,
-        hasResendKey: !!process.env.RESEND_API_KEY,
         to: Array.isArray(options.to) ? options.to.join(', ') : options.to,
         subject: options.subject
       });
+
+      // Try EmailJS first (if configured)
+      if (useEmailJS) {
+        logger.info('[EMAIL] Attempting to send email via EmailJS (primary method)');
+        const emailjsResult = await this.sendViaEmailJS(options);
+        if (emailjsResult.success) {
+          return emailjsResult;
+        } else {
+          logger.warn('[EMAIL] EmailJS failed, trying fallback...', {
+            error: emailjsResult.error
+          });
+          // Fall through to Resend or SMTP
+        }
+      }
       
       // Try SMTP first if configured (primary method)
       if (useSMTP) {

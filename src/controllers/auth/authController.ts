@@ -83,51 +83,20 @@ export class AuthController {
         securityQuestion: {
           question: securityQuestion,
           answer: securityAnswer
-        }
+        },
+        // EMAIL VERIFICATION DISABLED - Auto-verify users on registration
+        isVerified: true, // Auto-verify since email verification is suspended
+        emailVerificationToken: undefined,
+        emailVerificationExpires: undefined
       });
 
-      // Generate email verification token
-      const verificationToken = Math.random().toString(36).substring(2, 15) + Math.random().toString(36).substring(2, 15);
-      user.emailVerificationToken = verificationToken;
-      user.emailVerificationExpires = new Date(Date.now() + 24 * 60 * 60 * 1000); // 24 hours
       await user.save();
 
-      // Send verification email
-      let emailError: string | null = null;
-      try {
-        logger.info('[AUTH] Sending verification email during registration', {
-          email: user.email,
-          firstName: user.firstName,
-          hasToken: !!verificationToken,
-          tokenLength: verificationToken?.length
-        });
-
-        const EmailService = (await import('../../services/notification/emailService')).default;
-        const emailResult = await EmailService.sendVerificationEmail(user.email, user.firstName, verificationToken);
-        
-        if (emailResult.success) {
-          logger.info('[AUTH] ✅ Verification email sent successfully during registration', {
-            email: user.email,
-            messageId: emailResult.messageId,
-            message: emailResult.message
-          });
-        } else {
-          emailError = emailResult.message || emailResult.error || 'Failed to send verification email';
-          logger.error('[AUTH] ❌ Failed to send verification email during registration', {
-            email: user.email,
-            error: emailResult.error,
-            message: emailResult.message
-          });
-        }
-      } catch (emailErrorException) {
-        emailError = emailErrorException instanceof Error ? emailErrorException.message : 'Unknown error occurred while sending verification email';
-        logger.error('[AUTH] ❌ Exception while sending verification email during registration', {
-          email: user.email,
-          error: emailError,
-          stack: emailErrorException instanceof Error ? emailErrorException.stack : undefined
-        });
-        // Don't fail registration if email fails
-      }
+      logger.info('[AUTH] User registered and auto-verified (email verification suspended)', {
+        email: user.email,
+        ip: req.ip,
+        userAgent: req.get('User-Agent')
+      });
 
       // Generate tokens
       const tokens = generateTokenPair({
@@ -149,9 +118,9 @@ export class AuthController {
 
       logger.info(`New user registered: ${user.email}`);
 
-      const response: any = {
+      res.status(201).json({
         success: true,
-        message: 'User registered successfully',
+        message: 'User registered successfully. Email verification is currently disabled.',
         data: {
           user: userResponse,
           tokens: {
@@ -161,24 +130,7 @@ export class AuthController {
             refreshExpiresIn: tokens.refreshExpiresIn
           }
         }
-      };
-
-      // Include email error warning if verification email failed
-      if (emailError) {
-        response.warning = {
-          emailVerification: {
-            sent: false,
-            message: emailError,
-            note: 'Your account was created successfully, but the verification email could not be sent. Please use the resend verification feature or contact support.'
-          }
-        };
-        logger.warn('[AUTH] Registration succeeded but verification email failed', {
-          email: user.email,
-          error: emailError
-        });
-      }
-
-      res.status(201).json(response);
+      });
     } catch (error) {
       logger.error('Registration error:', error);
       res.status(500).json({
