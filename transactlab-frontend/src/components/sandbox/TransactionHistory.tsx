@@ -8,6 +8,7 @@ import { Badge } from '@/components/ui/badge';
 import { useSandbox } from '@/contexts/SandboxContext';
 import { useToast } from '@/hooks/use-toast';
 import Pagination from '@/components/ui/pagination';
+import { SANDBOX_API_BASE } from '@/config/api';
 import { generateReceiptPDF } from '@/utils/pdfGenerator';
 import { 
   DollarSign, 
@@ -423,7 +424,7 @@ const TransactionHistory: React.FC = () => {
     try {
       setSubmitting(true);
       const token = localStorage.getItem('accessToken');
-      const response = await fetch('https://transactlab-backend.onrender.com/api/v1/sandbox/refunds', {
+      const response = await fetch(`${SANDBOX_API_BASE}/refunds`, {
         method: 'POST',
         headers: {
           'Authorization': `Bearer ${token}`,

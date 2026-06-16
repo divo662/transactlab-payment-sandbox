@@ -1,6 +1,7 @@
 import React, { useEffect, useState } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
 import { Loader2, AlertCircle, FileText, CreditCard, CheckCircle, ArrowLeft } from 'lucide-react';
+import { SANDBOX_API_BASE } from '@/config/api';
 
 interface Invoice {
   _id: string;
@@ -16,7 +17,7 @@ interface Invoice {
   sessionId?: string; // optional link to a payment session
 }
 
-const API_BASE = 'https://transactlab-backend.onrender.com/api/v1/sandbox';
+const API_BASE = SANDBOX_API_BASE;
 
 const InvoicePage: React.FC = () => {
   const { invoiceId } = useParams<{ invoiceId: string }>();

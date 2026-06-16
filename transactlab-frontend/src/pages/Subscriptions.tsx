@@ -8,7 +8,7 @@ import { Label } from '@/components/ui/label';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { useToast } from '@/hooks/use-toast';
 import Pagination from '@/components/ui/pagination';
-import ApiWorkbench from '@/components/dev/ApiWorkbench';
+import { SANDBOX_API_BASE } from '@/config/api';
 
 const Subscriptions: React.FC = () => {
   const { createTestSubscription } = useSandbox();
@@ -16,7 +16,7 @@ const Subscriptions: React.FC = () => {
   const { toast } = useToast();
 
   // Backend endpoints base
-  const API_BASE = 'https://transactlab-backend.onrender.com/api/v1/sandbox';
+  const API_BASE = SANDBOX_API_BASE;
 
   // Products & Plans state
   const [products, setProducts] = useState<any[]>([]);
@@ -442,7 +442,7 @@ const Subscriptions: React.FC = () => {
 
 export default Subscriptions;
 function CreateProductForm({ onCreated }: { onCreated: () => void }) {
-  const API_BASE = 'https://transactlab-backend.onrender.com/api/v1/sandbox';
+  const API_BASE = SANDBOX_API_BASE;
   const { toast } = useToast();
   const [name, setName] = useState('Pro Suite');
   const [description, setDescription] = useState('All features');
@@ -476,7 +476,7 @@ function CreateProductForm({ onCreated }: { onCreated: () => void }) {
 }
 
 function CreatePlanForm({ products, onCreated }: { products: any[]; onCreated: () => void }) {
-  const API_BASE = 'https://transactlab-backend.onrender.com/api/v1/sandbox';
+  const API_BASE = SANDBOX_API_BASE;
   const { toast } = useToast();
   const [productId, setProductId] = useState('');
   const [amount, setAmount] = useState(10000);

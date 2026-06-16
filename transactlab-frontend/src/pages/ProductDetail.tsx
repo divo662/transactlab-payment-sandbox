@@ -11,8 +11,9 @@ import { Badge } from '@/components/ui/badge';
 import { ArrowLeft, Plus, BarChart3, TrendingUp, Users, DollarSign, Settings, Edit, MoreHorizontal, X, Save, Loader2, Trash2, AlertTriangle, Upload, Image as ImageIcon, FileImage } from 'lucide-react';
 import { useToast } from '@/hooks/use-toast';
 import ApiWorkbench from '@/components/dev/ApiWorkbench';
+import { SANDBOX_API_BASE, resolveBackendAssetUrl } from '@/config/api';
 
-const API_BASE = 'https://transactlab-backend.onrender.com/api/v1/sandbox';
+const API_BASE = SANDBOX_API_BASE;
 
 const ProductDetail: React.FC = () => {
   const { productId } = useParams();
@@ -65,7 +66,7 @@ const ProductDetail: React.FC = () => {
     
     // If it's a local upload path, prepend the backend URL
     if (imageUrl.startsWith('/uploads/')) {
-      return `${import.meta.env.VITE_API_URL || 'https://transactlab-backend.onrender.com'}${imageUrl}`;
+      return resolveBackendAssetUrl(imageUrl);
     }
     
     return imageUrl;

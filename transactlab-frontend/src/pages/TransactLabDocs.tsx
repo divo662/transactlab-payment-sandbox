@@ -1,4 +1,10 @@
 import React, { useState } from "react";
+import {
+  API_BASE_URL,
+  API_ORIGIN,
+  LIVE_API_BASE,
+  SANDBOX_API_BASE,
+} from "@/config/api";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { 
@@ -918,7 +924,7 @@ const TransactLabDocs: React.FC = () => {
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4 text-sm">
           <div className="bg-white p-3 rounded border">
             <h4 className="font-semibold text-blue-900 mb-1">Base URL</h4>
-            <code className="text-xs bg-blue-100 px-2 py-1 rounded">https://transactlab-backend.onrender.com/api/v1/sandbox</code>
+            <code className="text-xs bg-blue-100 px-2 py-1 rounded">{SANDBOX_API_BASE}</code>
           </div>
           <div className="bg-white p-3 rounded border">
             <h4 className="font-semibold text-blue-900 mb-1">Authentication</h4>
@@ -1028,7 +1034,7 @@ const TransactLabDocs: React.FC = () => {
             <h3 className="text-lg font-semibold mb-3">Sandbox Environment</h3>
             <p className="text-gray-600 mb-3">Use this URL for testing and development:</p>
             <div className="bg-gray-900 text-green-400 p-3 rounded text-sm font-mono">
-              <div>https://transactlab-backend.onrender.com/api/v1/sandbox</div>
+              <div>{SANDBOX_API_BASE}</div>
             </div>
             <p className="text-sm text-gray-500 mt-2">• Test transactions with fake cards</p>
             <p className="text-sm text-gray-500">• No real money processed</p>
@@ -1038,7 +1044,7 @@ const TransactLabDocs: React.FC = () => {
             <h3 className="text-lg font-semibold mb-3">Production Environment</h3>
             <p className="text-gray-600 mb-3">Use this URL for live transactions:</p>
             <div className="bg-gray-900 text-green-400 p-3 rounded text-sm font-mono">
-              <div>https://transactlab-backend.onrender.com/api/v1/live</div>
+              <div>{LIVE_API_BASE}</div>
             </div>
             <p className="text-sm text-gray-500 mt-2">• Real money transactions</p>
             <p className="text-sm text-gray-500">• Requires live API keys</p>
@@ -1152,7 +1158,7 @@ const TransactLabDocs: React.FC = () => {
             <div className="ml-2">"success": true,</div>
             <div className="ml-2">"data": &#123;</div>
             <div className="ml-4">"sessionId": "sess_1234567890",</div>
-            <div className="ml-4">"checkoutUrl": "https://transactlab-backend.onrender.com/checkout/sess_1234567890",</div>
+            <div className="ml-4">"checkoutUrl": "{API_ORIGIN}/checkout/sess_1234567890",</div>
             <div className="ml-4">"amount": "₦50.00",</div>
             <div className="ml-4">"currency": "NGN",</div>
             <div className="ml-4">"description": "Product purchase",</div>
@@ -1520,7 +1526,7 @@ const TransactLabDocs: React.FC = () => {
           <div className="bg-gray-900 text-green-400 p-4 rounded text-sm font-mono mb-4">
             <div>const &#123; TransactLab &#125; = require('./transactlab-magic/transactlab');</div>
             <div className="mt-2">const tl = new TransactLab(&#123;</div>
-            <div className="ml-4">baseUrl: 'https://transactlab-backend.onrender.com/api/v1',</div>
+            <div className="ml-4">baseUrl: '{API_BASE_URL}',</div>
             <div className="ml-4">sandboxSecret: 'your-sandbox-secret',</div>
             <div className="ml-4">webhookSecret: 'your-webhook-secret',</div>
             <div className="ml-4">frontendUrl: 'https://transactlab-payment-sandbox.vercel.app'</div>
@@ -1590,7 +1596,7 @@ const TransactLabDocs: React.FC = () => {
             <div className="ml-8">"frontend": "https://yoursite.com"</div>
             <div className="ml-4">&#125;,</div>
             <div className="ml-4">"environment": "sandbox",</div>
-            <div className="ml-4">"baseUrl": "https://transactlab-backend.onrender.com/api/v1"</div>
+            <div className="ml-4">"baseUrl": "{API_BASE_URL}"</div>
             <div>&#125;</div>
           </div>
         </div>

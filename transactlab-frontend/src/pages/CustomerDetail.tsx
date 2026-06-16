@@ -1,5 +1,6 @@
 import React, { useEffect, useState } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
+import { SANDBOX_API_BASE } from '@/config/api';
 import { 
   ArrowLeft, 
   Mail, 
@@ -164,7 +165,7 @@ const CustomerDetail: React.FC = () => {
   
   const [submitting, setSubmitting] = useState(false);
 
-  const API_BASE = 'https://transactlab-backend.onrender.com/api/v1/sandbox';
+  const API_BASE = SANDBOX_API_BASE;
 
   useEffect(() => {
     if (customerId) {

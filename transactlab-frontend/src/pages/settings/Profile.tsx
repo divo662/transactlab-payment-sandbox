@@ -13,13 +13,18 @@ import { toast, useToast } from "@/hooks/use-toast";
 import { useSEO } from "@/hooks/use-seo";
 import { useAuth } from "@/contexts/AuthContext";
 import React, { useState } from "react";
+import {
+  MAGIC_SDK_API_BASE,
+  SANDBOX_API_BASE,
+  resolveBackendAssetUrl,
+} from "@/config/api";
 const TeamSection: React.FC = () => {
   const [email, setEmail] = React.useState('');
   const [members, setMembers] = React.useState<any[]>([]);
   const [loading, setLoading] = React.useState(false);
   const [initialLoading, setInitialLoading] = React.useState(true);
   const [inviteStatus, setInviteStatus] = React.useState<{[key: string]: string}>({});
-  const API_BASE = 'https://transactlab-backend.onrender.com/api/v1/sandbox';
+  const API_BASE = SANDBOX_API_BASE;
 
   const authHeader = () => ({ 'Authorization': `Bearer ${localStorage.getItem('accessToken')}`, 'Content-Type': 'application/json' });
 
@@ -254,7 +259,7 @@ const WorkspaceSection: React.FC = () => {
   const [logs, setLogs] = React.useState<any[]>([]);
   const [showLogs, setShowLogs] = React.useState(false);
   const [logsLoading, setLogsLoading] = React.useState(false);
-  const API_BASE = 'https://transactlab-backend.onrender.com/api/v1/sandbox';
+  const API_BASE = SANDBOX_API_BASE;
 
   const authHeader = () => ({ 'Authorization': `Bearer ${localStorage.getItem('accessToken')}`, 'Content-Type': 'application/json' });
 
@@ -862,7 +867,7 @@ const Profile = () => {
               <div className="w-16 h-16 sm:w-12 sm:h-12 rounded-full bg-[#0a164d]/10 flex items-center justify-center text-[#0a164d] font-bold overflow-hidden mx-auto sm:mx-0">
                 {avatarPreviewUrl || normalizedAvatar ? (
                   <img
-                    src={avatarPreviewUrl || (normalizedAvatar?.startsWith('http') ? normalizedAvatar : `https://transactlab-backend.onrender.com/${normalizedAvatar}`)}
+                    src={avatarPreviewUrl || (normalizedAvatar?.startsWith('http') ? normalizedAvatar : resolveBackendAssetUrl(normalizedAvatar))}
                     alt="Avatar" 
                     className="w-full h-full object-cover"
                     onError={(e) => {
@@ -1228,7 +1233,7 @@ const DangerZoneSection: React.FC = () => {
 
 // --- Fraud Settings Section ---
 const MagicSdkWizardSection: React.FC = () => {
-  const API_BASE = 'https://transactlab-backend.onrender.com/api/v1/magic-sdk';
+  const API_BASE = MAGIC_SDK_API_BASE;
   const [loading, setLoading] = React.useState(false);
   const [successUrl, setSuccessUrl] = React.useState('');
   const [cancelUrl, setCancelUrl] = React.useState('');
@@ -1324,7 +1329,7 @@ const MagicSdkWizardSection: React.FC = () => {
 
 // --- Fraud Settings Section ---
 const FraudSettingsSection: React.FC = () => {
-  const API_BASE = 'https://transactlab-backend.onrender.com/api/v1/sandbox';
+  const API_BASE = SANDBOX_API_BASE;
   const [loading, setLoading] = React.useState(false);
   const [initialLoading, setInitialLoading] = React.useState(true);
   const [enabled, setEnabled] = React.useState(true);
@@ -1452,7 +1457,7 @@ const FraudSettingsSection: React.FC = () => {
 
 // --- Fraud Summary Section ---
 const FraudSummarySection: React.FC = () => {
-  const API_BASE = 'https://transactlab-backend.onrender.com/api/v1/sandbox';
+  const API_BASE = SANDBOX_API_BASE;
   const [loading, setLoading] = React.useState(false);
   const [initialLoading, setInitialLoading] = React.useState(true);
   const [totals, setTotals] = React.useState<any | null>(null);
@@ -1588,7 +1593,7 @@ const FraudSummarySection: React.FC = () => {
 
 // --- Fraud Review Section ---
 const FraudReviewSection: React.FC = () => {
-  const API_BASE = 'https://transactlab-backend.onrender.com/api/v1/sandbox';
+  const API_BASE = SANDBOX_API_BASE;
   const [loading, setLoading] = React.useState(false);
   const [initialLoading, setInitialLoading] = React.useState(true);
   const [items, setItems] = React.useState<any[]>([]);

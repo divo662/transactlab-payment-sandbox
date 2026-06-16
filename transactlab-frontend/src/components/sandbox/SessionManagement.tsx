@@ -8,6 +8,7 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@
 import { Badge } from '@/components/ui/badge';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { useSandbox } from '@/contexts/SandboxContext';
+import { SANDBOX_API_BASE } from '@/config/api';
 import { 
   Copy, 
   CreditCard, 
@@ -222,7 +223,7 @@ const SessionManagement: React.FC = () => {
   const fetchCustomers = async () => {
     try {
       const token = localStorage.getItem('accessToken');
-      const response = await fetch('https://transactlab-backend.onrender.com/api/v1/sandbox/customers', {
+      const response = await fetch(`${SANDBOX_API_BASE}/customers`, {
         headers: {
           'Authorization': `Bearer ${token}`,
           'Content-Type': 'application/json'
@@ -245,7 +246,7 @@ const SessionManagement: React.FC = () => {
     try {
       setLoading(true);
       const token = localStorage.getItem('accessToken');
-      const response = await fetch('https://transactlab-backend.onrender.com/api/v1/sandbox/customers', {
+      const response = await fetch(`${SANDBOX_API_BASE}/customers`, {
         method: 'POST',
         headers: {
           'Authorization': `Bearer ${token}`,

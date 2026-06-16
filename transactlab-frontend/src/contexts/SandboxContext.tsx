@@ -1,5 +1,6 @@
 import React, { createContext, useContext, useState, useEffect, ReactNode, useRef } from 'react';
 import { useAuth } from './AuthContext';
+import { SANDBOX_API_BASE } from '@/config/api';
 
 interface SandboxContextType {
   isSandboxMode: boolean;
@@ -140,7 +141,7 @@ export const SandboxProvider: React.FC<SandboxProviderProps> = ({ children }) =>
   const lastFetchTimeRef = useRef(0);
 
   // API base URL
-  const API_BASE = 'https://transactlab-backend.onrender.com/api/v1/sandbox';
+  const API_BASE = SANDBOX_API_BASE;
 
   // Helper function to make authenticated API calls
   const apiCall = async (endpoint: string, options: RequestInit = {}) => {

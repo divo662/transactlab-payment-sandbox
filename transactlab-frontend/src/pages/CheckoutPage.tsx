@@ -11,8 +11,10 @@ import {
   Eye,
   EyeOff
 } from 'lucide-react';
+import { API_ORIGIN } from '@/config/api';
 
-// Static checkout page without template customization
+// Backend origin (public read + bridge processing)
+const PUBLIC_BACKEND_ORIGIN = API_ORIGIN;
 
 interface CheckoutSession {
   sessionId: string;
@@ -55,8 +57,6 @@ interface PaymentFormData {
   saveCard: boolean;
 }
 
-// Backend origin (public read + bridge processing)
-const PUBLIC_BACKEND_ORIGIN = 'https://transactlab-backend.onrender.com';
 const BACKEND_BASE = PUBLIC_BACKEND_ORIGIN;
 // Using Hosted Checkout (Option A) via secure server bridge; no secrets in browser.
 

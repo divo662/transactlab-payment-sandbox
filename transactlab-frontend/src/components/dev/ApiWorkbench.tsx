@@ -1,6 +1,7 @@
 import React, { useMemo, useState } from 'react';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
+import { SANDBOX_API_BASE } from '@/config/api';
 
 type Example = {
   title: string;
@@ -10,7 +11,7 @@ type Example = {
   note?: string;
 };
 
-const API_BASE = 'https://transactlab-backend.onrender.com/api/v1/sandbox';
+const API_BASE = SANDBOX_API_BASE;
 
 export default function ApiWorkbench({ examples }: { examples: Example[] }) {
   const [activeIdx, setActiveIdx] = useState(0);

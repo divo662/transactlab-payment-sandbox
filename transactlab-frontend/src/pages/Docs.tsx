@@ -1,4 +1,5 @@
 import React, { useState } from "react";
+import { SANDBOX_API_BASE } from "@/config/api";
 import { Separator } from "@/components/ui/separator";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
@@ -338,7 +339,7 @@ const Docs: React.FC = () => {
                       <pre className="bg-gray-900 text-gray-100 p-4 rounded-lg text-sm overflow-x-auto">
 {`// Create a checkout session
 const response = await fetch(
-  'https://transactlab-backend.onrender.com/api/v1/sandbox/sessions',
+  '${SANDBOX_API_BASE}/sessions',
   {
     method: 'POST',
     headers: {

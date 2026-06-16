@@ -4,6 +4,7 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
 import api, { apiService } from "@/lib/api";
+import { API_BASE_URL } from "@/config/api";
 import { useToast } from "@/hooks/use-toast";
 
 export default function SDKSetup() {
@@ -34,7 +35,7 @@ export default function SDKSetup() {
 
   const generateConfigTemplate = () => `{
   "apiKey": "${apiKey || 'tk_test_secret_...'}",
-  "baseUrl": "https://transactlab-backend.onrender.com/api/v1",
+  "baseUrl": "${API_BASE_URL}",
   "urls": {
     "success": "http://localhost:3000/?payment=success",
     "cancel": "http://localhost:3000/?payment=cancel",
@@ -46,7 +47,7 @@ export default function SDKSetup() {
   function handleGenerateEnv() {
     try {
       const cfg = JSON.parse(configJson || "{}");
-      const base = (cfg.baseUrl || "https://transactlab-backend.onrender.com/api/v1").replace(/\/$/, "");
+      const base = (cfg.baseUrl || API_BASE_URL).replace(/\/$/, "");
       const sandbox = `${base}/sandbox`;
       const env = [
         `TL_BASE=${sandbox}`,

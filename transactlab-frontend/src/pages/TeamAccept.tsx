@@ -1,5 +1,6 @@
 import React from 'react';
 import { useLocation, useNavigate } from 'react-router-dom';
+import { SANDBOX_API_BASE } from '@/config/api';
 
 const TeamAccept: React.FC = () => {
   const location = useLocation();
@@ -18,7 +19,7 @@ const TeamAccept: React.FC = () => {
           navigate('/auth/register?invite=1');
           return;
         }
-        const res = await fetch('https://transactlab-backend.onrender.com/api/v1/sandbox/team/accept', {
+        const res = await fetch(`${SANDBOX_API_BASE}/team/accept`, {
           method: 'POST',
           headers: {
             'Authorization': `Bearer ${accessToken}`,

@@ -2,8 +2,9 @@ import React, { useEffect, useState } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
+import { SANDBOX_API_BASE } from '@/config/api';
 
-const API_BASE = 'https://transactlab-backend.onrender.com/api/v1/sandbox';
+const API_BASE = SANDBOX_API_BASE;
 
 const SubscriptionDetail: React.FC = () => {
   const { subscriptionId } = useParams();

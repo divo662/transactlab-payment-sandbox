@@ -1,6 +1,7 @@
 import React, { createContext, useContext, useState, useEffect } from 'react';
 import { useAuth } from './AuthContext';
 import { useToast } from '@/hooks/use-toast';
+import { SANDBOX_API_BASE } from '@/config/api';
 
 interface PendingInvite {
   teamId: string;
@@ -40,7 +41,7 @@ export const WorkspaceInviteProvider: React.FC<{ children: React.ReactNode }> = 
   const [loading, setLoading] = useState(false);
   const [showNotification, setShowNotification] = useState(true);
 
-  const API_BASE = 'https://transactlab-backend.onrender.com/api/v1/sandbox';
+  const API_BASE = SANDBOX_API_BASE;
 
   const authHeader = () => ({
     'Authorization': `Bearer ${localStorage.getItem('accessToken')}`,

@@ -8,8 +8,9 @@ import { Textarea } from '@/components/ui/textarea';
 import { useToast } from '@/hooks/use-toast';
 import { Edit, MoreHorizontal, X, Save, Loader2, Trash2, AlertTriangle, Upload, Image as ImageIcon, FileImage } from 'lucide-react';
 import { useSandbox } from '@/contexts/SandboxContext';
+import { SANDBOX_API_BASE, resolveBackendAssetUrl } from '@/config/api';
 
-const API_BASE = 'https://transactlab-backend.onrender.com/api/v1/sandbox';
+const API_BASE = SANDBOX_API_BASE;
 
 const Products: React.FC = () => {
   const navigate = useNavigate();
@@ -60,7 +61,7 @@ const Products: React.FC = () => {
     
     // If it's a local upload path, prepend the backend URL
     if (imageUrl.startsWith('/uploads/')) {
-      return `${import.meta.env.VITE_API_URL || 'https://transactlab-backend.onrender.com'}${imageUrl}`;
+      return resolveBackendAssetUrl(imageUrl);
     }
     
     return imageUrl;

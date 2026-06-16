@@ -11,6 +11,7 @@ import { useToast } from '@/hooks/use-toast';
 import Pagination from '@/components/ui/pagination';
 import { Plus, User, Mail, Phone, MapPin, Building, Download } from 'lucide-react';
 import { useSandbox } from '@/contexts/SandboxContext';
+import { SANDBOX_API_BASE } from '@/config/api';
 
 // Simple fetch via SandboxContext endpoints isn't defined yet for customers,
 // so we will call the REST endpoint directly using the auth token like other calls.
@@ -47,7 +48,7 @@ const Customers: React.FC = () => {
     description: ''
   });
 
-  const API_BASE = 'https://transactlab-backend.onrender.com/api/v1/sandbox';
+  const API_BASE = SANDBOX_API_BASE;
   const fetchCustomers = async (page: number = 1) => {
     try {
       setLoading(true);
