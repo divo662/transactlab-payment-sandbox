@@ -4,7 +4,7 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
 import api, { apiService } from "@/lib/api";
-import { API_BASE_URL } from "@/config/api";
+import { API_BASE_URL, openDocsInNewTab } from "@/config/api";
 import { useToast } from "@/hooks/use-toast";
 
 export default function SDKSetup() {
@@ -578,7 +578,7 @@ export default function SDKSetup() {
           </p>
           <div className="flex flex-col sm:flex-row gap-3 justify-center">
             <Button
-              onClick={() => window.open('https://transactlab-payment-sandbox.vercel.app/transactlab-docs', '_blank')}
+              onClick={() => openDocsInNewTab()}
               className="bg-indigo-600 hover:bg-indigo-700 text-white px-6 py-3"
             >
               <svg className="w-4 h-4 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -588,7 +588,7 @@ export default function SDKSetup() {
             </Button>
             <Button
               variant="outline"
-              onClick={() => window.open('https://transactlab-payment-sandbox.vercel.app/transactlab-docs', '_blank')}
+              onClick={() => openDocsInNewTab()}
               className="border-indigo-200 text-indigo-700 hover:bg-indigo-50 px-6 py-3"
             >
               View API Reference

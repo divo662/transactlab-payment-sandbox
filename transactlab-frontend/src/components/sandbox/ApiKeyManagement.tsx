@@ -6,6 +6,7 @@ import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Alert, AlertDescription } from '@/components/ui/alert';
 import { useSandbox } from '@/contexts/SandboxContext';
+import { openDocsInNewTab } from '@/config/api';
 import { 
   Copy, 
   Key, 
@@ -432,7 +433,7 @@ const ApiKeyManagement: React.FC = () => {
               <span className="sm:hidden">New Keys</span>
                 </Button>
                 <Button 
-              onClick={() => window.open('https://transactlab-payment-sandbox.vercel.app/transactlab-docs', '_blank')}
+              onClick={() => openDocsInNewTab()}
               variant="outline"
               className="w-full sm:w-auto"
             >

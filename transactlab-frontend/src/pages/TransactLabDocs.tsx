@@ -4,6 +4,7 @@ import {
   API_ORIGIN,
   LIVE_API_BASE,
   SANDBOX_API_BASE,
+  getFrontendOrigin,
 } from "@/config/api";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
@@ -28,6 +29,7 @@ import {
 } from "lucide-react";
 
 const TransactLabDocs: React.FC = () => {
+  const frontendOrigin = getFrontendOrigin();
   const [activeNavItem, setActiveNavItem] = useState("home");
 
   const navigationItems = [
@@ -297,7 +299,7 @@ const TransactLabDocs: React.FC = () => {
             <ol className="space-y-3 text-sm">
               <li className="flex items-start">
                 <span className="bg-blue-100 text-blue-600 rounded-full w-5 h-5 flex items-center justify-center text-xs font-bold mr-3 mt-0.5">1</span>
-                <span>Visit <code className="bg-gray-100 px-2 py-1 rounded">https://transactlab-payment-sandbox.vercel.app/</code> and click "Sign Up"</span>
+                <span>Visit <code className="bg-gray-100 px-2 py-1 rounded">{frontendOrigin}/</code> and click "Sign Up"</span>
               </li>
               <li className="flex items-start">
                 <span className="bg-blue-100 text-blue-600 rounded-full w-5 h-5 flex items-center justify-center text-xs font-bold mr-3 mt-0.5">2</span>
@@ -1134,7 +1136,7 @@ const TransactLabDocs: React.FC = () => {
                 <div>&#123;</div>
                 <div className="ml-2">"success": true,</div>
                 <div className="ml-2">"subscriptionId": "sub_1234567890",</div>
-                <div className="ml-2">"checkoutUrl": "https://transactlab-payment-sandbox.vercel.app/checkout/sub_1234567890",</div>
+                <div className="ml-2">"checkoutUrl": "{frontendOrigin}/checkout/sub_1234567890",</div>
                 <div className="ml-2">"planId": "plan_z2x8haem"</div>
                 <div>&#125;</div>
               </div>
@@ -1529,7 +1531,7 @@ const TransactLabDocs: React.FC = () => {
             <div className="ml-4">baseUrl: '{API_BASE_URL}',</div>
             <div className="ml-4">sandboxSecret: 'your-sandbox-secret',</div>
             <div className="ml-4">webhookSecret: 'your-webhook-secret',</div>
-            <div className="ml-4">frontendUrl: 'https://transactlab-payment-sandbox.vercel.app'</div>
+            <div className="ml-4">frontendUrl: '{frontendOrigin}'</div>
             <div>&#125;);</div>
           </div>
           <p className="text-gray-600">The SDK automatically reads from your environment variables after running <code>magic-setup.js</code></p>

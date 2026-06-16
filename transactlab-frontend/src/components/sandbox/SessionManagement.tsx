@@ -8,7 +8,7 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@
 import { Badge } from '@/components/ui/badge';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { useSandbox } from '@/contexts/SandboxContext';
-import { SANDBOX_API_BASE } from '@/config/api';
+import { SANDBOX_API_BASE, openDocsInNewTab } from '@/config/api';
 import { 
   Copy, 
   CreditCard, 
@@ -1433,7 +1433,7 @@ const SessionManagement: React.FC = () => {
             </p>
             <div className="flex flex-col sm:flex-row gap-3 justify-center">
               <Button
-                onClick={() => window.open('https://transactlab-payment-sandbox.vercel.app/transactlab-docs', '_blank')}
+                onClick={() => openDocsInNewTab()}
                 className="bg-green-600 hover:bg-green-700 text-white px-6 py-3"
               >
                 <ExternalLink className="w-4 h-4 mr-2" />
@@ -1441,7 +1441,7 @@ const SessionManagement: React.FC = () => {
               </Button>
               <Button
                 variant="outline"
-                onClick={() => window.open('https://transactlab-payment-sandbox.vercel.app/transactlab-docs', '_blank')}
+                onClick={() => openDocsInNewTab()}
                 className="border-green-200 text-green-700 hover:bg-green-50 px-6 py-3"
               >
                 View API Reference

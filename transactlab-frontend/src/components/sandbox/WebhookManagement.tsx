@@ -9,6 +9,7 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { Badge } from '@/components/ui/badge';
 import { Alert, AlertDescription } from '@/components/ui/alert';
 import { useSandbox } from '@/contexts/SandboxContext';
+import { openDocsInNewTab } from '@/config/api';
 import { 
   Copy, 
   RefreshCw, 
@@ -978,7 +979,7 @@ const WebhookManagement: React.FC = () => {
             </p>
             <div className="flex flex-col sm:flex-row gap-3 justify-center">
               <Button
-                onClick={() => window.open('https://transactlab-payment-sandbox.vercel.app/transactlab-docs', '_blank')}
+                onClick={() => openDocsInNewTab()}
                 className="bg-purple-600 hover:bg-purple-700 text-white px-6 py-3"
               >
                 <ExternalLink className="w-4 h-4 mr-2" />
@@ -986,7 +987,7 @@ const WebhookManagement: React.FC = () => {
               </Button>
               <Button
                 variant="outline"
-                onClick={() => window.open('https://transactlab-payment-sandbox.vercel.app/transactlab-docs', '_blank')}
+                onClick={() => openDocsInNewTab()}
                 className="border-purple-200 text-purple-700 hover:bg-purple-50 px-6 py-3"
               >
                 View API Reference
