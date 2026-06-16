@@ -8,6 +8,7 @@ import { Label } from '@/components/ui/label';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { useToast } from '@/hooks/use-toast';
 import Pagination from '@/components/ui/pagination';
+import ApiWorkbench from '@/components/dev/ApiWorkbench';
 import { SANDBOX_API_BASE } from '@/config/api';
 
 const Subscriptions: React.FC = () => {
