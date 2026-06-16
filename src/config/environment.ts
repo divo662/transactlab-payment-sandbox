@@ -89,6 +89,7 @@ const DEFAULT_ENV: Partial<EnvironmentConfig> = {
   TRUSTED_IPS: [],
   CORS_ORIGINS: [
     'https://transactlab-payment-sandbox.vercel.app',
+    'https://transactlab.divinenzeh.click',
     'http://localhost:3000',
     'http://localhost:3001',
     'http://localhost:5173',

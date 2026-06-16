@@ -39,6 +39,7 @@ import systemRoutes from './routes/admin/systemRoutes';
 import checkoutTemplateRoutes from './routes/checkout/checkoutTemplateRoutes';
 import feedbackRoutes from './routes/feedback/feedbackRoutes';
 import analyticsRoutes from './routes/api/v1/analyticsRoutes';
+import { ENV } from './config/environment';
 
 /**
  * Express Application Setup
@@ -58,7 +59,7 @@ app.use(helmet({
   crossOriginResourcePolicy: { policy: 'cross-origin' },
 }));
 app.use(cors({
-  origin: ['https://transactlab-payment-sandbox.vercel.app', 'http://localhost:8080'],
+  origin: ENV.CORS_ORIGINS,
   credentials: true,
 }));
 app.use(express.json({ limit: '10mb' }));
